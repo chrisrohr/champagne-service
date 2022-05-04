@@ -5,54 +5,64 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.kiwiproject</groupId>
-    <artifactId>champagne</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <parent>
+        <groupId>org.kiwiproject</groupId>
+        <artifactId>kiwi-parent</artifactId>
+        <version>2.0.0</version>
+    </parent>
+
+    <artifactId>champagne-service</artifactId>
+    <version>0.1.0</version>
     <packaging>jar</packaging>
-    <name>Champagne</name>
+
+    <name>${project.groupId}:${project.artifactId}</name>
+    <description>
+        Champagne is a service that aides in tracking and promoting builds to deploy services to infrastructure.
+    </description>
+    <url>https://github.com/kiwiproject/champagne-service</url>
+    <inceptionYear>2022</inceptionYear>
 
     <properties>
-	<!-- Versions -->
-	<dropwizard.version>2.1.0</dropwizard.version>
+        <!-- Versions for required dependencies -->
+        <kiwi-bom.version>0.9.1</kiwi-bom.version>
+        <dropwizard.version>2.1.0</dropwizard.version>
 	    
         <maven-compiler-plugin.java.release>17</maven-compiler-plugin.java.release>
         <maven-compiler-plugin.encoding>UTF-8</maven-compiler-plugin.encoding>
 
-        <sonar.organization>chrisrohr</sonar.organization>
+        <sonar.organization>kiwiproject</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
-        <sonar.projectKey>chrisrohr_champagne</sonar.projectKey>
+        <sonar.projectKey>kiwiproject_champagne-service</sonar.projectKey>
     </properties>
 
     <dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>org.junit</groupId>
-				<artifactId>junit-bom</artifactId>
-				<version>5.8.2</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.kiwiproject</groupId>
+                <artifactId>kiwi-bom</artifactId>
+                <version>${kiwi-bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
 
         <dependency>
             <groupId>io.dropwizard</groupId>
-            <artifactId>dropwizard-assets</artifactId>
-            <version>${dropwizard.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-core</artifactId>
-            <version>${dropwizard.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>net.sourceforge.argparse4j</groupId>
+                    <artifactId>argparse4j</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-jdbi3</artifactId>
-            <version>${dropwizard.version}</version>
         </dependency>
 
         <dependency>
@@ -64,7 +74,6 @@
         <dependency>
             <groupId>org.jdbi</groupId>
             <artifactId>jdbi3-postgres</artifactId>
-            <version>3.28.0</version>
         </dependency>
 
         <dependency>
@@ -82,60 +91,31 @@
         <dependency>
             <groupId>org.liquibase</groupId>
             <artifactId>liquibase-core</artifactId>
-            <version>4.9.1</version>
         </dependency>
 
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.3.4</version>
         </dependency>
 
         <!-- Provided dependencies -->
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.18.24</version>
-            <scope>provided</scope>
-        </dependency>
 
         <!-- Test dependencies -->
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-testing</artifactId>
-            <version>2.0.29</version>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>net.sourceforge.argparse4j</groupId>
+                    <artifactId>argparse4j</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
             <groupId>io.zonky.test</groupId>
             <artifactId>embedded-postgres</artifactId>
-            <version>1.3.1</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.assertj</groupId>
-            <artifactId>assertj-core</artifactId>
-            <version>3.22.0</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-params</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -143,13 +123,6 @@
             <groupId>org.kiwiproject</groupId>
             <artifactId>kiwi-test</artifactId>
             <version>2.0.0</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>4.5.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
