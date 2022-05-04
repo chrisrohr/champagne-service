@@ -12,6 +12,9 @@
     <name>Champagne</name>
 
     <properties>
+	<!-- Versions -->
+	<dropwizard.version>2.1.0</dropwizard.version>
+	    
         <maven-compiler-plugin.java.release>17</maven-compiler-plugin.java.release>
         <maven-compiler-plugin.encoding>UTF-8</maven-compiler-plugin.encoding>
 
@@ -37,25 +40,25 @@
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-assets</artifactId>
-            <version>2.0.29</version>
+            <version>${dropwizard.version}</version>
         </dependency>
 
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-core</artifactId>
-            <version>2.0.29</version>
+            <version>${dropwizard.version}</version>
         </dependency>
 
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-jdbi3</artifactId>
-            <version>2.0.29</version>
+            <version>${dropwizard.version}</version>
         </dependency>
 
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-migrations</artifactId>
-            <version>2.0.29</version>
+            <version>${dropwizard.version}</version>
         </dependency>
 
         <dependency>
@@ -164,83 +167,10 @@
             </plugin>
 
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>3.2.0</version>
-                <executions>
-                    <execution>
-                        <id>copy-ui</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${basedir}/target/classes/ui</outputDirectory>
-                            <resources>          
-                                <resource>
-                                    <directory>src/main/js/ui/dist/spa</directory>
-                                </resource>
-                            </resources>              
-                        </configuration>            
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.0.0-M6</version>
             </plugin>
-
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>3.0.0</version>
-                <executions>
-                    <execution>
-                        <id>yarn install</id>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <phase>initialize</phase>
-                        <configuration>
-                            <workingDirectory>./src/main/js/ui</workingDirectory>
-                            <executable>yarn</executable>
-                            <arguments>
-                                <argument>install</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>yarn build</id>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <phase>generate-resources</phase>
-                        <configuration>
-                            <workingDirectory>./src/main/js/ui</workingDirectory>
-                            <executable>yarn</executable>
-                            <arguments>
-                                <argument>build</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>yarn test with coverage</id>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <phase>test</phase>
-                        <configuration>
-                            <workingDirectory>./src/main/js/ui</workingDirectory>
-                            <executable>yarn</executable>
-                            <arguments>
-                                <argument>test:unit:coverage</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
+		
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
