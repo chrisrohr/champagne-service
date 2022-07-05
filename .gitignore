@@ -1,3 +1,5 @@
+# Created by .ignore support plugin (hsz.mobi)
+### Maven template
 target/
 pom.xml.tag
 pom.xml.releaseBackup
@@ -7,6 +9,16 @@ release.properties
 dependency-reduced-pom.xml
 buildNumber.properties
 .mvn/timing.properties
-# https://github.com/takari/maven-wrapper#usage-without-binary-jar
-.mvn/wrapper/maven-wrapper.jar
+
+# Avoid ignoring Maven wrapper jar file (.jar files are usually ignored)
+!/.mvn/wrapper/maven-wrapper.jar
+
+# Deployment log
+maven-central-deploy.log
+
+# IntelliJ project files
 .idea
+*.iml
+
+# VS Code configuration files
+.vscode
