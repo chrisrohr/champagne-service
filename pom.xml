@@ -24,7 +24,7 @@
 
     <properties>
         <!-- Versions for required dependencies -->
-        <kiwi-bom.version>0.23.0</kiwi-bom.version>
+        <kiwi-bom.version>0.23.1</kiwi-bom.version>
 
         <maven-compiler-plugin.java.release>17</maven-compiler-plugin.java.release>
         <maven-compiler-plugin.encoding>UTF-8</maven-compiler-plugin.encoding>
