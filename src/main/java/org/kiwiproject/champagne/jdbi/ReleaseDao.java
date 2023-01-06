@@ -8,6 +8,7 @@ import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+import org.kiwiproject.champagne.core.manualdeployment.DeploymentTaskStatus;
 import org.kiwiproject.champagne.core.manualdeployment.Release;
 import org.kiwiproject.champagne.jdbi.mappers.ReleaseMapper;
 
@@ -27,7 +28,7 @@ public interface ReleaseDao {
     @SqlQuery("select r.* from manual_deployment_task_releases r join manual_deployment_task_release_statuses rs " +
             "on r.id = rs.manual_deployment_task_release_id where rs.status = :status and rs.environment = :environment")
     List<Release> findByStatusAndEnvironment(@Bind("status") DeploymentTaskStatus status, 
-                                             @Bind("environment") DeploymentEnvironment environment);
+                                             @Bind("environment") String environment);
 
     @SqlUpdate("delete from manual_deployment_task_releases where id = :id")
     void deleteById(@Bind("id") long id);

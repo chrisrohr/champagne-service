@@ -13,7 +13,6 @@ import org.kiwiproject.champagne.jdbi.mappers.DeploymentEnvironmentMapper;
 
 @RegisterRowMapper(DeploymentEnvironmentMapper.class)
 public interface DeploymentEnvironmentDao {
-
     @SqlUpdate("insert into deployment_environments"
             + " (environment_name, created_by, updated_by)"
             + " values (:name, :createdById, :updatedById)")
