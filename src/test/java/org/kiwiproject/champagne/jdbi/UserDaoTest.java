@@ -75,6 +75,7 @@ class UserDaoTest {
             softly.assertThat(user.get("first_name")).isEqualTo("John");
             softly.assertThat(user.get("last_name")).isEqualTo("Doe");
             softly.assertThat(user.get("display_name")).isEqualTo("John Doe");
+            softly.assertThat(user.get("deleted")).isEqualTo(false);
         }
     }
 
@@ -143,8 +144,8 @@ class UserDaoTest {
 
             var users = dao.findPagedUsers(0, 10);
             assertThat(users)
-                .extracting("systemIdentifier", "firstName", "lastName")
-                .contains(tuple("fooBar", "Foo", "Bar"));
+                .extracting("systemIdentifier", "firstName", "lastName", "deleted")
+                .contains(tuple("fooBar", "Foo", "Bar", false));
         }
 
         @Test
@@ -152,6 +153,28 @@ class UserDaoTest {
             saveTestUserRecord("fooBar", "Foo", "Bar");
 
             var users = dao.findPagedUsers(10, 10);
+            assertThat(users).isEmpty();
+        }
+    }
+
+    @Nested
+    class FindPagedUsersIncludingDeleted {
+
+        @Test
+        void shouldReturnListOfUsers() {
+            saveTestUserRecord("fooBar", "Foo", "Bar", true);
+
+            var users = dao.findPagedUsersIncludingDeleted(0, 10);
+            assertThat(users)
+                    .extracting("systemIdentifier", "firstName", "lastName", "deleted")
+                    .contains(tuple("fooBar", "Foo", "Bar", true));
+        }
+
+        @Test
+        void shouldReturnEmptyListWhenNoUsersFound() {
+            saveTestUserRecord("fooBar", "Foo", "Bar");
+
+            var users = dao.findPagedUsersIncludingDeleted(10, 10);
             assertThat(users).isEmpty();
         }
     }
@@ -175,6 +198,24 @@ class UserDaoTest {
     }
 
     @Nested
+    class CountUsersIncludingDeleted {
+
+        @Test
+        void shouldReturnCountOfUsers() {
+            saveTestUserRecord("fooBar", "Foo", "Bar", true);
+
+            var users = dao.countUsersIncludingDeleted();
+            assertThat(users).isOne();
+        }
+
+        @Test
+        void shouldReturnEmptyListWhenNoUsersFound() {
+            var users = dao.countUsersIncludingDeleted();
+            assertThat(users).isZero();
+        }
+    }
+
+    @Nested
     class DeleteUser {
 
         @Test
@@ -189,12 +230,20 @@ class UserDaoTest {
             dao.deleteUser(userId);
 
             var users = handle.select("select * from users where id = ?", userId).mapToMap().list();
-            assertThat(users).isEmpty();
+            assertThat(users).hasSize(1);
+
+            var user = first(users);
+            softly.assertThat(user.get("id")).isEqualTo(userId);
+            softly.assertThat(user.get("deleted")).isEqualTo(true);
         }
 
     }
 
     private void saveTestUserRecord(String systemIdentifier, String firstName, String lastName) {
-        handle.execute("insert into users (first_name, last_name, display_name, system_identifier) values (?, ?, ?, ?)", firstName, lastName, firstName + " " + lastName, systemIdentifier);
+        saveTestUserRecord(systemIdentifier, firstName, lastName, false);
+    }
+
+    private void saveTestUserRecord(String systemIdentifier, String firstName, String lastName, boolean deleted) {
+        handle.execute("insert into users (first_name, last_name, display_name, system_identifier, deleted) values (?, ?, ?, ?, ?)", firstName, lastName, firstName + " " + lastName, systemIdentifier, deleted);
     }
 }

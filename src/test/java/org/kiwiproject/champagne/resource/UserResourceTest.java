@@ -1,5 +1,6 @@
 package org.kiwiproject.champagne.resource;
 
+import static javax.ws.rs.client.Entity.json;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.kiwiproject.collect.KiwiLists.first;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertNoContentResponse;
@@ -13,12 +14,8 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import java.time.Instant;
-import java.util.List;
-
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.GenericType;
-
+import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+import io.dropwizard.testing.junit5.ResourceExtension;
 import org.assertj.core.api.junit.jupiter.SoftAssertionsExtension;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,8 +27,9 @@ import org.kiwiproject.champagne.jdbi.UserDao;
 import org.kiwiproject.jaxrs.exception.JaxrsExceptionMapper;
 import org.kiwiproject.spring.data.KiwiPage;
 
-import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
-import io.dropwizard.testing.junit5.ResourceExtension;
+import java.time.Instant;
+import java.util.List;
+import javax.ws.rs.core.GenericType;
 
 @DisplayName("UserResource")
 @ExtendWith({ DropwizardExtensionsSupport.class, SoftAssertionsExtension.class })
@@ -127,6 +125,43 @@ public class UserResourceTest {
             verify(USER_DAO).countUsers();
             verifyNoMoreInteractions(USER_DAO);
         }
+
+        @Test
+        void shouldReturnPagedListOfUsersIncludingDeletedUsingDefaultPagingParamsAndIncludeDeleted() {
+            var user = User.builder()
+                    .id(1L)
+                    .firstName("John")
+                    .lastName("Doe")
+                    .displayName("John Doe")
+                    .createdAt(Instant.now())
+                    .updatedAt(Instant.now())
+                    .build();
+
+            when(USER_DAO.findPagedUsersIncludingDeleted(0, 25)).thenReturn(List.of(user));
+            when(USER_DAO.countUsersIncludingDeleted()).thenReturn(1L);
+
+            var response = APP.client().target("/users")
+                    .queryParam("includeDeleted", true)
+                    .request()
+                    .get();
+
+            assertOkResponse(response);
+
+            var pagedData = response.readEntity(new GenericType<KiwiPage<User>>(){});
+            assertThat(pagedData.getNumberOfElements()).isOne();
+            assertThat(pagedData.getTotalElements()).isOne();
+            assertThat(pagedData.getNumber()).isOne();
+
+            var foundUser = first(pagedData.getContent());
+            assertThat(foundUser)
+                    .usingRecursiveComparison()
+                    .ignoringFields("createdAt", "updatedAt")
+                    .isEqualTo(user);
+
+            verify(USER_DAO).findPagedUsersIncludingDeleted(0, 25);
+            verify(USER_DAO).countUsersIncludingDeleted();
+            verifyNoMoreInteractions(USER_DAO);
+        }
     }
 
     @Nested
@@ -143,7 +178,7 @@ public class UserResourceTest {
 
             var response = APP.client().target("/users")
                 .request()
-                .post(Entity.json(user));
+                .post(json(user));
 
             assertNoContentResponse(response);
 
@@ -157,7 +192,7 @@ public class UserResourceTest {
 
             var response = APP.client().target("/users")
                 .request()
-                .post(Entity.json(user));
+                .post(json(user));
 
             assertResponseStatusCode(response, 422);
 
@@ -179,6 +214,24 @@ public class UserResourceTest {
             assertNoContentResponse(response);
 
             verify(USER_DAO).deleteUser(1L);
+            verifyNoMoreInteractions(USER_DAO);
+        }
+    }
+
+    @Nested
+    class ReactivateUser {
+
+        @Test
+        void shouldReActivateGivenUser() {
+            var response = APP.client().target("/users")
+                    .path("{id}/reactivate")
+                    .resolveTemplate("id", 1)
+                    .request()
+                    .put(json(""));
+
+            assertNoContentResponse(response);
+
+            verify(USER_DAO).reactivateUser(1L);
             verifyNoMoreInteractions(USER_DAO);
         }
     }
