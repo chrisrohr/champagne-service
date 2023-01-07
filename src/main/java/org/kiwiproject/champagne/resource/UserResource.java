@@ -10,6 +10,7 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -22,6 +23,8 @@ import com.codahale.metrics.annotation.Timed;
 import org.kiwiproject.champagne.core.User;
 import org.kiwiproject.champagne.jdbi.UserDao;
 import org.kiwiproject.spring.data.KiwiPage;
+
+import java.util.List;
 
 @Path("/users")
 @Produces(APPLICATION_JSON)
@@ -38,15 +41,23 @@ public class UserResource {
     @Timed
     @ExceptionMetered
     public Response listUsers(@QueryParam("pageNumber") @DefaultValue("1") int pageNumber, 
-                              @QueryParam("pageSize") @DefaultValue("25") int pageSize) {
+                              @QueryParam("pageSize") @DefaultValue("25") int pageSize,
+                              @QueryParam("includeDeleted") @DefaultValue("false") boolean includeDeleted) {
 
         var offset = zeroBasedOffset(pageNumber, pageSize);
 
-        var users = userDao.findPagedUsers(offset, pageSize);
-        var total = userDao.countUsers();
+        List<User> users;
+        long total;
+
+        if (includeDeleted) {
+            users = userDao.findPagedUsersIncludingDeleted(offset, pageSize);
+            total = userDao.countUsersIncludingDeleted();
+        } else {
+            users = userDao.findPagedUsers(offset, pageSize);
+            total = userDao.countUsers();
+        }
 
         var page = KiwiPage.of(pageNumber, pageSize, total, users);
-
         return Response.ok(page).build();
     }
 
@@ -64,6 +75,15 @@ public class UserResource {
     @ExceptionMetered
     public Response deleteUser(@PathParam("id") long id) {
         userDao.deleteUser(id);
+        return Response.noContent().build();
+    }
+
+    @PUT
+    @Path("/{id}/reactivate")
+    @Timed
+    @ExceptionMetered
+    public Response reactivateUser(@PathParam("id") long id) {
+        userDao.reactivateUser(id);
         return Response.noContent().build();
     }
 
