@@ -131,16 +131,61 @@ class DeploymentEnvironmentDaoTest {
     }
 
     @Nested
-    class DeleteById {
+    class HardDeleteById {
 
         @Test
         void shouldDeleteDeploymentEnvironmentSuccessfully() {
             long envId = saveTestDeploymentEnvironmentRecord("TRAINING");
 
-            dao.deleteById(envId);
+            dao.hardDeleteById(envId);
 
             var envs = handle.select("select * from deployment_environments where id = ?", envId).mapToMap().list();
             assertThat(envs).isEmpty();
+        }
+
+    }
+
+    @Nested
+    class SoftDeleteById {
+
+        @Test
+        void shouldSoftDeleteDeploymentEnvironmentSuccessfully(SoftAssertions softly) {
+            var id = saveTestDeploymentEnvironmentRecord("TEST");
+
+            dao.softDeleteById(id, testUserId);
+
+            var envs = handle.select("select * from deployment_environments where id = ?", id)
+                .map(new DeploymentEnvironmentMapper())
+                .list();
+
+            assertThat(envs).hasSize(1);
+
+            var user = first(envs);
+            softly.assertThat(user.getId()).isEqualTo(id);
+            softly.assertThat(user.isDeleted()).isEqualTo(true);
+        }
+
+    }
+
+    @Nested
+    class UnDeleteById {
+
+        @Test
+        void shouldUnDeleteDeploymentEnvironmentSuccessfully(SoftAssertions softly) {
+            var id = saveTestDeploymentEnvironmentRecord("TEST");
+            handle.execute("update deployment_environments set deleted=true where id = ?", id);
+
+            dao.unSoftDeleteById(id, testUserId);
+
+            var envs = handle.select("select * from deployment_environments where id = ?", id)
+                .map(new DeploymentEnvironmentMapper())
+                .list();
+
+            assertThat(envs).hasSize(1);
+
+            var user = first(envs);
+            softly.assertThat(user.getId()).isEqualTo(id);
+            softly.assertThat(user.isDeleted()).isEqualTo(false);
         }
 
     }

@@ -235,12 +235,36 @@ class UserDaoTest {
 
             dao.deleteUser(userId);
 
-            var users = handle.select("select * from users where id = ?", userId).mapToMap().list();
+            var users = handle.select("select * from users where id = ?", userId).map(new UserMapper()).list();
             assertThat(users).hasSize(1);
 
             var user = first(users);
-            softly.assertThat(user.get("id")).isEqualTo(userId);
-            softly.assertThat(user.get("deleted")).isEqualTo(true);
+            softly.assertThat(user.getId()).isEqualTo(userId);
+            softly.assertThat(user.isDeleted()).isEqualTo(true);
+        }
+
+    }
+
+    @Nested
+    class ReactivateUser {
+
+        @Test
+        void shouldReactivateUserSuccessfully(SoftAssertions softly) {
+            saveTestUserRecord("jdoe", "John", "Doe", true);
+            long userId = handle.select("select * from users where system_identifier = ?", "jdoe")
+                .mapToMap()
+                .findFirst()
+                .map(row -> (long) row.get("id"))
+                .orElseThrow();
+
+            dao.reactivateUser(userId);
+
+            var users = handle.select("select * from users where id = ?", userId).map(new UserMapper()).list();
+            assertThat(users).hasSize(1);
+
+            var user = first(users);
+            softly.assertThat(user.getId()).isEqualTo(userId);
+            softly.assertThat(user.isDeleted()).isEqualTo(false);
         }
 
     }

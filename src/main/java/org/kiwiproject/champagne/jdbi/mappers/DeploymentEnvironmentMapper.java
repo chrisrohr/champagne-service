@@ -20,6 +20,7 @@ public class DeploymentEnvironmentMapper implements RowMapper<DeploymentEnvironm
                 .updatedAt(instantFromTimestamp(rs, "updated_at"))
                 .updatedById(rs.getLong("updated_by"))
                 .name(rs.getString("environment_name"))
+                .deleted(rs.getBoolean("deleted"))
                 .build();
     }
 }

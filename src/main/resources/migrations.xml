@@ -60,6 +60,9 @@
             <column name="environment_name" type="text">
                 <constraints nullable="false"/>
             </column>
+            <column name="deleted" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
     </changeSet>
 </databaseChangeLog>
