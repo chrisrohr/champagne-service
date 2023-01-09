@@ -19,7 +19,7 @@ public class TaskStatusMapper implements RowMapper<TaskStatus> {
             .createdAt(instantFromTimestamp(rs, "created_at"))
             .updatedAt(instantFromTimestamp(rs, "updated_at"))
             .taskId(rs.getLong("manual_deployment_task_id"))
-            .environment(rs.getString("environment"))
+            .environmentId(rs.getLong("deployment_environment_id"))
             .status(DeploymentTaskStatus.valueOf(rs.getString("status")))
             .build();
     }

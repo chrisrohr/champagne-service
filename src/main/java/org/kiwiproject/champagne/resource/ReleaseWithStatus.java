@@ -16,5 +16,5 @@ public class ReleaseWithStatus {
     @Delegate
     Release release;
 
-    Map<String, DeploymentTaskStatus> environmentStatus;
+    Map<Long, DeploymentTaskStatus> environmentStatus;
 }

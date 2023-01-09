@@ -10,6 +10,7 @@ import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.kiwiproject.champagne.core.manualdeployment.Task;
+import org.kiwiproject.champagne.jdbi.mappers.TaskMapper;
 
 @RegisterRowMapper(TaskMapper.class)
 public interface TaskDao {

@@ -2,7 +2,6 @@ package org.kiwiproject.champagne.core.manualdeployment;
 
 import java.time.Instant;
 
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -25,8 +24,8 @@ public class TaskStatus {
     @NotNull
     Long taskId;
 
-    @NotBlank
-    String environment;
+    @NotNull
+    Long environmentId;
 
     @NotNull
     DeploymentTaskStatus status;

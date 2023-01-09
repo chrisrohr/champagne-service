@@ -19,7 +19,7 @@ public class ReleaseStatusMapper implements RowMapper<ReleaseStatus> {
                 .createdAt(instantFromTimestamp(rs, "created_at"))
                 .updatedAt(instantFromTimestamp(rs, "updated_at"))
                 .releaseId(rs.getLong("manual_deployment_task_release_id"))
-                .environment(rs.getString("environment"))
+                .environmentId(rs.getLong("deployment_environment_id"))
                 .status(DeploymentTaskStatus.valueOf(rs.getString("status")))
                 .build();
     }

@@ -95,8 +95,8 @@
             <column name="manual_deployment_task_release_id" type="bigint">
                 <constraints nullable="false" foreignKeyName="fk_deployment_task_release_status_deployment_task_release" references="manual_deployment_task_releases(id)" deleteCascade="true"/>
             </column>
-            <column name="environment" type="text">
-                <constraints nullable="false"/>
+            <column name="deployment_environment_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_deployment_task_release_status_deployment_environment" references="deployment_environments(id)" deleteCascade="true"/>
             </column>
             <column name="status" type="text">
                 <constraints nullable="false"/>
@@ -141,8 +141,8 @@
             <column name="manual_deployment_task_id" type="bigint">
                 <constraints nullable="false" foreignKeyName="fk_deployment_task_status_deployment_task" references="manual_deployment_tasks(id)" deleteCascade="true"/>
             </column>
-            <column name="environment" type="text">
-                <constraints nullable="false"/>
+            <column name="deployment_environment_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_deployment_task_status_deployment_environment" references="deployment_environments(id)" deleteCascade="true"/>
             </column>
             <column name="status" type="text">
                 <constraints nullable="false"/>

@@ -3,7 +3,6 @@ package org.kiwiproject.champagne.resource;
 import java.util.Map;
 
 import org.kiwiproject.champagne.core.manualdeployment.DeploymentTaskStatus;
-import org.kiwiproject.champagne.core.manualdeployment.ReleaseStage;
 import org.kiwiproject.champagne.core.manualdeployment.Task;
 
 import lombok.Builder;
@@ -17,5 +16,5 @@ public class TaskWithStatus {
     @Delegate
     Task task;
 
-    Map<String, DeploymentTaskStatus> environmentStatus;
+    Map<Long, DeploymentTaskStatus> environmentStatus;
 }

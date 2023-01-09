@@ -3,11 +3,11 @@ package org.kiwiproject.champagne.resource;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
 import static org.kiwiproject.search.KiwiSearching.zeroBasedOffset;
 
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -38,12 +38,10 @@ import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Path("/manual/deployment/tasks")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
-@Slf4j
 @AllArgsConstructor
 public class TaskResource {
 
@@ -60,18 +58,18 @@ public class TaskResource {
     public Response getPagedReleases(@QueryParam("pageNumber") @DefaultValue("1") int pageNumber,
                                      @QueryParam("pageSize") @DefaultValue("50") int pageSize) {
 
-        var releases = releaseDao.findAll(zeroBasedOffset(pageNumber, pageSize), pageSize);
+        var releases = releaseDao.findPagedReleases(zeroBasedOffset(pageNumber, pageSize), pageSize);
         var releasesWithStatus = releases.stream()
                 .map(this::buildReleaseWithStatusFrom)
                 .collect(toList());
         
-        var totalCount = releaseDao.countAll();
+        var totalCount = releaseDao.countReleases();
         return Response.ok(KiwiPage.of(pageNumber, pageSize, totalCount, releasesWithStatus).usingOneAsFirstPage()).build();
     }
 
     private ReleaseWithStatus buildReleaseWithStatusFrom(Release release) {
         var statuses = releaseStatusDao.findByReleaseId(release.getId());
-        var environmentStatus = statuses.stream().collect(toMap(ReleaseStatus::getEnvironment, ReleaseStatus::getStatus));
+        var environmentStatus = statuses.stream().collect(toMap(ReleaseStatus::getEnvironmentId, ReleaseStatus::getStatus));
 
         return ReleaseWithStatus.builder()
             .release(release)
@@ -95,7 +93,7 @@ public class TaskResource {
 
     private TaskWithStatus buildTaskWithStatusFrom(Task task) {
         var statuses = taskStatusDao.findByTaskId(task.getId());
-        var environmentStatus = statuses.stream().collect(toMap(TaskStatus::getEnvironment, TaskStatus::getStatus));
+        var environmentStatus = statuses.stream().collect(toMap(TaskStatus::getEnvironmentId, TaskStatus::getStatus));
 
         return TaskWithStatus.builder()
             .task(task)
@@ -113,7 +111,7 @@ public class TaskResource {
         deploymentEnvironmentDao.findAllEnvironments().stream().forEach(env -> {
             var status = ReleaseStatus.builder()
                 .releaseId(releaseId)
-                .environment(env)
+                .environmentId(env.getId())
                 .status(DeploymentTaskStatus.PENDING)
                 .build(); 
 
@@ -132,7 +130,7 @@ public class TaskResource {
         deploymentEnvironmentDao.findAllEnvironments().stream().forEach(env -> {
             var status = TaskStatus.builder()
                 .taskId(taskId)
-                .environment(env)
+                .environmentId(env.getId())
                 .status(DeploymentTaskStatus.PENDING)
                 .build(); 
 
@@ -150,16 +148,16 @@ public class TaskResource {
         var taskToStatusMap = tasksForRelease.stream()
                 .map(task -> taskStatusDao.findByTaskId(task.getId()))
                 .flatMap(List::stream)
-                .collect(groupingBy(TaskStatus::getEnvironment));
+                .collect(groupingBy(TaskStatus::getEnvironmentId));
 
         var releaseStatuses = releaseStatusDao.findByReleaseId(releaseId);
 
         releaseStatuses.forEach(status -> {
-            var env = status.getEnvironment();
+            var env = status.getEnvironmentId();
             var newStatus = rollupTaskStatus(status.getStatus(), taskToStatusMap.getOrDefault(env, List.of()));
 
             if (status.getStatus() != newStatus) {
-                releaseStatusDao.updateStatus(releaseId, newStatus, env);
+                releaseStatusDao.updateStatus(status.getId(), newStatus);
             }
         });
     }
