@@ -37,9 +37,9 @@ public interface UserDao {
     @SqlQuery("select count(*) from users")
     long countUsersIncludingDeleted();
 
-    @SqlUpdate("update users set deleted = true where id = :id")
+    @SqlUpdate("update users set deleted = true, updated_at = current_timestamp where id = :id")
     void deleteUser(@Bind("id") long id);
 
-    @SqlUpdate("update users set deleted = false where id = :id")
+    @SqlUpdate("update users set deleted = false, updated_at = current_timestamp where id = :id")
     void reactivateUser(@Bind("id") long id);
 }
