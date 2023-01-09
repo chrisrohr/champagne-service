@@ -38,6 +38,7 @@ class UserDaoTest {
     private UserDao dao;
     private Handle handle;
 
+    @SuppressWarnings("SqlWithoutWhere")
     @BeforeEach
     void setUp() {
         dao = daoExtension.getDao();
@@ -100,13 +101,14 @@ class UserDaoTest {
                 .lastName("Doe")
                 .displayName("Foo Doe")
                 .build();
-            var id = dao.insertUser(userToUpdate);
 
-            var users = handle.select("select * from users where id = ?", id).mapToMap().list();
+            dao.updateUser(userToUpdate);
+
+            var users = handle.select("select * from users where id = ?", userId).mapToMap().list();
             assertThat(users).hasSize(1);
 
             var user = first(users);
-            softly.assertThat(user.get("id")).isEqualTo(id);
+            softly.assertThat(user.get("id")).isEqualTo(userId);
 
             assertTimeDifferenceWithinTolerance(softly, "updatedAt", beforeUpdate, utcZonedDateTimeFromTimestamp((Timestamp) user.get("updated_at")), 1000L);
 
