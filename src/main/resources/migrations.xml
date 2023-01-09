@@ -39,4 +39,27 @@
             </column>
         </addColumn>
     </changeSet>
+    
+    <changeSet id="create_deployment_environments" author="crohr">
+        <createTable tableName="deployment_environments">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamp without time zone" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_deployment_environment_created_by_user" references="users(id)"/>
+            </column>
+            <column name="updated_at" type="timestamp without time zone" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_by" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_deployment_environment_updated_by_user" references="users(id)"/>
+            </column>
+            <column name="environment_name" type="text">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
 </databaseChangeLog>
