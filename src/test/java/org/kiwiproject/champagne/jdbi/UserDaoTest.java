@@ -3,10 +3,9 @@ package org.kiwiproject.champagne.jdbi;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.kiwiproject.collect.KiwiLists.first;
-import static org.kiwiproject.jdbc.KiwiJdbc.utcZonedDateTimeFromTimestamp;
 import static org.kiwiproject.test.util.DateTimeTestHelper.assertTimeDifferenceWithinTolerance;
 
-import java.sql.Timestamp;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
 import org.assertj.core.api.SoftAssertions;
@@ -19,6 +18,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.kiwiproject.champagne.core.User;
+import org.kiwiproject.champagne.jdbi.mappers.UserMapper;
 import org.kiwiproject.test.junit.jupiter.Jdbi3DaoExtension;
 import org.kiwiproject.test.junit.jupiter.PostgresLiquibaseTestExtension;
 
@@ -43,8 +43,6 @@ class UserDaoTest {
     void setUp() {
         dao = daoExtension.getDao();
         handle = daoExtension.getHandle();
-
-        handle.execute("delete from users");
     }
 
     @Nested
@@ -63,20 +61,23 @@ class UserDaoTest {
 
             var id = dao.insertUser(userToInsert);
 
-            var users = handle.select("select * from users where id = ?", id).mapToMap().list();
+            var users = handle.select("select * from users where id = ?", id)
+                .map(new UserMapper())
+                .list();
+
             assertThat(users).hasSize(1);
 
             var user = first(users);
-            softly.assertThat(user.get("id")).isEqualTo(id);
+            softly.assertThat(user.getId()).isEqualTo(id);
 
-            assertTimeDifferenceWithinTolerance(softly, "createdAt", beforeInsert, utcZonedDateTimeFromTimestamp((Timestamp) user.get("created_at")), 1000L);
-            assertTimeDifferenceWithinTolerance(softly, "updatedAt", beforeInsert, utcZonedDateTimeFromTimestamp((Timestamp) user.get("updated_at")), 1000L);
+            assertTimeDifferenceWithinTolerance(softly, "createdAt", beforeInsert, user.getCreatedAt().atZone(ZoneOffset.UTC), 1000L);
+            assertTimeDifferenceWithinTolerance(softly, "updatedAt", beforeInsert, user.getUpdatedAt().atZone(ZoneOffset.UTC), 1000L);
 
-            softly.assertThat(user.get("system_identifier")).isEqualTo("doej");
-            softly.assertThat(user.get("first_name")).isEqualTo("John");
-            softly.assertThat(user.get("last_name")).isEqualTo("Doe");
-            softly.assertThat(user.get("display_name")).isEqualTo("John Doe");
-            softly.assertThat(user.get("deleted")).isEqualTo(false);
+            softly.assertThat(user.getSystemIdentifier()).isEqualTo("doej");
+            softly.assertThat(user.getFirstName()).isEqualTo("John");
+            softly.assertThat(user.getLastName()).isEqualTo("Doe");
+            softly.assertThat(user.getDisplayName()).isEqualTo("John Doe");
+            softly.assertThat(user.isDeleted()).isEqualTo(false);
         }
     }
 
@@ -104,18 +105,21 @@ class UserDaoTest {
 
             dao.updateUser(userToUpdate);
 
-            var users = handle.select("select * from users where id = ?", userId).mapToMap().list();
+            var users = handle.select("select * from users where id = ?", userId)
+                .map(new UserMapper())
+                .list();
+
             assertThat(users).hasSize(1);
 
             var user = first(users);
-            softly.assertThat(user.get("id")).isEqualTo(userId);
+            softly.assertThat(user.getId()).isEqualTo(userId);
 
-            assertTimeDifferenceWithinTolerance(softly, "updatedAt", beforeUpdate, utcZonedDateTimeFromTimestamp((Timestamp) user.get("updated_at")), 1000L);
+            assertTimeDifferenceWithinTolerance(softly, "updatedAt", beforeUpdate, user.getUpdatedAt().atZone(ZoneOffset.UTC), 1000L);
 
-            softly.assertThat(user.get("system_identifier")).isEqualTo("doej");
-            softly.assertThat(user.get("first_name")).isEqualTo("Foo");
-            softly.assertThat(user.get("last_name")).isEqualTo("Doe");
-            softly.assertThat(user.get("display_name")).isEqualTo("Foo Doe");
+            softly.assertThat(user.getSystemIdentifier()).isEqualTo("doej");
+            softly.assertThat(user.getFirstName()).isEqualTo("Foo");
+            softly.assertThat(user.getLastName()).isEqualTo("Doe");
+            softly.assertThat(user.getDisplayName()).isEqualTo("Foo Doe");
         }
     }
 

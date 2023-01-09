@@ -20,7 +20,7 @@ public interface DeploymentEnvironmentDao {
     @GetGeneratedKeys
     long insertEnvironment(@BindBean DeploymentEnvironment env);
 
-    @SqlUpdate("update deployment_environments set environment_name = :name, updated_at = now(), updated_by = :updatedById where id = :id")
+    @SqlUpdate("update deployment_environments set environment_name = :name, updated_at = current_timestamp, updated_by = :updatedById where id = :id")
     void updateEnvironment(@BindBean DeploymentEnvironment env);
 
     @SqlUpdate("delete from deployment_environments where id = :id")

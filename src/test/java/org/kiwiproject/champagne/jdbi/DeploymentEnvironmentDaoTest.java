@@ -2,7 +2,6 @@ package org.kiwiproject.champagne.jdbi;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.kiwiproject.collect.KiwiLists.first;
-import static org.kiwiproject.jdbc.KiwiJdbc.utcZonedDateTimeFromTimestamp;
 import static org.kiwiproject.test.util.DateTimeTestHelper.assertTimeDifferenceWithinTolerance;
 
 import org.assertj.core.api.SoftAssertions;
@@ -15,10 +14,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.kiwiproject.champagne.core.DeploymentEnvironment;
+import org.kiwiproject.champagne.jdbi.mappers.DeploymentEnvironmentMapper;
 import org.kiwiproject.test.junit.jupiter.Jdbi3DaoExtension;
 import org.kiwiproject.test.junit.jupiter.PostgresLiquibaseTestExtension;
 
-import java.sql.Timestamp;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
 @DisplayName("DeploymentEnvironmentDao")
@@ -45,9 +45,6 @@ class DeploymentEnvironmentDaoTest {
         dao = daoExtension.getDao();
         handle = daoExtension.getHandle();
 
-        handle.execute("delete from deployment_environments");
-        handle.execute("delete from users");
-
         testUserId = saveTestUserRecord("jdoe");
     }
 
@@ -66,16 +63,21 @@ class DeploymentEnvironmentDaoTest {
 
             var id = dao.insertEnvironment(envToInsert);
 
-            var envs = handle.select("select * from deployment_environments where id = ?", id).mapToMap().list();
+            var envs = handle.select("select * from deployment_environments where id = ?", id)
+                .map(new DeploymentEnvironmentMapper())
+                .list();
+
             assertThat(envs).hasSize(1);
 
             var env = first(envs);
-            softly.assertThat(env.get("id")).isEqualTo(id);
+            softly.assertThat(env.getId()).isEqualTo(id);
 
-            assertTimeDifferenceWithinTolerance(softly, "createdAt", beforeInsert, utcZonedDateTimeFromTimestamp((Timestamp) env.get("created_at")), 1000L);
-            assertTimeDifferenceWithinTolerance(softly, "updatedAt", beforeInsert, utcZonedDateTimeFromTimestamp((Timestamp) env.get("updated_at")), 1000L);
+            assertTimeDifferenceWithinTolerance(softly, "createdAt", beforeInsert, env.getCreatedAt().atZone(ZoneOffset.UTC), 1000L);
+            assertTimeDifferenceWithinTolerance(softly, "updatedAt", beforeInsert, env.getUpdatedAt().atZone(ZoneOffset.UTC), 1000L);
 
-            softly.assertThat(env.get("environment_name")).isEqualTo("PRODUCTION");
+            softly.assertThat(env.getName()).isEqualTo("PRODUCTION");
+            softly.assertThat(env.getCreatedById()).isEqualTo(testUserId);
+            softly.assertThat(env.getUpdatedById()).isEqualTo(testUserId);
         }
     }
 
@@ -95,13 +97,16 @@ class DeploymentEnvironmentDaoTest {
 
             dao.updateEnvironment(envToUpdate);
 
-            var users = handle.select("select * from deployment_environments where id = ?", envId).mapToMap().list();
+            var users = handle.select("select * from deployment_environments where id = ?", envId)
+                .map(new DeploymentEnvironmentMapper())
+                .list();
+
             assertThat(users).hasSize(1);
 
             var user = first(users);
-            softly.assertThat(user.get("environment_name")).isEqualTo("PRODUCTION");
-            softly.assertThat(user.get("created_by")).isEqualTo(1L);
-            softly.assertThat(user.get("updated_by")).isEqualTo(2L);
+            softly.assertThat(user.getName()).isEqualTo("PRODUCTION");
+            softly.assertThat(user.getCreatedById()).isEqualTo(1L);
+            softly.assertThat(user.getUpdatedById()).isEqualTo(2L);
         }
     }
 
