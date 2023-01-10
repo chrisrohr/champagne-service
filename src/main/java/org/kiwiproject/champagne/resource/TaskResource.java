@@ -40,6 +40,7 @@ import org.kiwiproject.spring.data.KiwiPage;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
+import com.google.common.annotations.VisibleForTesting;
 
 import lombok.AllArgsConstructor;
 
@@ -146,7 +147,8 @@ public class TaskResource {
         return Response.accepted().build();
     }
 
-    private void calculateReleaseStatus(long releaseId) {
+    @VisibleForTesting
+    void calculateReleaseStatus(long releaseId) {
         var tasksForRelease = taskDao.findByReleaseId(releaseId);
 
         var taskToStatusMap = tasksForRelease.stream()

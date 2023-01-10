@@ -437,4 +437,234 @@ class TaskResourceTest {
             assertNotFoundResponse(response);
         }
     }
+
+    @Nested
+    class CalculateReleaseStatus {
+
+        @Test
+        void shouldKeepOriginalStatusIfNoTasks() {
+            when(TASK_DAO.findByReleaseId(1L)).thenReturn(List.of());
+
+            var releaseStatus = newReleaseStatus(DeploymentTaskStatus.PENDING);
+            when(RELEASE_STATUS_DAO.findByReleaseId(1L)).thenReturn(List.of(releaseStatus));
+
+            RESOURCE.calculateReleaseStatus(1L);
+
+            verify(TASK_DAO).findByReleaseId(1L);
+            verify(RELEASE_STATUS_DAO).findByReleaseId(1L);
+
+            verifyNoMoreInteractions(TASK_DAO, RELEASE_STATUS_DAO);
+            verifyNoInteractions(TASK_STATUS_DAO, RELEASE_DAO);
+        }
+
+        private ReleaseStatus newReleaseStatus(DeploymentTaskStatus status) {
+            return ReleaseStatus.builder()
+                .id(1L)
+                .environmentId(1L)
+                .status(status)
+                .build();
+        }
+
+        @Test
+        void shouldIgnoreStatusUpdateWhenStatusDoesNotChange() {
+            var task = Task.builder().id(2L).build();
+            when(TASK_DAO.findByReleaseId(1L)).thenReturn(List.of(task));
+
+            var taskStatus = newTaskStatus(DeploymentTaskStatus.PENDING);
+            when(TASK_STATUS_DAO.findByTaskId(2L)).thenReturn(List.of(taskStatus));
+
+            var releaseStatus = newReleaseStatus(DeploymentTaskStatus.PENDING);
+            when(RELEASE_STATUS_DAO.findByReleaseId(1L)).thenReturn(List.of(releaseStatus));
+
+            RESOURCE.calculateReleaseStatus(1L);
+
+            verify(TASK_DAO).findByReleaseId(1L);
+            verify(TASK_STATUS_DAO).findByTaskId(2L);
+            verify(RELEASE_STATUS_DAO).findByReleaseId(1L);
+
+            verifyNoMoreInteractions(TASK_DAO, RELEASE_STATUS_DAO, TASK_STATUS_DAO);
+            verifyNoInteractions(RELEASE_DAO);
+        }
+
+        private TaskStatus newTaskStatus(DeploymentTaskStatus status) {
+            return TaskStatus.builder()
+                .id(1L)
+                .environmentId(1L)
+                .status(status)
+                .build();
+        }
+
+        @Test
+        void shouldSetStatusToCompleteWhenOnlyTaskIsComplete() {
+            var task = Task.builder().id(2L).build();
+            when(TASK_DAO.findByReleaseId(1L)).thenReturn(List.of(task));
+
+            var taskStatus = newTaskStatus(DeploymentTaskStatus.COMPLETE);
+            when(TASK_STATUS_DAO.findByTaskId(2L)).thenReturn(List.of(taskStatus));
+
+            var releaseStatus = newReleaseStatus(DeploymentTaskStatus.PENDING);
+            when(RELEASE_STATUS_DAO.findByReleaseId(1L)).thenReturn(List.of(releaseStatus));
+
+            RESOURCE.calculateReleaseStatus(1L);
+
+            verify(TASK_DAO).findByReleaseId(1L);
+            verify(TASK_STATUS_DAO).findByTaskId(2L);
+            verify(RELEASE_STATUS_DAO).findByReleaseId(1L);
+            verify(RELEASE_STATUS_DAO).updateStatus(1L, DeploymentTaskStatus.COMPLETE);
+
+            verifyNoMoreInteractions(TASK_DAO, RELEASE_STATUS_DAO, TASK_STATUS_DAO);
+            verifyNoInteractions(RELEASE_DAO);
+        }
+
+        @Test
+        void shouldSetStatusToCompleteWhenAllTasksAreComplete() {
+            var task = Task.builder().id(2L).build();
+            var task2 = Task.builder().id(3L).build();
+            when(TASK_DAO.findByReleaseId(1L)).thenReturn(List.of(task, task2));
+
+            var taskStatus = newTaskStatus(DeploymentTaskStatus.COMPLETE);
+            when(TASK_STATUS_DAO.findByTaskId(2L)).thenReturn(List.of(taskStatus));
+            when(TASK_STATUS_DAO.findByTaskId(3L)).thenReturn(List.of(taskStatus));
+
+            var releaseStatus = newReleaseStatus(DeploymentTaskStatus.PENDING);
+            when(RELEASE_STATUS_DAO.findByReleaseId(1L)).thenReturn(List.of(releaseStatus));
+
+            RESOURCE.calculateReleaseStatus(1L);
+
+            verify(TASK_DAO).findByReleaseId(1L);
+            verify(TASK_STATUS_DAO).findByTaskId(2L);
+            verify(TASK_STATUS_DAO).findByTaskId(3L);
+            verify(RELEASE_STATUS_DAO).findByReleaseId(1L);
+            verify(RELEASE_STATUS_DAO).updateStatus(1L, DeploymentTaskStatus.COMPLETE);
+
+            verifyNoMoreInteractions(TASK_DAO, RELEASE_STATUS_DAO, TASK_STATUS_DAO);
+            verifyNoInteractions(RELEASE_DAO);
+        }
+
+        @Test
+        void shouldSetStatusToNotRequiredWhenOnlyTaskIsNotRequired() {
+            var task = Task.builder().id(2L).build();
+            when(TASK_DAO.findByReleaseId(1L)).thenReturn(List.of(task));
+
+            var taskStatus = newTaskStatus(DeploymentTaskStatus.NOT_REQUIRED);
+            when(TASK_STATUS_DAO.findByTaskId(2L)).thenReturn(List.of(taskStatus));
+
+            var releaseStatus = newReleaseStatus(DeploymentTaskStatus.PENDING);
+            when(RELEASE_STATUS_DAO.findByReleaseId(1L)).thenReturn(List.of(releaseStatus));
+
+            RESOURCE.calculateReleaseStatus(1L);
+
+            verify(TASK_DAO).findByReleaseId(1L);
+            verify(TASK_STATUS_DAO).findByTaskId(2L);
+            verify(RELEASE_STATUS_DAO).findByReleaseId(1L);
+            verify(RELEASE_STATUS_DAO).updateStatus(1L, DeploymentTaskStatus.NOT_REQUIRED);
+
+            verifyNoMoreInteractions(TASK_DAO, RELEASE_STATUS_DAO, TASK_STATUS_DAO);
+            verifyNoInteractions(RELEASE_DAO);
+        }
+
+        @Test
+        void shouldSetStatusToNotRequiredWhenAllTasksAreNotRequired() {
+            var task = Task.builder().id(2L).build();
+            var task2 = Task.builder().id(3L).build();
+            when(TASK_DAO.findByReleaseId(1L)).thenReturn(List.of(task, task2));
+
+            var taskStatus = newTaskStatus(DeploymentTaskStatus.NOT_REQUIRED);
+            when(TASK_STATUS_DAO.findByTaskId(2L)).thenReturn(List.of(taskStatus));
+            when(TASK_STATUS_DAO.findByTaskId(3L)).thenReturn(List.of(taskStatus));
+
+            var releaseStatus = newReleaseStatus(DeploymentTaskStatus.PENDING);
+            when(RELEASE_STATUS_DAO.findByReleaseId(1L)).thenReturn(List.of(releaseStatus));
+
+            RESOURCE.calculateReleaseStatus(1L);
+
+            verify(TASK_DAO).findByReleaseId(1L);
+            verify(TASK_STATUS_DAO).findByTaskId(2L);
+            verify(TASK_STATUS_DAO).findByTaskId(3L);
+            verify(RELEASE_STATUS_DAO).findByReleaseId(1L);
+            verify(RELEASE_STATUS_DAO).updateStatus(1L, DeploymentTaskStatus.NOT_REQUIRED);
+
+            verifyNoMoreInteractions(TASK_DAO, RELEASE_STATUS_DAO, TASK_STATUS_DAO);
+            verifyNoInteractions(RELEASE_DAO);
+        }
+
+        @Test
+        void shouldSetStatusToPendingWhenAllTasksArePending() {
+            var task = Task.builder().id(2L).build();
+            var task2 = Task.builder().id(3L).build();
+            when(TASK_DAO.findByReleaseId(1L)).thenReturn(List.of(task, task2));
+
+            var taskStatus = newTaskStatus(DeploymentTaskStatus.PENDING);
+            when(TASK_STATUS_DAO.findByTaskId(2L)).thenReturn(List.of(taskStatus));
+            when(TASK_STATUS_DAO.findByTaskId(3L)).thenReturn(List.of(taskStatus));
+
+            var releaseStatus = newReleaseStatus(DeploymentTaskStatus.COMPLETE);
+            when(RELEASE_STATUS_DAO.findByReleaseId(1L)).thenReturn(List.of(releaseStatus));
+
+            RESOURCE.calculateReleaseStatus(1L);
+
+            verify(TASK_DAO).findByReleaseId(1L);
+            verify(TASK_STATUS_DAO).findByTaskId(2L);
+            verify(TASK_STATUS_DAO).findByTaskId(3L);
+            verify(RELEASE_STATUS_DAO).findByReleaseId(1L);
+            verify(RELEASE_STATUS_DAO).updateStatus(1L, DeploymentTaskStatus.PENDING);
+
+            verifyNoMoreInteractions(TASK_DAO, RELEASE_STATUS_DAO, TASK_STATUS_DAO);
+            verifyNoInteractions(RELEASE_DAO);
+        }
+
+        @Test
+        void shouldSetStatusToPendingWhenSomeTasksArePending() {
+            var task = Task.builder().id(2L).build();
+            var task2 = Task.builder().id(3L).build();
+            when(TASK_DAO.findByReleaseId(1L)).thenReturn(List.of(task, task2));
+
+            var taskStatus = newTaskStatus(DeploymentTaskStatus.PENDING);
+            when(TASK_STATUS_DAO.findByTaskId(2L)).thenReturn(List.of(taskStatus));
+
+            var taskStatus2 = newTaskStatus(DeploymentTaskStatus.COMPLETE);
+            when(TASK_STATUS_DAO.findByTaskId(3L)).thenReturn(List.of(taskStatus2));
+
+            var releaseStatus = newReleaseStatus(DeploymentTaskStatus.COMPLETE);
+            when(RELEASE_STATUS_DAO.findByReleaseId(1L)).thenReturn(List.of(releaseStatus));
+
+            RESOURCE.calculateReleaseStatus(1L);
+
+            verify(TASK_DAO).findByReleaseId(1L);
+            verify(TASK_STATUS_DAO).findByTaskId(2L);
+            verify(TASK_STATUS_DAO).findByTaskId(3L);
+            verify(RELEASE_STATUS_DAO).findByReleaseId(1L);
+            verify(RELEASE_STATUS_DAO).updateStatus(1L, DeploymentTaskStatus.PENDING);
+
+            verifyNoMoreInteractions(TASK_DAO, RELEASE_STATUS_DAO, TASK_STATUS_DAO);
+            verifyNoInteractions(RELEASE_DAO);
+        }
+
+        @Test
+        void shouldSetStatusToCompleteWhenTasksContainCompleteAndNotRequired() {
+            var task = Task.builder().id(2L).build();
+            var task2 = Task.builder().id(3L).build();
+            when(TASK_DAO.findByReleaseId(1L)).thenReturn(List.of(task, task2));
+
+            var taskStatus = newTaskStatus(DeploymentTaskStatus.NOT_REQUIRED);
+            when(TASK_STATUS_DAO.findByTaskId(2L)).thenReturn(List.of(taskStatus));
+
+            var taskStatus2 = newTaskStatus(DeploymentTaskStatus.COMPLETE);
+            when(TASK_STATUS_DAO.findByTaskId(3L)).thenReturn(List.of(taskStatus2));
+
+            var releaseStatus = newReleaseStatus(DeploymentTaskStatus.PENDING);
+            when(RELEASE_STATUS_DAO.findByReleaseId(1L)).thenReturn(List.of(releaseStatus));
+
+            RESOURCE.calculateReleaseStatus(1L);
+
+            verify(TASK_DAO).findByReleaseId(1L);
+            verify(TASK_STATUS_DAO).findByTaskId(2L);
+            verify(TASK_STATUS_DAO).findByTaskId(3L);
+            verify(RELEASE_STATUS_DAO).findByReleaseId(1L);
+            verify(RELEASE_STATUS_DAO).updateStatus(1L, DeploymentTaskStatus.COMPLETE);
+
+            verifyNoMoreInteractions(TASK_DAO, RELEASE_STATUS_DAO, TASK_STATUS_DAO);
+            verifyNoInteractions(RELEASE_DAO);
+        }
+    }
 }
