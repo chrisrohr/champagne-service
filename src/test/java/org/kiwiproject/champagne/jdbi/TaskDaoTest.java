@@ -16,6 +16,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.kiwiproject.champagne.core.manualdeployment.DeploymentTaskStatus;
 import org.kiwiproject.champagne.core.manualdeployment.ReleaseStage;
 import org.kiwiproject.champagne.core.manualdeployment.Task;
 import org.kiwiproject.champagne.jdbi.mappers.TaskMapper;
@@ -169,6 +170,26 @@ class TaskDaoTest {
         }
     }
 
+    @Nested
+    class FindByTaskStatusId {
+
+        @Test
+        void shouldFindTaskSuccessfully() {
+            var id = saveTestTaskRecord("to be found");
+            var statusId = saveTestTaskStatusRecord(DeploymentTaskStatus.PENDING, id);
+
+            var task = dao.findByTaskStatusId(statusId).orElseThrow();
+            assertThat(task.getId()).isEqualTo(id);
+            assertThat(task.getSummary()).isEqualTo("to be found");
+        }
+
+        @Test
+        void shouldReturnOptionalEmptyWhenNotFound() {
+            var task = dao.findByTaskStatusId(1L);
+            assertThat(task).isEmpty();
+        }
+    }
+
     private long saveTestReleaseRecord(String releaseNumber) {
         handle.execute("insert into manual_deployment_task_releases (release_number) values (?)", releaseNumber);
 
@@ -189,6 +210,42 @@ class TaskDaoTest {
             releaseId, ReleaseStage.POST, summary, "component");
 
         return handle.select("select * from manual_deployment_tasks where summary = ?", summary)
+                .mapToMap()
+                .findFirst()
+                .map(row -> (long) row.get("id"))
+                .orElseThrow();
+    }
+
+    private long saveTestTaskStatusRecord(DeploymentTaskStatus status, long taskId) {
+        var envId = saveTestEnvironmentRecord("DEV");
+
+        handle.execute("insert into manual_deployment_task_statuses (manual_deployment_task_id, deployment_environment_id, status) values (?, ?, ?)",
+            taskId, envId, status);
+
+        return handle.select("select * from manual_deployment_task_statuses where status = ?", status)
+            .mapToMap()
+            .findFirst()
+            .map(row -> (long) row.get("id"))
+            .orElseThrow();
+    }
+
+    private long saveTestEnvironmentRecord(String env) {
+        var userId = saveTestUserRecord("jdoe");
+
+        handle.execute("insert into deployment_environments (environment_name, created_by, updated_by) values (?, ?, ?)", env, userId, userId);
+
+        return handle.select("select * from deployment_environments where environment_name = ?", env)
+                .mapToMap()
+                .findFirst()
+                .map(row -> (long) row.get("id"))
+                .orElseThrow();
+    }
+
+    private long saveTestUserRecord(String systemIdentifier) {
+        handle.execute("insert into users (system_identifier, first_name, last_name, display_name) values (?, ?, ?, ?)",
+                systemIdentifier, "John", "Doe", "John Doe");
+
+        return handle.select("select * from users where system_identifier = ?", systemIdentifier)
                 .mapToMap()
                 .findFirst()
                 .map(row -> (long) row.get("id"))

@@ -4,6 +4,7 @@ import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
+import static org.kiwiproject.jaxrs.KiwiStandardResponses.standardNotFoundResponse;
 import static org.kiwiproject.search.KiwiSearching.zeroBasedOffset;
 
 import java.util.List;
@@ -12,9 +13,11 @@ import java.util.Set;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -32,6 +35,7 @@ import org.kiwiproject.champagne.jdbi.ReleaseDao;
 import org.kiwiproject.champagne.jdbi.ReleaseStatusDao;
 import org.kiwiproject.champagne.jdbi.TaskDao;
 import org.kiwiproject.champagne.jdbi.TaskStatusDao;
+import org.kiwiproject.jaxrs.exception.JaxrsNotFoundException;
 import org.kiwiproject.spring.data.KiwiPage;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
@@ -197,5 +201,61 @@ public class TaskResource {
 
     private static boolean anyTasksWithPendingStatus(Set<DeploymentTaskStatus> statuses) {
         return statuses.stream().anyMatch(status -> status == DeploymentTaskStatus.PENDING);
+    }
+
+    @Path("/releases/{statusId}/{status}")
+    @PUT
+    @ExceptionMetered
+    @Timed
+    public Response updateReleaseStatus(@PathParam("statusId") long statusId, 
+                                        @PathParam("status") DeploymentTaskStatus status) {
+        var updatedCount = releaseStatusDao.updateStatus(statusId, status);
+
+        if (updatedCount == 0) {
+            return standardNotFoundResponse("Unable to update release status with id" + statusId);
+        }
+
+        return Response.accepted().build();
+    }
+
+    @Path("/{statusId}/{status}")
+    @PUT
+    @ExceptionMetered
+    @Timed
+    public Response updateTaskStatus(@PathParam("statusId") long statusId, 
+                                        @PathParam("status") DeploymentTaskStatus status) {
+        var updatedCount = taskStatusDao.updateStatus(statusId, status);
+
+        if (updatedCount == 0) {
+            return standardNotFoundResponse("Unable to update task status with id" + statusId);
+        }
+
+        taskDao.findByTaskStatusId(statusId).ifPresent(task -> calculateReleaseStatus(task.getReleaseId()));
+        return Response.accepted().build();
+    }
+
+    @DELETE
+    @Path("/releases/{releaseId}")
+    @Timed
+    @ExceptionMetered
+    public Response deleteRelease(@PathParam("releaseId") long releaseId) {
+        releaseDao.deleteById(releaseId);
+
+        return Response.accepted().build();
+    }
+
+    @DELETE
+    @Path("/{taskId}")
+    @Timed
+    @ExceptionMetered
+    public Response deleteTask(@PathParam("taskId") long taskId) {
+        var releaseId = taskDao.findById(taskId).map(Task::getReleaseId)
+            .orElseThrow(() -> new JaxrsNotFoundException("Unable to find task with id" + taskId));
+
+        taskDao.deleteById(taskId);
+
+        calculateReleaseStatus(releaseId);
+
+        return Response.accepted().build();
     }
 }

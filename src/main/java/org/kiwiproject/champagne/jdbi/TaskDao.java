@@ -33,4 +33,7 @@ public interface TaskDao {
 
     @SqlQuery("select * from manual_deployment_tasks where id = :id")
     Optional<Task> findById(@Bind("id") long id);
+
+    @SqlQuery("select t.* from manual_deployment_tasks t left join manual_deployment_task_statuses s on s.manual_deployment_task_id = t.id where s.id = :statusId")
+    Optional<Task> findByTaskStatusId(@Bind("statusId") long statusId);
 }

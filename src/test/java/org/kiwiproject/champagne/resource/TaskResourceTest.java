@@ -1,9 +1,15 @@
 package org.kiwiproject.champagne.resource;
 
+import static javax.ws.rs.client.Entity.json;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 import static org.kiwiproject.collect.KiwiLists.first;
+import static org.kiwiproject.test.constants.KiwiTestConstants.JSON_HELPER;
+import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertAcceptedResponse;
+import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertNotFoundResponse;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertOkResponse;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
@@ -12,6 +18,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Optional;
 
 import javax.ws.rs.core.GenericType;
 
@@ -20,6 +27,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.kiwiproject.champagne.core.DeploymentEnvironment;
 import org.kiwiproject.champagne.core.manualdeployment.DeploymentTaskStatus;
 import org.kiwiproject.champagne.core.manualdeployment.Release;
 import org.kiwiproject.champagne.core.manualdeployment.ReleaseStage;
@@ -33,6 +41,7 @@ import org.kiwiproject.champagne.jdbi.TaskDao;
 import org.kiwiproject.champagne.jdbi.TaskStatusDao;
 import org.kiwiproject.dropwizard.util.exception.JerseyViolationExceptionMapper;
 import org.kiwiproject.jaxrs.exception.JaxrsExceptionMapper;
+import org.kiwiproject.json.JsonHelper;
 import org.kiwiproject.spring.data.KiwiPage;
 
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -205,6 +214,227 @@ class TaskResourceTest {
             verifyNoInteractions(RELEASE_DAO, RELEASE_STATUS_DAO, DEPLOYMENT_ENVIRONMENT_DAO);
         }
     }
+
+    @Nested
+    class AddNewRelease {
+
+        @Test
+        void shouldSaveNewRelease() {
+            var release = Release.builder()
+                .releaseNumber("2023.01")
+                .build();
+
+            when(RELEASE_DAO.insertRelease(any(Release.class))).thenReturn(1L);
+
+            var env = DeploymentEnvironment.builder()
+                .id(1L)
+                .name("DEVELOPMENT")
+                .build();
+
+            when(DEPLOYMENT_ENVIRONMENT_DAO.findAllEnvironments()).thenReturn(List.of(env));
+
+            var response = RESOURCES.client()
+                .target("/manual/deployment/tasks/releases")
+                .request()
+                .post(json(release));
+
+            assertAcceptedResponse(response);
+
+            verify(RELEASE_DAO).insertRelease(argThat(r -> "2023.01".equalsIgnoreCase(r.getReleaseNumber())));
+            verify(RELEASE_STATUS_DAO).insertReleaseStatus(any(ReleaseStatus.class));
+            verify(DEPLOYMENT_ENVIRONMENT_DAO).findAllEnvironments();
+
+            verifyNoMoreInteractions(RELEASE_DAO, RELEASE_STATUS_DAO, DEPLOYMENT_ENVIRONMENT_DAO);
+            verifyNoInteractions(TASK_DAO, TASK_STATUS_DAO);
+        }
+    }
     
-    
+    @Nested
+    class AddNewTask {
+
+        @Test
+        void shouldSaveNewTask() {
+            var task = Task.builder()
+                .releaseId(1L)
+                .stage(ReleaseStage.PRE)
+                .description("some things")
+                .summary("Do it")
+                .component("super-service")
+                .build();
+
+            when(TASK_DAO.insertTask(any(Task.class))).thenReturn(2L);
+
+            var env = DeploymentEnvironment.builder()
+                .id(1L)
+                .name("DEVELOPMENT")
+                .build();
+
+            when(DEPLOYMENT_ENVIRONMENT_DAO.findAllEnvironments()).thenReturn(List.of(env));
+
+            var taskStatus = TaskStatus.builder()
+                .status(DeploymentTaskStatus.COMPLETE)
+                .environmentId(1L)
+                .build();
+
+            when(TASK_STATUS_DAO.findByTaskId(2L)).thenReturn(List.of(taskStatus));
+
+            var savedTask = Task.builder()
+                .id(2L)
+                .releaseId(1L)
+                .stage(ReleaseStage.PRE)
+                .description("some things")
+                .summary("Do it")
+                .component("super-service")
+                .build();
+
+            when(TASK_DAO.findByReleaseId(1L)).thenReturn(List.of(savedTask));
+
+            var status = ReleaseStatus.builder()
+                .id(5L)
+                .environmentId(1L)
+                .status(DeploymentTaskStatus.PENDING)
+                .build();
+
+            when(RELEASE_STATUS_DAO.findByReleaseId(1L)).thenReturn(List.of(status));
+
+            var response = RESOURCES.client()
+                .target("/manual/deployment/tasks")
+                .request()
+                .post(json(task));
+
+            assertAcceptedResponse(response);
+
+            verify(TASK_DAO).insertTask(argThat(t -> JSON_HELPER.jsonEqualsIgnoringPaths(task, t, "id", "createdAt", "updatedAt")));
+            verify(TASK_STATUS_DAO).insertTaskStatus(any(TaskStatus.class));
+            verify(TASK_DAO).findByReleaseId(1L);
+            verify(TASK_STATUS_DAO).findByTaskId(2L);
+            verify(RELEASE_STATUS_DAO).findByReleaseId(1L);
+            verify(RELEASE_STATUS_DAO).updateStatus(5L, DeploymentTaskStatus.COMPLETE);
+            verify(DEPLOYMENT_ENVIRONMENT_DAO).findAllEnvironments();
+
+            verifyNoMoreInteractions(TASK_DAO, TASK_STATUS_DAO, RELEASE_STATUS_DAO, DEPLOYMENT_ENVIRONMENT_DAO);
+            verifyNoInteractions(RELEASE_DAO);
+
+        }
+    }
+
+    @Nested
+    class UpdateReleaseStatus {
+
+        @Test
+        void shouldUpdateStatusForRelease() {
+            when(RELEASE_STATUS_DAO.updateStatus(1L, DeploymentTaskStatus.COMPLETE)).thenReturn(1);
+
+            var response = RESOURCES.client()
+                .target("/manual/deployment/tasks/releases/{statusId}/{status}")
+                .resolveTemplate("statusId", 1L)
+                .resolveTemplate("status", DeploymentTaskStatus.COMPLETE)
+                .request()
+                .put(json(""));
+
+            assertAcceptedResponse(response);
+
+            verify(RELEASE_STATUS_DAO).updateStatus(1L, DeploymentTaskStatus.COMPLETE);
+        }
+
+        @Test
+        void shouldReturn404ResponseWhenStatusNotFound() {
+            when(RELEASE_STATUS_DAO.updateStatus(1L, DeploymentTaskStatus.COMPLETE)).thenReturn(0);
+
+            var response = RESOURCES.client()
+                .target("/manual/deployment/tasks/releases/{statusId}/{status}")
+                .resolveTemplate("statusId", 1L)
+                .resolveTemplate("status", DeploymentTaskStatus.COMPLETE)
+                .request()
+                .put(json(""));
+
+            assertNotFoundResponse(response);
+        }
+    }
+
+    @Nested
+    class UpdateTaskStatus {
+
+        @Test
+        void shouldUpdateStatusForTask() {
+            when(TASK_STATUS_DAO.updateStatus(1L, DeploymentTaskStatus.COMPLETE)).thenReturn(1);
+
+            var response = RESOURCES.client()
+                .target("/manual/deployment/tasks/{statusId}/{status}")
+                .resolveTemplate("statusId", 1L)
+                .resolveTemplate("status", DeploymentTaskStatus.COMPLETE)
+                .request()
+                .put(json(""));
+
+            assertAcceptedResponse(response);
+
+            verify(TASK_STATUS_DAO).updateStatus(1L, DeploymentTaskStatus.COMPLETE);
+        }
+
+        @Test
+        void shouldReturn404ResponseWhenStatusNotFound() {
+            when(TASK_STATUS_DAO.updateStatus(1L, DeploymentTaskStatus.COMPLETE)).thenReturn(0);
+
+            var response = RESOURCES.client()
+                .target("/manual/deployment/tasks/{statusId}/{status}")
+                .resolveTemplate("statusId", 1L)
+                .resolveTemplate("status", DeploymentTaskStatus.COMPLETE)
+                .request()
+                .put(json(""));
+
+            assertNotFoundResponse(response);
+        }
+    }
+
+    @Nested
+    class DeleteRelease {
+
+        @Test
+        void shouldDeleteRelease() {
+            var response = RESOURCES.client()
+                .target("/manual/deployment/tasks/releases/{releaseId}")
+                .resolveTemplate("releaseId", 1L)
+                .request()
+                .delete();
+
+            assertAcceptedResponse(response);
+            verify(RELEASE_DAO).deleteById(1L);
+        }
+    }
+
+    @Nested
+    class DeleteTask {
+
+        @Test
+        void shouldDeleteTask() {
+            var task = Task.builder()
+                .id(1L)
+                .releaseId(1L)
+                .build();
+            
+            when(TASK_DAO.findById(1L)).thenReturn(Optional.of(task));
+
+            var response = RESOURCES.client()
+                .target("/manual/deployment/tasks/{taskId}")
+                .resolveTemplate("taskId", 1L)
+                .request()
+                .delete();
+
+            assertAcceptedResponse(response);
+            verify(TASK_DAO).deleteById(1L);
+        }
+
+        @Test
+        void shouldReturn404WhenTaskNotFound() {
+            when(TASK_DAO.findById(1L)).thenReturn(Optional.empty());
+
+            var response = RESOURCES.client()
+                .target("/manual/deployment/tasks/{taskId}")
+                .resolveTemplate("taskId", 1L)
+                .request()
+                .delete();
+
+            assertNotFoundResponse(response);
+        }
+    }
 }
