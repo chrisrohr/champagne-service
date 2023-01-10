@@ -14,7 +14,7 @@ import lombok.experimental.Delegate;
  */
 @Value
 @Builder
-public class TaskWithStatus {
+class TaskWithStatus {
     
     @Delegate
     Task task;
