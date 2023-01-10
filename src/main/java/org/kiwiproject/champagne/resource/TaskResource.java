@@ -66,7 +66,7 @@ public class TaskResource {
         var releases = releaseDao.findPagedReleases(zeroBasedOffset(pageNumber, pageSize), pageSize);
         var releasesWithStatus = releases.stream()
                 .map(this::buildReleaseWithStatusFrom)
-                .collect(toList());
+                .toList();
         
         var totalCount = releaseDao.countReleases();
         return Response.ok(KiwiPage.of(pageNumber, pageSize, totalCount, releasesWithStatus).usingOneAsFirstPage()).build();
@@ -91,7 +91,7 @@ public class TaskResource {
 
         var tasksWithStatus = tasks.stream()
                 .map(this::buildTaskWithStatusFrom)
-                .collect(toList());
+                .toList();
 
         return Response.ok(tasksWithStatus).build();
     }
