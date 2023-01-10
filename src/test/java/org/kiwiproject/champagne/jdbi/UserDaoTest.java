@@ -38,7 +38,6 @@ class UserDaoTest {
     private UserDao dao;
     private Handle handle;
 
-    @SuppressWarnings("SqlWithoutWhere")
     @BeforeEach
     void setUp() {
         dao = daoExtension.getDao();

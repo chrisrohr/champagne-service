@@ -39,7 +39,6 @@ class DeploymentEnvironmentDaoTest {
 
     private long testUserId;
 
-    @SuppressWarnings("SqlWithoutWhere")
     @BeforeEach
     void setUp() {
         dao = daoExtension.getDao();
