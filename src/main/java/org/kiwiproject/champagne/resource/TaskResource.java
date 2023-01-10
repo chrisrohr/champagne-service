@@ -56,10 +56,10 @@ public class TaskResource {
     private final TaskStatusDao taskStatusDao;
     private final DeploymentEnvironmentDao deploymentEnvironmentDao;
 
-    @Path("/releases")
-    @ExceptionMetered
-    @Timed
     @GET
+    @Path("/releases")
+    @Timed
+    @ExceptionMetered
     public Response getPagedReleases(@QueryParam("pageNumber") @DefaultValue("1") int pageNumber,
                                      @QueryParam("pageSize") @DefaultValue("50") int pageSize) {
 
@@ -82,10 +82,10 @@ public class TaskResource {
             .build();
     }
 
-    @Path("/releases/{releaseId}")
-    @ExceptionMetered
-    @Timed
     @GET
+    @Path("/releases/{releaseId}")
+    @Timed
+    @ExceptionMetered
     public Response getTasksForRelease(@PathParam("releaseId") long releaseId) {
         var tasks = taskDao.findByReleaseId(releaseId);
 
@@ -106,10 +106,10 @@ public class TaskResource {
             .build();
     }
     
-    @Path("/releases")
-    @ExceptionMetered
-    @Timed
     @POST
+    @Path("/releases")
+    @Timed
+    @ExceptionMetered
     public Response addNewRelease(@Valid @NotNull Release release) {
         var releaseId = releaseDao.insertRelease(release);
 
@@ -126,9 +126,9 @@ public class TaskResource {
         return Response.accepted().build();
     }
 
-    @ExceptionMetered
-    @Timed
     @POST
+    @Timed
+    @ExceptionMetered
     public Response addNewTask(@Valid @NotNull Task task) {
         var taskId = taskDao.insertTask(task);
 
@@ -205,10 +205,10 @@ public class TaskResource {
         return statuses.stream().anyMatch(status -> status == DeploymentTaskStatus.PENDING);
     }
 
-    @Path("/releases/{statusId}/{status}")
     @PUT
-    @ExceptionMetered
+    @Path("/releases/{statusId}/{status}")
     @Timed
+    @ExceptionMetered
     public Response updateReleaseStatus(@PathParam("statusId") long statusId, 
                                         @PathParam("status") DeploymentTaskStatus status) {
         var updatedCount = releaseStatusDao.updateStatus(statusId, status);
@@ -220,10 +220,10 @@ public class TaskResource {
         return Response.accepted().build();
     }
 
-    @Path("/{statusId}/{status}")
     @PUT
-    @ExceptionMetered
+    @Path("/{statusId}/{status}")
     @Timed
+    @ExceptionMetered
     public Response updateTaskStatus(@PathParam("statusId") long statusId, 
                                         @PathParam("status") DeploymentTaskStatus status) {
         var updatedCount = taskStatusDao.updateStatus(statusId, status);

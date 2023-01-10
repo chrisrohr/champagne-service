@@ -9,9 +9,12 @@ import lombok.Builder;
 import lombok.Value;
 import lombok.experimental.Delegate;
 
+/**
+ * This model is used for the {@link TaskResource.class} to combine the release information with all of the statues for the stored environments.
+ */
 @Value
 @Builder
-public class ReleaseWithStatus {
+class ReleaseWithStatus {
 
     @Delegate
     Release release;
