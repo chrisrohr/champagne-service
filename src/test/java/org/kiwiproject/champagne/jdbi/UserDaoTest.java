@@ -191,14 +191,14 @@ class UserDaoTest {
         void shouldReturnCountOfUsers() {
             saveTestUserRecord("fooBar", "Foo", "Bar");
 
-            var users = dao.countUsers();
-            assertThat(users).isOne();
+            var count = dao.countUsers();
+            assertThat(count).isOne();
         }
 
         @Test
-        void shouldReturnEmptyListWhenNoUsersFound() {
-            var users = dao.countUsers();
-            assertThat(users).isZero();
+        void shouldReturnZeroWhenNoUsersFound() {
+            var count = dao.countUsers();
+            assertThat(count).isZero();
         }
     }
 
@@ -209,14 +209,14 @@ class UserDaoTest {
         void shouldReturnCountOfUsers() {
             saveTestUserRecord("fooBar", "Foo", "Bar", true);
 
-            var users = dao.countUsersIncludingDeleted();
-            assertThat(users).isOne();
+            var count = dao.countUsersIncludingDeleted();
+            assertThat(count).isOne();
         }
 
         @Test
-        void shouldReturnEmptyListWhenNoUsersFound() {
-            var users = dao.countUsersIncludingDeleted();
-            assertThat(users).isZero();
+        void shouldReturnZeroWhenNoUsersFound() {
+            var count = dao.countUsersIncludingDeleted();
+            assertThat(count).isZero();
         }
     }
 

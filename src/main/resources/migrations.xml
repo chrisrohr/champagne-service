@@ -149,4 +149,31 @@
             </column>
         </createTable>
     </changeSet>
+    
+    <changeSet id="create_audit_table" author="crohr">
+        <createTable tableName="audit_records">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="audit_timestamp" type="timestamp without time zone" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_system_identifier" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="action" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="record_type" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="record_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="audit_records" indexName="audit_records_audit_timestamp_idx">
+            <column name="audit_timestamp"/>
+        </createIndex>
+    </changeSet>
 </databaseChangeLog>
