@@ -1,6 +1,9 @@
 package org.kiwiproject.champagne.config;
 
+import java.security.SecureRandom;
+
 import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -18,4 +21,7 @@ public class AppConfig extends Configuration {
     @Valid
     @JsonProperty("database")
     private DataSourceFactory dataSourceFactory = new DataSourceFactory();
+
+    @NotBlank
+    private String jwtCacheSpec = "expireAfterWrite=60m";
 }
