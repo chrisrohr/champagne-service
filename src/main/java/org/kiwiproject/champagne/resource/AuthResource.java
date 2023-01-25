@@ -5,7 +5,7 @@ import com.codahale.metrics.annotation.Timed;
 import lombok.AllArgsConstructor;
 import org.dhatim.dropwizard.jwt.cookie.authentication.DefaultJwtCookiePrincipal;
 import org.dhatim.dropwizard.jwt.cookie.authentication.JwtCookiePrincipal;
-import org.kiwiproject.champagne.jdbi.UserDao;
+import org.kiwiproject.champagne.dao.UserDao;
 import org.kiwiproject.jaxrs.exception.JaxrsNotAuthorizedException;
 
 import static java.util.Objects.isNull;

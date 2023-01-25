@@ -2,8 +2,8 @@ package org.kiwiproject.champagne.resource;
 
 import java.util.Map;
 
-import org.kiwiproject.champagne.core.manualdeployment.DeploymentTaskStatus;
-import org.kiwiproject.champagne.core.manualdeployment.Release;
+import org.kiwiproject.champagne.model.manualdeployment.DeploymentTaskStatus;
+import org.kiwiproject.champagne.model.manualdeployment.Release;
 
 import lombok.Builder;
 import lombok.Value;

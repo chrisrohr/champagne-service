@@ -21,8 +21,8 @@ import javax.ws.rs.core.Response;
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 
-import org.kiwiproject.champagne.core.User;
-import org.kiwiproject.champagne.jdbi.UserDao;
+import org.kiwiproject.champagne.model.User;
+import org.kiwiproject.champagne.dao.UserDao;
 import org.kiwiproject.spring.data.KiwiPage;
 
 import java.util.List;
