@@ -33,19 +33,18 @@ public class AuthResource {
     @Path("/login")
     @Timed
     @ExceptionMetered
-    public DefaultJwtCookiePrincipal login(@Context ContainerRequestContext context, String name) {
+    public Response login(@Context ContainerRequestContext context, String name) {
 
         // TODO: Need to actually check password or valid login not just user lookup
         var userOptional = userDao.findBySystemIdentifier(name);
 
-        // TODO: Since we are setting the context, we should talk about whether we want the response to be
-        //       the actual principal since that essentially contains the JWT information.
-        return userOptional.map(u -> {
-            // By calling addInContext, the principal is set on the SecurityContext and a cookie is generated
+        userOptional.map(u -> {
             var principal = new DefaultJwtCookiePrincipal(u.getSystemIdentifier());
             principal.addInContext(context);
             return principal;
         }).orElseThrow(() -> new JaxrsNotAuthorizedException("Invalid login"));
+
+        return Response.ok().build();
     }
 
     @DELETE
@@ -53,10 +52,6 @@ public class AuthResource {
     @Timed
     @ExceptionMetered
     public Response logout(@Context ContainerRequestContext context) {
-        // From the dropwizard-jwt-cookie-authentication docs:
-        // It is a stateless authentication method, so there is no real way to invalidate a session other than
-        // waiting for the JWT to expire. However, calling JwtCookiePrincipal.removeFromContext(context) will
-        // make browsers discard the cookie by setting the cookie expiration to a past date.
         JwtCookiePrincipal.removeFromContext(context);
         return Response.noContent().build();
     }
