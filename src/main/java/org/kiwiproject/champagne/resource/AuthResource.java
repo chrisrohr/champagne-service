@@ -8,6 +8,8 @@ import org.dhatim.dropwizard.jwt.cookie.authentication.JwtCookiePrincipal;
 import org.kiwiproject.champagne.jdbi.UserDao;
 import org.kiwiproject.jaxrs.exception.JaxrsNotAuthorizedException;
 
+import static java.util.Objects.isNull;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.POST;
@@ -36,13 +38,14 @@ public class AuthResource {
     public Response login(@Context ContainerRequestContext context, String name) {
 
         // TODO: Need to actually check password or valid login not just user lookup
-        var userOptional = userDao.findBySystemIdentifier(name);
+        var user = userDao.findBySystemIdentifier(name).orElse(null);
 
-        userOptional.map(u -> {
-            var principal = new DefaultJwtCookiePrincipal(u.getSystemIdentifier());
-            principal.addInContext(context);
-            return principal;
-        }).orElseThrow(() -> new JaxrsNotAuthorizedException("Invalid login"));
+        if (isNull(user)) {
+            throw new JaxrsNotAuthorizedException("Invalid login");
+        }
+
+        var principal = new DefaultJwtCookiePrincipal(user.getSystemIdentifier());
+        principal.addInContext(context);
 
         return Response.ok().build();
     }
