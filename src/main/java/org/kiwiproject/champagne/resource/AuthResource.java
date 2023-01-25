@@ -36,11 +36,11 @@ public class AuthResource {
     public DefaultJwtCookiePrincipal login(@Context ContainerRequestContext context, String name) {
 
         // TODO: Need to actually check password or valid login not just user lookup
-        var user = userDao.findBySystemIdentifier(name);
+        var userOptional = userDao.findBySystemIdentifier(name);
 
         // TODO: Since we are setting the context, we should talk about whether we want the response to be
         //       the actual principal since that essentially contains the JWT information.
-        return user.map(u -> {
+        return userOptional.map(u -> {
             // By calling addInContext, the principal is set on the SecurityContext and a cookie is generated
             var principal = new DefaultJwtCookiePrincipal(u.getSystemIdentifier());
             principal.addInContext(context);
