@@ -3,6 +3,7 @@ package org.kiwiproject.champagne.resource;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.kiwiproject.search.KiwiSearching.zeroBasedOffset;
 
+import javax.annotation.security.PermitAll;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -29,6 +30,7 @@ import java.util.List;
 @Path("/users")
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
+@PermitAll
 public class UserResource {
 
     private final UserDao userDao;

@@ -1,15 +1,31 @@
 package org.kiwiproject.champagne.resource;
 
 import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static org.kiwiproject.jaxrs.KiwiStandardResponses.standardNotFoundResponse;
 import static org.kiwiproject.search.KiwiSearching.zeroBasedOffset;
 
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
+import com.google.common.annotations.VisibleForTesting;
+import lombok.AllArgsConstructor;
+import org.kiwiproject.champagne.core.manualdeployment.DeploymentTaskStatus;
+import org.kiwiproject.champagne.core.manualdeployment.Release;
+import org.kiwiproject.champagne.core.manualdeployment.ReleaseStatus;
+import org.kiwiproject.champagne.core.manualdeployment.Task;
+import org.kiwiproject.champagne.core.manualdeployment.TaskStatus;
+import org.kiwiproject.champagne.jdbi.DeploymentEnvironmentDao;
+import org.kiwiproject.champagne.jdbi.ReleaseDao;
+import org.kiwiproject.champagne.jdbi.ReleaseStatusDao;
+import org.kiwiproject.champagne.jdbi.TaskDao;
+import org.kiwiproject.champagne.jdbi.TaskStatusDao;
+import org.kiwiproject.jaxrs.exception.JaxrsNotFoundException;
+import org.kiwiproject.spring.data.KiwiPage;
+
 import java.util.List;
 import java.util.Set;
-
+import javax.annotation.security.PermitAll;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -25,29 +41,11 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.kiwiproject.champagne.core.manualdeployment.DeploymentTaskStatus;
-import org.kiwiproject.champagne.core.manualdeployment.Release;
-import org.kiwiproject.champagne.core.manualdeployment.ReleaseStatus;
-import org.kiwiproject.champagne.core.manualdeployment.Task;
-import org.kiwiproject.champagne.core.manualdeployment.TaskStatus;
-import org.kiwiproject.champagne.jdbi.DeploymentEnvironmentDao;
-import org.kiwiproject.champagne.jdbi.ReleaseDao;
-import org.kiwiproject.champagne.jdbi.ReleaseStatusDao;
-import org.kiwiproject.champagne.jdbi.TaskDao;
-import org.kiwiproject.champagne.jdbi.TaskStatusDao;
-import org.kiwiproject.jaxrs.exception.JaxrsNotFoundException;
-import org.kiwiproject.spring.data.KiwiPage;
-
-import com.codahale.metrics.annotation.ExceptionMetered;
-import com.codahale.metrics.annotation.Timed;
-import com.google.common.annotations.VisibleForTesting;
-
-import lombok.AllArgsConstructor;
-
 @Path("/manual/deployment/tasks")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 @AllArgsConstructor
+@PermitAll
 public class TaskResource {
 
     private final ReleaseDao releaseDao;
@@ -113,7 +111,7 @@ public class TaskResource {
     public Response addNewRelease(@Valid @NotNull Release release) {
         var releaseId = releaseDao.insertRelease(release);
 
-        deploymentEnvironmentDao.findAllEnvironments().stream().forEach(env -> {
+        deploymentEnvironmentDao.findAllEnvironments().forEach(env -> {
             var status = ReleaseStatus.builder()
                 .releaseId(releaseId)
                 .environmentId(env.getId())
@@ -132,7 +130,7 @@ public class TaskResource {
     public Response addNewTask(@Valid @NotNull Task task) {
         var taskId = taskDao.insertTask(task);
 
-        deploymentEnvironmentDao.findAllEnvironments().stream().forEach(env -> {
+        deploymentEnvironmentDao.findAllEnvironments().forEach(env -> {
             var status = TaskStatus.builder()
                 .taskId(taskId)
                 .environmentId(env.getId())
