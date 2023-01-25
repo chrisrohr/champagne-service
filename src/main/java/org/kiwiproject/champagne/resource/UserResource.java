@@ -3,6 +3,7 @@ package org.kiwiproject.champagne.resource;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.kiwiproject.search.KiwiSearching.zeroBasedOffset;
 
+import javax.annotation.security.PermitAll;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -40,6 +41,7 @@ public class UserResource {
     @GET
     @Timed
     @ExceptionMetered
+    @PermitAll
     public Response listUsers(@QueryParam("pageNumber") @DefaultValue("1") int pageNumber, 
                               @QueryParam("pageSize") @DefaultValue("25") int pageSize,
                               @QueryParam("includeDeleted") @DefaultValue("false") boolean includeDeleted) {
@@ -64,6 +66,7 @@ public class UserResource {
     @POST
     @Timed
     @ExceptionMetered
+    @PermitAll
     public Response addUser(@NotNull @Valid User user) {
         userDao.insertUser(user);
         return Response.noContent().build();
@@ -73,6 +76,7 @@ public class UserResource {
     @Path("/{id}")
     @Timed
     @ExceptionMetered
+    @PermitAll
     public Response deleteUser(@PathParam("id") long id) {
         userDao.deleteUser(id);
         return Response.noContent().build();
@@ -82,6 +86,7 @@ public class UserResource {
     @Path("/{id}/reactivate")
     @Timed
     @ExceptionMetered
+    @PermitAll
     public Response reactivateUser(@PathParam("id") long id) {
         userDao.reactivateUser(id);
         return Response.noContent().build();

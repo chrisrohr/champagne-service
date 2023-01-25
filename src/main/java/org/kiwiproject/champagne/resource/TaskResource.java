@@ -1,15 +1,31 @@
 package org.kiwiproject.champagne.resource;
 
 import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static org.kiwiproject.jaxrs.KiwiStandardResponses.standardNotFoundResponse;
 import static org.kiwiproject.search.KiwiSearching.zeroBasedOffset;
 
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
+import com.google.common.annotations.VisibleForTesting;
+import lombok.AllArgsConstructor;
+import org.kiwiproject.champagne.core.manualdeployment.DeploymentTaskStatus;
+import org.kiwiproject.champagne.core.manualdeployment.Release;
+import org.kiwiproject.champagne.core.manualdeployment.ReleaseStatus;
+import org.kiwiproject.champagne.core.manualdeployment.Task;
+import org.kiwiproject.champagne.core.manualdeployment.TaskStatus;
+import org.kiwiproject.champagne.jdbi.DeploymentEnvironmentDao;
+import org.kiwiproject.champagne.jdbi.ReleaseDao;
+import org.kiwiproject.champagne.jdbi.ReleaseStatusDao;
+import org.kiwiproject.champagne.jdbi.TaskDao;
+import org.kiwiproject.champagne.jdbi.TaskStatusDao;
+import org.kiwiproject.jaxrs.exception.JaxrsNotFoundException;
+import org.kiwiproject.spring.data.KiwiPage;
+
 import java.util.List;
 import java.util.Set;
-
+import javax.annotation.security.PermitAll;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -24,25 +40,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-
-import org.kiwiproject.champagne.core.manualdeployment.DeploymentTaskStatus;
-import org.kiwiproject.champagne.core.manualdeployment.Release;
-import org.kiwiproject.champagne.core.manualdeployment.ReleaseStatus;
-import org.kiwiproject.champagne.core.manualdeployment.Task;
-import org.kiwiproject.champagne.core.manualdeployment.TaskStatus;
-import org.kiwiproject.champagne.jdbi.DeploymentEnvironmentDao;
-import org.kiwiproject.champagne.jdbi.ReleaseDao;
-import org.kiwiproject.champagne.jdbi.ReleaseStatusDao;
-import org.kiwiproject.champagne.jdbi.TaskDao;
-import org.kiwiproject.champagne.jdbi.TaskStatusDao;
-import org.kiwiproject.jaxrs.exception.JaxrsNotFoundException;
-import org.kiwiproject.spring.data.KiwiPage;
-
-import com.codahale.metrics.annotation.ExceptionMetered;
-import com.codahale.metrics.annotation.Timed;
-import com.google.common.annotations.VisibleForTesting;
-
-import lombok.AllArgsConstructor;
 
 @Path("/manual/deployment/tasks")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -60,6 +57,7 @@ public class TaskResource {
     @Path("/releases")
     @Timed
     @ExceptionMetered
+    @PermitAll
     public Response getPagedReleases(@QueryParam("pageNumber") @DefaultValue("1") int pageNumber,
                                      @QueryParam("pageSize") @DefaultValue("50") int pageSize) {
 
@@ -86,6 +84,7 @@ public class TaskResource {
     @Path("/releases/{releaseId}")
     @Timed
     @ExceptionMetered
+    @PermitAll
     public Response getTasksForRelease(@PathParam("releaseId") long releaseId) {
         var tasks = taskDao.findByReleaseId(releaseId);
 
@@ -110,10 +109,11 @@ public class TaskResource {
     @Path("/releases")
     @Timed
     @ExceptionMetered
+    @PermitAll
     public Response addNewRelease(@Valid @NotNull Release release) {
         var releaseId = releaseDao.insertRelease(release);
 
-        deploymentEnvironmentDao.findAllEnvironments().stream().forEach(env -> {
+        deploymentEnvironmentDao.findAllEnvironments().forEach(env -> {
             var status = ReleaseStatus.builder()
                 .releaseId(releaseId)
                 .environmentId(env.getId())
@@ -129,10 +129,11 @@ public class TaskResource {
     @POST
     @Timed
     @ExceptionMetered
+    @PermitAll
     public Response addNewTask(@Valid @NotNull Task task) {
         var taskId = taskDao.insertTask(task);
 
-        deploymentEnvironmentDao.findAllEnvironments().stream().forEach(env -> {
+        deploymentEnvironmentDao.findAllEnvironments().forEach(env -> {
             var status = TaskStatus.builder()
                 .taskId(taskId)
                 .environmentId(env.getId())
@@ -209,6 +210,7 @@ public class TaskResource {
     @Path("/releases/{statusId}/{status}")
     @Timed
     @ExceptionMetered
+    @PermitAll
     public Response updateReleaseStatus(@PathParam("statusId") long statusId, 
                                         @PathParam("status") DeploymentTaskStatus status) {
         var updatedCount = releaseStatusDao.updateStatus(statusId, status);
@@ -224,6 +226,7 @@ public class TaskResource {
     @Path("/{statusId}/{status}")
     @Timed
     @ExceptionMetered
+    @PermitAll
     public Response updateTaskStatus(@PathParam("statusId") long statusId, 
                                         @PathParam("status") DeploymentTaskStatus status) {
         var updatedCount = taskStatusDao.updateStatus(statusId, status);
@@ -240,6 +243,7 @@ public class TaskResource {
     @Path("/releases/{releaseId}")
     @Timed
     @ExceptionMetered
+    @PermitAll
     public Response deleteRelease(@PathParam("releaseId") long releaseId) {
         releaseDao.deleteById(releaseId);
 
@@ -250,6 +254,7 @@ public class TaskResource {
     @Path("/{taskId}")
     @Timed
     @ExceptionMetered
+    @PermitAll
     public Response deleteTask(@PathParam("taskId") long taskId) {
         var releaseId = taskDao.findById(taskId).map(Task::getReleaseId)
             .orElseThrow(() -> new JaxrsNotFoundException("Unable to find task with id" + taskId));
