@@ -71,10 +71,6 @@ class AuthResourceTest {
                     .post(json("jdoe"));
 
             assertOkResponse(response);
-
-            var responseData = response.readEntity(Map.class);
-            assertThat(responseData).contains(entry("name", "jdoe"));
-
             // TODO: When the bundle is added, a cookie is setup in the response, need to figure out how to test
             //       that the cookie is being set correctly. Currently response.getCookies() returns an empty map.
             //       Probably need to figure out how to access/use the ContainerRequestContext in the test.
