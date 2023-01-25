@@ -45,6 +45,7 @@ import javax.ws.rs.core.Response;
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 @AllArgsConstructor
+@PermitAll
 public class TaskResource {
 
     private final ReleaseDao releaseDao;
@@ -57,7 +58,6 @@ public class TaskResource {
     @Path("/releases")
     @Timed
     @ExceptionMetered
-    @PermitAll
     public Response getPagedReleases(@QueryParam("pageNumber") @DefaultValue("1") int pageNumber,
                                      @QueryParam("pageSize") @DefaultValue("50") int pageSize) {
 
@@ -84,7 +84,6 @@ public class TaskResource {
     @Path("/releases/{releaseId}")
     @Timed
     @ExceptionMetered
-    @PermitAll
     public Response getTasksForRelease(@PathParam("releaseId") long releaseId) {
         var tasks = taskDao.findByReleaseId(releaseId);
 
@@ -109,7 +108,6 @@ public class TaskResource {
     @Path("/releases")
     @Timed
     @ExceptionMetered
-    @PermitAll
     public Response addNewRelease(@Valid @NotNull Release release) {
         var releaseId = releaseDao.insertRelease(release);
 
@@ -129,7 +127,6 @@ public class TaskResource {
     @POST
     @Timed
     @ExceptionMetered
-    @PermitAll
     public Response addNewTask(@Valid @NotNull Task task) {
         var taskId = taskDao.insertTask(task);
 
@@ -210,7 +207,6 @@ public class TaskResource {
     @Path("/releases/{statusId}/{status}")
     @Timed
     @ExceptionMetered
-    @PermitAll
     public Response updateReleaseStatus(@PathParam("statusId") long statusId, 
                                         @PathParam("status") DeploymentTaskStatus status) {
         var updatedCount = releaseStatusDao.updateStatus(statusId, status);
@@ -226,7 +222,6 @@ public class TaskResource {
     @Path("/{statusId}/{status}")
     @Timed
     @ExceptionMetered
-    @PermitAll
     public Response updateTaskStatus(@PathParam("statusId") long statusId, 
                                         @PathParam("status") DeploymentTaskStatus status) {
         var updatedCount = taskStatusDao.updateStatus(statusId, status);
@@ -243,7 +238,6 @@ public class TaskResource {
     @Path("/releases/{releaseId}")
     @Timed
     @ExceptionMetered
-    @PermitAll
     public Response deleteRelease(@PathParam("releaseId") long releaseId) {
         releaseDao.deleteById(releaseId);
 
@@ -254,7 +248,6 @@ public class TaskResource {
     @Path("/{taskId}")
     @Timed
     @ExceptionMetered
-    @PermitAll
     public Response deleteTask(@PathParam("taskId") long taskId) {
         var releaseId = taskDao.findById(taskId).map(Task::getReleaseId)
             .orElseThrow(() -> new JaxrsNotFoundException("Unable to find task with id" + taskId));
