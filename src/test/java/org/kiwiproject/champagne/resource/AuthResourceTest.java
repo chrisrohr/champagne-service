@@ -2,7 +2,6 @@ package org.kiwiproject.champagne.resource;
 
 import static javax.ws.rs.client.Entity.json;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.entry;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertNoContentResponse;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertOkResponse;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertUnauthorizedResponse;
@@ -17,11 +16,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.kiwiproject.champagne.core.User;
-import org.kiwiproject.champagne.jdbi.UserDao;
+import org.kiwiproject.champagne.model.User;
+import org.kiwiproject.champagne.dao.UserDao;
 import org.kiwiproject.jaxrs.exception.JaxrsExceptionMapper;
 
-import java.util.Map;
 import java.util.Optional;
 
 @DisplayName("AuthResource")
