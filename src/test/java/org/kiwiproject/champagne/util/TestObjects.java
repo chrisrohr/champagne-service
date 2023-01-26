@@ -1,4 +1,4 @@
-package org.kiwiproject.champagne.dao;
+package org.kiwiproject.champagne.util;
 
 import org.jdbi.v3.core.Handle;
 import org.kiwiproject.champagne.model.AuditRecord;
@@ -15,9 +15,9 @@ import org.kiwiproject.champagne.model.manualdeployment.TaskStatus;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
-public class TestDbObjects {
+public class TestObjects {
 
-    public static long saveTestAuditRecord(Handle handle) {
+    public static long insertAuditRecord(Handle handle) {
         var testAuditRecord = AuditRecord.builder()
             .userSystemIdentifier("jdoe")
             .action(Action.UPDATED)
@@ -32,7 +32,7 @@ public class TestDbObjects {
             .first();
     }
 
-    public static long saveTestDeploymentEnvironmentRecord(Handle handle, String name, long userId) {
+    public static long insertDeploymentEnvironmentRecord(Handle handle, String name, long userId) {
         var testDeploymentEnvironmentRecord = DeploymentEnvironment.builder()
             .name(name)
             .createdById(userId)
@@ -46,15 +46,15 @@ public class TestDbObjects {
             .first();
     }
 
-    public static long saveTestUserRecord(Handle handle, String systemIdentifier) {
-        return saveTestUserRecord(handle, systemIdentifier, "John", "Doe");
+    public static long insertUserRecord(Handle handle, String systemIdentifier) {
+        return insertUserRecord(handle, systemIdentifier, "John", "Doe");
     }
 
-    public static long saveTestUserRecord(Handle handle, String systemIdentifier, String firstName, String lastName) {
-        return saveTestUserRecord(handle, systemIdentifier, firstName, lastName, false);
+    public static long insertUserRecord(Handle handle, String systemIdentifier, String firstName, String lastName) {
+        return insertUserRecord(handle, systemIdentifier, firstName, lastName, false);
     }
 
-    public static long saveTestUserRecord(Handle handle, String systemIdentifier, String firstName, String lastName, boolean deleted) {
+    public static long insertUserRecord(Handle handle, String systemIdentifier, String firstName, String lastName, boolean deleted) {
         var testUserRecord = User.builder()
             .systemIdentifier(systemIdentifier)
             .firstName(firstName)
@@ -70,7 +70,7 @@ public class TestDbObjects {
             .first();
     }
 
-    public static long saveTestReleaseRecord(Handle handle, String releaseNumber) {
+    public static long insertReleaseRecord(Handle handle, String releaseNumber) {
         var testReleaseRecord = Release.builder()
             .releaseNumber(releaseNumber)
             .build();
@@ -82,14 +82,14 @@ public class TestDbObjects {
             .first();
     }
 
-    public static long saveTestReleaseStatusRecord(Handle handle, DeploymentTaskStatus status) {
-        var releaseId = saveTestReleaseRecord(handle, "42");
-        return saveTestReleaseStatusRecord(handle, status, releaseId);
+    public static long insertReleaseStatusRecord(Handle handle, DeploymentTaskStatus status) {
+        var releaseId = insertReleaseRecord(handle, "42");
+        return insertReleaseStatusRecord(handle, status, releaseId);
     }
 
-    public static long saveTestReleaseStatusRecord(Handle handle, DeploymentTaskStatus status, long releaseId) {
-        var userId = saveTestUserRecord(handle, "jdoe");
-        var envId = saveTestDeploymentEnvironmentRecord(handle, "DEV", userId);
+    public static long insertReleaseStatusRecord(Handle handle, DeploymentTaskStatus status, long releaseId) {
+        var userId = insertUserRecord(handle, "jdoe");
+        var envId = insertDeploymentEnvironmentRecord(handle, "DEV", userId);
 
         var testReleaseStatusRecord = ReleaseStatus.builder()
             .releaseId(releaseId)
@@ -104,12 +104,12 @@ public class TestDbObjects {
             .first();
     }
 
-    public static long saveTestTaskRecord(Handle handle, String summary) {
-        var releaseId = saveTestReleaseRecord(handle, "42");
-        return saveTestTaskRecord(handle, summary, releaseId);
+    public static long insertTaskRecord(Handle handle, String summary) {
+        var releaseId = insertReleaseRecord(handle, "42");
+        return insertTaskRecord(handle, summary, releaseId);
     }
 
-    public static long saveTestTaskRecord(Handle handle, String summary, long releaseId) {
+    public static long insertTaskRecord(Handle handle, String summary, long releaseId) {
         var testTaskRecord = Task.builder()
             .releaseId(releaseId)
             .stage(ReleaseStage.POST)
@@ -124,9 +124,9 @@ public class TestDbObjects {
             .first();
     }
 
-    public static long saveTestTaskStatusRecord(Handle handle, DeploymentTaskStatus status, long taskId) {
-        var userId = saveTestUserRecord(handle, "jdoe");
-        var envId = saveTestDeploymentEnvironmentRecord(handle, "DEV", userId);
+    public static long insertTaskStatusRecord(Handle handle, DeploymentTaskStatus status, long taskId) {
+        var userId = insertUserRecord(handle, "jdoe");
+        var envId = insertDeploymentEnvironmentRecord(handle, "DEV", userId);
 
         var testTaskStatusRecord = TaskStatus.builder()
             .taskId(taskId)

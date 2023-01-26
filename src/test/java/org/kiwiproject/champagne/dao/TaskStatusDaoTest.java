@@ -1,10 +1,10 @@
 package org.kiwiproject.champagne.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.kiwiproject.champagne.dao.TestDbObjects.saveTestDeploymentEnvironmentRecord;
-import static org.kiwiproject.champagne.dao.TestDbObjects.saveTestTaskRecord;
-import static org.kiwiproject.champagne.dao.TestDbObjects.saveTestTaskStatusRecord;
-import static org.kiwiproject.champagne.dao.TestDbObjects.saveTestUserRecord;
+import static org.kiwiproject.champagne.util.TestObjects.insertDeploymentEnvironmentRecord;
+import static org.kiwiproject.champagne.util.TestObjects.insertTaskRecord;
+import static org.kiwiproject.champagne.util.TestObjects.insertTaskStatusRecord;
+import static org.kiwiproject.champagne.util.TestObjects.insertUserRecord;
 import static org.kiwiproject.collect.KiwiLists.first;
 import static org.kiwiproject.test.util.DateTimeTestHelper.assertTimeDifferenceWithinTolerance;
 
@@ -55,9 +55,9 @@ class TaskStatusDaoTest {
         void shouldInsertTaskStatusSuccessfully(SoftAssertions softly) {
             var beforeInsert = ZonedDateTime.now();
 
-            var taskId = saveTestTaskRecord(handle, "Some task");
-            var userId = saveTestUserRecord(handle, "jdoe");
-            var envId = saveTestDeploymentEnvironmentRecord(handle, "TEST", userId);
+            var taskId = insertTaskRecord(handle, "Some task");
+            var userId = insertUserRecord(handle, "jdoe");
+            var envId = insertDeploymentEnvironmentRecord(handle, "TEST", userId);
 
             var taskStatusToInsert = TaskStatus.builder()
                 .environmentId(envId)
@@ -90,8 +90,8 @@ class TaskStatusDaoTest {
 
         @Test
         void shouldReturnListOfTaskStatuses() {
-            var taskId = saveTestTaskRecord(handle, "do it");
-            saveTestTaskStatusRecord(handle, DeploymentTaskStatus.PENDING, taskId);
+            var taskId = insertTaskRecord(handle, "do it");
+            insertTaskStatusRecord(handle, DeploymentTaskStatus.PENDING, taskId);
 
             var statuses = dao.findByTaskId(taskId);
             assertThat(statuses)
@@ -112,8 +112,8 @@ class TaskStatusDaoTest {
 
         @Test
         void shouldUpdateTheStatusOfAGivenRecord() {
-            var taskId = saveTestTaskRecord(handle, "Some Task");
-            var statusId = saveTestTaskStatusRecord(handle, DeploymentTaskStatus.PENDING, taskId);
+            var taskId = insertTaskRecord(handle, "Some Task");
+            var statusId = insertTaskStatusRecord(handle, DeploymentTaskStatus.PENDING, taskId);
 
             dao.updateStatus(statusId, DeploymentTaskStatus.COMPLETE);
 

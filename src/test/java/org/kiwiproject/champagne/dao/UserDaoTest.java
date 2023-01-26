@@ -2,7 +2,7 @@ package org.kiwiproject.champagne.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
-import static org.kiwiproject.champagne.dao.TestDbObjects.saveTestUserRecord;
+import static org.kiwiproject.champagne.util.TestObjects.insertUserRecord;
 import static org.kiwiproject.collect.KiwiLists.first;
 import static org.kiwiproject.test.util.DateTimeTestHelper.assertTimeDifferenceWithinTolerance;
 
@@ -86,7 +86,7 @@ class UserDaoTest {
 
         @Test
         void shouldUpdateUserSuccessfully(SoftAssertions softly) {
-            var userId = saveTestUserRecord(handle, "jdoe");
+            var userId = insertUserRecord(handle, "jdoe");
 
             var beforeUpdate = ZonedDateTime.now();
 
@@ -123,7 +123,7 @@ class UserDaoTest {
 
         @Test
         void shouldReturnOptionalWithUserWhenFound() {
-            saveTestUserRecord(handle, "doeja", "Jane", "Doe");
+            insertUserRecord(handle, "doeja", "Jane", "Doe");
 
             var user = dao.findBySystemIdentifier("doeja");
             assertThat(user).isPresent();
@@ -141,7 +141,7 @@ class UserDaoTest {
 
         @Test
         void shouldReturnListOfUsers() {
-            saveTestUserRecord(handle, "fooBar", "Foo", "Bar");
+            insertUserRecord(handle, "fooBar", "Foo", "Bar");
 
             var users = dao.findPagedUsers(0, 10);
             assertThat(users)
@@ -151,7 +151,7 @@ class UserDaoTest {
 
         @Test
         void shouldReturnEmptyListWhenNoUsersFound() {
-            saveTestUserRecord(handle, "fooBar", "Foo", "Bar");
+            insertUserRecord(handle, "fooBar", "Foo", "Bar");
 
             var users = dao.findPagedUsers(10, 10);
             assertThat(users).isEmpty();
@@ -163,7 +163,7 @@ class UserDaoTest {
 
         @Test
         void shouldReturnListOfUsers() {
-            saveTestUserRecord(handle, "fooBar", "Foo", "Bar", true);
+            insertUserRecord(handle, "fooBar", "Foo", "Bar", true);
 
             var users = dao.findPagedUsersIncludingDeleted(0, 10);
             assertThat(users)
@@ -173,7 +173,7 @@ class UserDaoTest {
 
         @Test
         void shouldReturnEmptyListWhenNoUsersFound() {
-            saveTestUserRecord(handle, "fooBar", "Foo", "Bar");
+            insertUserRecord(handle, "fooBar", "Foo", "Bar");
 
             var users = dao.findPagedUsersIncludingDeleted(10, 10);
             assertThat(users).isEmpty();
@@ -185,7 +185,7 @@ class UserDaoTest {
 
         @Test
         void shouldReturnCountOfUsers() {
-            saveTestUserRecord(handle, "fooBar", "Foo", "Bar");
+            insertUserRecord(handle, "fooBar", "Foo", "Bar");
 
             var count = dao.countUsers();
             assertThat(count).isOne();
@@ -203,7 +203,7 @@ class UserDaoTest {
 
         @Test
         void shouldReturnCountOfUsers() {
-            saveTestUserRecord(handle, "fooBar", "Foo", "Bar", true);
+            insertUserRecord(handle, "fooBar", "Foo", "Bar", true);
 
             var count = dao.countUsersIncludingDeleted();
             assertThat(count).isOne();
@@ -221,7 +221,7 @@ class UserDaoTest {
 
         @Test
         void shouldDeleteUserSuccessfully(SoftAssertions softly) {
-            var userId = saveTestUserRecord(handle, "jdoe");
+            var userId = insertUserRecord(handle, "jdoe");
 
             dao.deleteUser(userId);
 
@@ -240,7 +240,7 @@ class UserDaoTest {
 
         @Test
         void shouldReactivateUserSuccessfully(SoftAssertions softly) {
-            var userId = saveTestUserRecord(handle, "jdoe", "John", "Doe", true);
+            var userId = insertUserRecord(handle, "jdoe", "John", "Doe", true);
 
             dao.reactivateUser(userId);
 

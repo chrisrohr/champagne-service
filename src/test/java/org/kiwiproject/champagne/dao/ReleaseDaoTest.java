@@ -1,7 +1,7 @@
 package org.kiwiproject.champagne.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.kiwiproject.champagne.dao.TestDbObjects.saveTestReleaseRecord;
+import static org.kiwiproject.champagne.util.TestObjects.insertReleaseRecord;
 import static org.kiwiproject.collect.KiwiLists.first;
 import static org.kiwiproject.test.util.DateTimeTestHelper.assertTimeDifferenceWithinTolerance;
 
@@ -78,7 +78,7 @@ class ReleaseDaoTest {
 
         @Test
         void shouldReturnListOfReleases() {
-            saveTestReleaseRecord(handle, "42");
+            insertReleaseRecord(handle, "42");
 
             var releases = dao.findPagedReleases(0, 10);
             assertThat(releases)
@@ -88,7 +88,7 @@ class ReleaseDaoTest {
 
         @Test
         void shouldReturnEmptyListWhenNoReleasesFound() {
-            saveTestReleaseRecord(handle, "42");
+            insertReleaseRecord(handle, "42");
 
             var releases = dao.findPagedReleases(10, 10);
             assertThat(releases).isEmpty();
@@ -100,7 +100,7 @@ class ReleaseDaoTest {
 
         @Test
         void shouldReturnCountOfReleases() {
-            saveTestReleaseRecord(handle, "42");
+            insertReleaseRecord(handle, "42");
 
             var releases = dao.countReleases();
             assertThat(releases).isOne();
@@ -118,7 +118,7 @@ class ReleaseDaoTest {
 
         @Test
         void shouldDeleteReleaseSuccessfully() {
-            var id = saveTestReleaseRecord(handle, "42");
+            var id = insertReleaseRecord(handle, "42");
 
             dao.deleteById(id);
 

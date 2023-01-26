@@ -1,9 +1,9 @@
 package org.kiwiproject.champagne.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.kiwiproject.champagne.dao.TestDbObjects.saveTestReleaseRecord;
-import static org.kiwiproject.champagne.dao.TestDbObjects.saveTestTaskRecord;
-import static org.kiwiproject.champagne.dao.TestDbObjects.saveTestTaskStatusRecord;
+import static org.kiwiproject.champagne.util.TestObjects.insertReleaseRecord;
+import static org.kiwiproject.champagne.util.TestObjects.insertTaskRecord;
+import static org.kiwiproject.champagne.util.TestObjects.insertTaskStatusRecord;
 import static org.kiwiproject.collect.KiwiLists.first;
 import static org.kiwiproject.test.util.DateTimeTestHelper.assertTimeDifferenceWithinTolerance;
 
@@ -55,7 +55,7 @@ class TaskDaoTest {
         void shouldInsertTaskSuccessfully(SoftAssertions softly) {
             var beforeInsert = ZonedDateTime.now();
 
-            var releaseId = saveTestReleaseRecord(handle, "42");
+            var releaseId = insertReleaseRecord(handle, "42");
 
             var taskToInsert = Task.builder()
                 .releaseId(releaseId)
@@ -93,8 +93,8 @@ class TaskDaoTest {
 
         @Test
         void shouldReturnListOfTasks() {
-            var releaseId = saveTestReleaseRecord(handle, "42");
-            saveTestTaskRecord(handle, "Sample", releaseId);
+            var releaseId = insertReleaseRecord(handle, "42");
+            insertTaskRecord(handle, "Sample", releaseId);
 
             var tasks = dao.findByReleaseId(releaseId);
             assertThat(tasks)
@@ -114,7 +114,7 @@ class TaskDaoTest {
 
         @Test
         void shouldUpdateTask() {
-            var taskId = saveTestTaskRecord(handle, "Old value");
+            var taskId = insertTaskRecord(handle, "Old value");
 
             var taskToUpdate = Task.builder()
                 .id(taskId)
@@ -142,7 +142,7 @@ class TaskDaoTest {
 
         @Test
         void shouldDeleteTaskSuccessfully() {
-            var id = saveTestTaskRecord(handle, "to be deleted");
+            var id = insertTaskRecord(handle, "to be deleted");
 
             dao.deleteById(id);
 
@@ -160,7 +160,7 @@ class TaskDaoTest {
 
         @Test
         void shouldFindTaskSuccessfully() {
-            var id = saveTestTaskRecord(handle, "to be found");
+            var id = insertTaskRecord(handle, "to be found");
 
             var task = dao.findById(id).orElseThrow();
             assertThat(task.getSummary()).isEqualTo("to be found");
@@ -178,8 +178,8 @@ class TaskDaoTest {
 
         @Test
         void shouldFindTaskSuccessfully() {
-            var id = saveTestTaskRecord(handle, "to be found");
-            var statusId = saveTestTaskStatusRecord(handle, DeploymentTaskStatus.PENDING, id);
+            var id = insertTaskRecord(handle, "to be found");
+            var statusId = insertTaskStatusRecord(handle, DeploymentTaskStatus.PENDING, id);
 
             var task = dao.findByTaskStatusId(statusId).orElseThrow();
             assertThat(task.getId()).isEqualTo(id);

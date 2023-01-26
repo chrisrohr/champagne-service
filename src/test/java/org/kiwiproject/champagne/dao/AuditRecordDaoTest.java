@@ -1,7 +1,7 @@
 package org.kiwiproject.champagne.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.kiwiproject.champagne.dao.TestDbObjects.saveTestAuditRecord;
+import static org.kiwiproject.champagne.util.TestObjects.insertAuditRecord;
 
 import org.jdbi.v3.core.Handle;
 import org.junit.jupiter.api.BeforeEach;
@@ -69,7 +69,7 @@ class AuditRecordDaoTest {
 
         @Test
         void shouldReturnListOfAuditRecords() {
-            saveTestAuditRecord(handle);
+            insertAuditRecord(handle);
 
             var audits = dao.findPagedAuditRecords(0, 10);
             assertThat(audits).hasSize(1);
@@ -77,7 +77,7 @@ class AuditRecordDaoTest {
 
         @Test
         void shouldReturnEmptyListWhenNoAuditRecordsFound() {
-            saveTestAuditRecord(handle);
+            insertAuditRecord(handle);
 
             var audits = dao.findPagedAuditRecords(10, 10);
             assertThat(audits).isEmpty();
@@ -89,7 +89,7 @@ class AuditRecordDaoTest {
 
         @Test
         void shouldReturnCountOfAuditRecords() {
-            saveTestAuditRecord(handle);
+            insertAuditRecord(handle);
 
             var count = dao.countAuditRecords();
             assertThat(count).isOne();

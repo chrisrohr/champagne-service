@@ -1,10 +1,10 @@
 package org.kiwiproject.champagne.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.kiwiproject.champagne.dao.TestDbObjects.saveTestDeploymentEnvironmentRecord;
-import static org.kiwiproject.champagne.dao.TestDbObjects.saveTestReleaseRecord;
-import static org.kiwiproject.champagne.dao.TestDbObjects.saveTestReleaseStatusRecord;
-import static org.kiwiproject.champagne.dao.TestDbObjects.saveTestUserRecord;
+import static org.kiwiproject.champagne.util.TestObjects.insertDeploymentEnvironmentRecord;
+import static org.kiwiproject.champagne.util.TestObjects.insertReleaseRecord;
+import static org.kiwiproject.champagne.util.TestObjects.insertReleaseStatusRecord;
+import static org.kiwiproject.champagne.util.TestObjects.insertUserRecord;
 import static org.kiwiproject.collect.KiwiLists.first;
 import static org.kiwiproject.test.util.DateTimeTestHelper.assertTimeDifferenceWithinTolerance;
 
@@ -55,9 +55,9 @@ class ReleaseStatusDaoTest {
         void shouldInsertReleaseStatusSuccessfully(SoftAssertions softly) {
             var beforeInsert = ZonedDateTime.now();
 
-            var releaseId = saveTestReleaseRecord(handle, "42");
-            var userId = saveTestUserRecord(handle, "jdoe");
-            var envId = saveTestDeploymentEnvironmentRecord(handle, "TEST", userId);
+            var releaseId = insertReleaseRecord(handle, "42");
+            var userId = insertUserRecord(handle, "jdoe");
+            var envId = insertDeploymentEnvironmentRecord(handle, "TEST", userId);
 
             var releaseStatusToInsert = ReleaseStatus.builder()
                 .environmentId(envId)
@@ -90,8 +90,8 @@ class ReleaseStatusDaoTest {
 
         @Test
         void shouldReturnListOfReleaseStatuses() {
-            var releaseId = saveTestReleaseRecord(handle, "42");
-            saveTestReleaseStatusRecord(handle, DeploymentTaskStatus.PENDING, releaseId);
+            var releaseId = insertReleaseRecord(handle, "42");
+            insertReleaseStatusRecord(handle, DeploymentTaskStatus.PENDING, releaseId);
 
             var statuses = dao.findByReleaseId(releaseId);
             assertThat(statuses)
@@ -112,7 +112,7 @@ class ReleaseStatusDaoTest {
 
         @Test
         void shouldUpdateTheStatusOfAGivenRecord() {
-            var statusId = saveTestReleaseStatusRecord(handle, DeploymentTaskStatus.PENDING);
+            var statusId = insertReleaseStatusRecord(handle, DeploymentTaskStatus.PENDING);
 
             dao.updateStatus(statusId, DeploymentTaskStatus.COMPLETE);
 

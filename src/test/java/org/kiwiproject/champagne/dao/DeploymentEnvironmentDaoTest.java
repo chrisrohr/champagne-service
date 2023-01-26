@@ -1,8 +1,8 @@
 package org.kiwiproject.champagne.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.kiwiproject.champagne.dao.TestDbObjects.saveTestDeploymentEnvironmentRecord;
-import static org.kiwiproject.champagne.dao.TestDbObjects.saveTestUserRecord;
+import static org.kiwiproject.champagne.util.TestObjects.insertDeploymentEnvironmentRecord;
+import static org.kiwiproject.champagne.util.TestObjects.insertUserRecord;
 import static org.kiwiproject.collect.KiwiLists.first;
 import static org.kiwiproject.test.util.DateTimeTestHelper.assertTimeDifferenceWithinTolerance;
 
@@ -46,7 +46,7 @@ class DeploymentEnvironmentDaoTest {
         dao = daoExtension.getDao();
         handle = daoExtension.getHandle();
 
-        testUserId = saveTestUserRecord(handle, "jdoe");
+        testUserId = insertUserRecord(handle, "jdoe");
     }
 
     @Nested
@@ -87,8 +87,8 @@ class DeploymentEnvironmentDaoTest {
 
         @Test
         void shouldUpdateDeploymentEnvironmentSuccessfully(SoftAssertions softly) {
-            long envId = saveTestDeploymentEnvironmentRecord(handle, "TEST", testUserId);
-            long testSecondUser = saveTestUserRecord(handle, "jadoe");
+            long envId = insertDeploymentEnvironmentRecord(handle, "TEST", testUserId);
+            long testSecondUser = insertUserRecord(handle, "jadoe");
 
             var envToUpdate = DeploymentEnvironment.builder()
                     .id(envId)
@@ -116,7 +116,7 @@ class DeploymentEnvironmentDaoTest {
 
         @Test
         void shouldReturnListOfDeploymentEnvironments() {
-            saveTestDeploymentEnvironmentRecord(handle, "DEV", testUserId);
+            insertDeploymentEnvironmentRecord(handle, "DEV", testUserId);
 
             var environments = dao.findAllEnvironments();
             assertThat(environments)
@@ -136,7 +136,7 @@ class DeploymentEnvironmentDaoTest {
 
         @Test
         void shouldDeleteDeploymentEnvironmentSuccessfully() {
-            long envId = saveTestDeploymentEnvironmentRecord(handle, "TRAINING", testUserId);
+            long envId = insertDeploymentEnvironmentRecord(handle, "TRAINING", testUserId);
 
             dao.hardDeleteById(envId);
 
@@ -151,7 +151,7 @@ class DeploymentEnvironmentDaoTest {
 
         @Test
         void shouldSoftDeleteDeploymentEnvironmentSuccessfully(SoftAssertions softly) {
-            var id = saveTestDeploymentEnvironmentRecord(handle, "TEST", testUserId);
+            var id = insertDeploymentEnvironmentRecord(handle, "TEST", testUserId);
 
             dao.softDeleteById(id, testUserId);
 
@@ -173,7 +173,7 @@ class DeploymentEnvironmentDaoTest {
 
         @Test
         void shouldUnDeleteDeploymentEnvironmentSuccessfully(SoftAssertions softly) {
-            var id = saveTestDeploymentEnvironmentRecord(handle, "TEST", testUserId);
+            var id = insertDeploymentEnvironmentRecord(handle, "TEST", testUserId);
             handle.execute("update deployment_environments set deleted=true where id = ?", id);
 
             dao.unSoftDeleteById(id, testUserId);
