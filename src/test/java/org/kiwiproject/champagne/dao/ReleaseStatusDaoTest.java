@@ -1,6 +1,10 @@
 package org.kiwiproject.champagne.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.kiwiproject.champagne.util.TestObjects.insertDeploymentEnvironmentRecord;
+import static org.kiwiproject.champagne.util.TestObjects.insertReleaseRecord;
+import static org.kiwiproject.champagne.util.TestObjects.insertReleaseStatusRecord;
+import static org.kiwiproject.champagne.util.TestObjects.insertUserRecord;
 import static org.kiwiproject.collect.KiwiLists.first;
 import static org.kiwiproject.test.util.DateTimeTestHelper.assertTimeDifferenceWithinTolerance;
 
@@ -51,8 +55,9 @@ class ReleaseStatusDaoTest {
         void shouldInsertReleaseStatusSuccessfully(SoftAssertions softly) {
             var beforeInsert = ZonedDateTime.now();
 
-            var releaseId = saveTestReleaseRecord("42");
-            var envId = saveTestEnvironmentRecord("TEST");
+            var releaseId = insertReleaseRecord(handle, "42");
+            var userId = insertUserRecord(handle, "jdoe");
+            var envId = insertDeploymentEnvironmentRecord(handle, "TEST", userId);
 
             var releaseStatusToInsert = ReleaseStatus.builder()
                 .environmentId(envId)
@@ -85,8 +90,8 @@ class ReleaseStatusDaoTest {
 
         @Test
         void shouldReturnListOfReleaseStatuses() {
-            var releaseId = saveTestReleaseRecord("42");
-            saveTestReleaseStatusRecord(DeploymentTaskStatus.PENDING, releaseId);
+            var releaseId = insertReleaseRecord(handle, "42");
+            insertReleaseStatusRecord(handle, DeploymentTaskStatus.PENDING, releaseId);
 
             var statuses = dao.findByReleaseId(releaseId);
             assertThat(statuses)
@@ -107,7 +112,7 @@ class ReleaseStatusDaoTest {
 
         @Test
         void shouldUpdateTheStatusOfAGivenRecord() {
-            var statusId = saveTestReleaseStatusRecord(DeploymentTaskStatus.PENDING);
+            var statusId = insertReleaseStatusRecord(handle, DeploymentTaskStatus.PENDING);
 
             dao.updateStatus(statusId, DeploymentTaskStatus.COMPLETE);
 
@@ -122,54 +127,4 @@ class ReleaseStatusDaoTest {
         }
     }
 
-    private long saveTestReleaseRecord(String releaseNumber) {
-        handle.execute("insert into manual_deployment_task_releases (release_number) values (?)", releaseNumber);
-
-        return handle.select("select * from manual_deployment_task_releases where release_number = ?", releaseNumber)
-                .mapToMap()
-                .findFirst()
-                .map(row -> (long) row.get("id"))
-                .orElseThrow();
-    }
-
-    private long saveTestEnvironmentRecord(String env) {
-        var userId = saveTestUserRecord("jdoe");
-
-        handle.execute("insert into deployment_environments (environment_name, created_by, updated_by) values (?, ?, ?)", env, userId, userId);
-
-        return handle.select("select * from deployment_environments where environment_name = ?", env)
-                .mapToMap()
-                .findFirst()
-                .map(row -> (long) row.get("id"))
-                .orElseThrow();
-    }
-
-    private long saveTestUserRecord(String systemIdentifier) {
-        handle.execute("insert into users (system_identifier, first_name, last_name, display_name) values (?, ?, ?, ?)",
-                systemIdentifier, "John", "Doe", "John Doe");
-
-        return handle.select("select * from users where system_identifier = ?", systemIdentifier)
-                .mapToMap()
-                .findFirst()
-                .map(row -> (long) row.get("id"))
-                .orElseThrow();
-    }
-
-    private long saveTestReleaseStatusRecord(DeploymentTaskStatus status) {
-        var releaseId = saveTestReleaseRecord("42");
-        return saveTestReleaseStatusRecord(status, releaseId);
-    }
-
-    private long saveTestReleaseStatusRecord(DeploymentTaskStatus status, long releaseId) {
-        var envId = saveTestEnvironmentRecord("DEV");
-
-        handle.execute("insert into manual_deployment_task_release_statuses (manual_deployment_task_release_id, deployment_environment_id, status) values (?, ?, ?)",
-            releaseId, envId, status);
-
-        return handle.select("select * from manual_deployment_task_release_statuses where status = ?", status)
-            .mapToMap()
-            .findFirst()
-            .map(row -> (long) row.get("id"))
-            .orElseThrow();
-    }
 }
