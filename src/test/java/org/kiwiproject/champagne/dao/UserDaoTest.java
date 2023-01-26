@@ -2,6 +2,7 @@ package org.kiwiproject.champagne.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.kiwiproject.champagne.dao.TestDbObjects.saveTestUserRecord;
 import static org.kiwiproject.collect.KiwiLists.first;
 import static org.kiwiproject.test.util.DateTimeTestHelper.assertTimeDifferenceWithinTolerance;
 
@@ -85,12 +86,7 @@ class UserDaoTest {
 
         @Test
         void shouldUpdateUserSuccessfully(SoftAssertions softly) {
-            saveTestUserRecord("jdoe", "John", "Doe");
-            long userId = handle.select("select * from users where system_identifier = ?", "jdoe")
-                .mapToMap()
-                .findFirst()
-                .map(row -> (long) row.get("id"))
-                .orElseThrow();
+            var userId = saveTestUserRecord(handle, "jdoe");
 
             var beforeUpdate = ZonedDateTime.now();
 
@@ -127,7 +123,7 @@ class UserDaoTest {
 
         @Test
         void shouldReturnOptionalWithUserWhenFound() {
-            saveTestUserRecord("doeja", "Jane", "Doe");
+            saveTestUserRecord(handle, "doeja", "Jane", "Doe");
 
             var user = dao.findBySystemIdentifier("doeja");
             assertThat(user).isPresent();
@@ -145,7 +141,7 @@ class UserDaoTest {
 
         @Test
         void shouldReturnListOfUsers() {
-            saveTestUserRecord("fooBar", "Foo", "Bar");
+            saveTestUserRecord(handle, "fooBar", "Foo", "Bar");
 
             var users = dao.findPagedUsers(0, 10);
             assertThat(users)
@@ -155,7 +151,7 @@ class UserDaoTest {
 
         @Test
         void shouldReturnEmptyListWhenNoUsersFound() {
-            saveTestUserRecord("fooBar", "Foo", "Bar");
+            saveTestUserRecord(handle, "fooBar", "Foo", "Bar");
 
             var users = dao.findPagedUsers(10, 10);
             assertThat(users).isEmpty();
@@ -167,7 +163,7 @@ class UserDaoTest {
 
         @Test
         void shouldReturnListOfUsers() {
-            saveTestUserRecord("fooBar", "Foo", "Bar", true);
+            saveTestUserRecord(handle, "fooBar", "Foo", "Bar", true);
 
             var users = dao.findPagedUsersIncludingDeleted(0, 10);
             assertThat(users)
@@ -177,7 +173,7 @@ class UserDaoTest {
 
         @Test
         void shouldReturnEmptyListWhenNoUsersFound() {
-            saveTestUserRecord("fooBar", "Foo", "Bar");
+            saveTestUserRecord(handle, "fooBar", "Foo", "Bar");
 
             var users = dao.findPagedUsersIncludingDeleted(10, 10);
             assertThat(users).isEmpty();
@@ -189,7 +185,7 @@ class UserDaoTest {
 
         @Test
         void shouldReturnCountOfUsers() {
-            saveTestUserRecord("fooBar", "Foo", "Bar");
+            saveTestUserRecord(handle, "fooBar", "Foo", "Bar");
 
             var count = dao.countUsers();
             assertThat(count).isOne();
@@ -207,7 +203,7 @@ class UserDaoTest {
 
         @Test
         void shouldReturnCountOfUsers() {
-            saveTestUserRecord("fooBar", "Foo", "Bar", true);
+            saveTestUserRecord(handle, "fooBar", "Foo", "Bar", true);
 
             var count = dao.countUsersIncludingDeleted();
             assertThat(count).isOne();
@@ -225,12 +221,7 @@ class UserDaoTest {
 
         @Test
         void shouldDeleteUserSuccessfully(SoftAssertions softly) {
-            saveTestUserRecord("jdoe", "John", "Doe");
-            long userId = handle.select("select * from users where system_identifier = ?", "jdoe")
-                .mapToMap()
-                .findFirst()
-                .map(row -> (long) row.get("id"))
-                .orElseThrow();
+            var userId = saveTestUserRecord(handle, "jdoe");
 
             dao.deleteUser(userId);
 
@@ -249,12 +240,7 @@ class UserDaoTest {
 
         @Test
         void shouldReactivateUserSuccessfully(SoftAssertions softly) {
-            saveTestUserRecord("jdoe", "John", "Doe", true);
-            long userId = handle.select("select * from users where system_identifier = ?", "jdoe")
-                .mapToMap()
-                .findFirst()
-                .map(row -> (long) row.get("id"))
-                .orElseThrow();
+            var userId = saveTestUserRecord(handle, "jdoe", "John", "Doe", true);
 
             dao.reactivateUser(userId);
 
@@ -268,11 +254,4 @@ class UserDaoTest {
 
     }
 
-    private void saveTestUserRecord(String systemIdentifier, String firstName, String lastName) {
-        saveTestUserRecord(systemIdentifier, firstName, lastName, false);
-    }
-
-    private void saveTestUserRecord(String systemIdentifier, String firstName, String lastName, boolean deleted) {
-        handle.execute("insert into users (first_name, last_name, display_name, system_identifier, deleted) values (?, ?, ?, ?, ?)", firstName, lastName, firstName + " " + lastName, systemIdentifier, deleted);
-    }
 }

@@ -1,6 +1,7 @@
 package org.kiwiproject.champagne.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.kiwiproject.champagne.dao.TestDbObjects.saveTestReleaseRecord;
 import static org.kiwiproject.collect.KiwiLists.first;
 import static org.kiwiproject.test.util.DateTimeTestHelper.assertTimeDifferenceWithinTolerance;
 
@@ -77,7 +78,7 @@ class ReleaseDaoTest {
 
         @Test
         void shouldReturnListOfReleases() {
-            saveTestReleaseRecord("42");
+            saveTestReleaseRecord(handle, "42");
 
             var releases = dao.findPagedReleases(0, 10);
             assertThat(releases)
@@ -87,7 +88,7 @@ class ReleaseDaoTest {
 
         @Test
         void shouldReturnEmptyListWhenNoReleasesFound() {
-            saveTestReleaseRecord("42");
+            saveTestReleaseRecord(handle, "42");
 
             var releases = dao.findPagedReleases(10, 10);
             assertThat(releases).isEmpty();
@@ -99,7 +100,7 @@ class ReleaseDaoTest {
 
         @Test
         void shouldReturnCountOfReleases() {
-            saveTestReleaseRecord("42");
+            saveTestReleaseRecord(handle, "42");
 
             var releases = dao.countReleases();
             assertThat(releases).isOne();
@@ -117,7 +118,7 @@ class ReleaseDaoTest {
 
         @Test
         void shouldDeleteReleaseSuccessfully() {
-            var id = saveTestReleaseRecord("42");
+            var id = saveTestReleaseRecord(handle, "42");
 
             dao.deleteById(id);
 
@@ -128,16 +129,6 @@ class ReleaseDaoTest {
             assertThat(releases).isEmpty();
         }
 
-    }
-
-    private long saveTestReleaseRecord(String releaseNumber) {
-        handle.execute("insert into manual_deployment_task_releases (release_number) values (?)", releaseNumber);
-
-        return handle.select("select * from manual_deployment_task_releases where release_number = ?", releaseNumber)
-                .mapToMap()
-                .findFirst()
-                .map(row -> (long) row.get("id"))
-                .orElseThrow();
     }
 
 }

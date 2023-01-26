@@ -1,7 +1,6 @@
 package org.kiwiproject.champagne.resource;
 
 import static javax.ws.rs.client.Entity.json;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertNoContentResponse;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertOkResponse;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertUnauthorizedResponse;
@@ -55,7 +54,6 @@ class AuthResourceTest {
             assertUnauthorizedResponse(response);
         }
 
-        @SuppressWarnings("unchecked")
         @Test
         void shouldReturnJwtAsCookieWhenLoginIsSuccessful() {
             var user = User.builder()

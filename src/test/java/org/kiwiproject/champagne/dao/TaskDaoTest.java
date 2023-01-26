@@ -1,6 +1,9 @@
 package org.kiwiproject.champagne.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.kiwiproject.champagne.dao.TestDbObjects.saveTestReleaseRecord;
+import static org.kiwiproject.champagne.dao.TestDbObjects.saveTestTaskRecord;
+import static org.kiwiproject.champagne.dao.TestDbObjects.saveTestTaskStatusRecord;
 import static org.kiwiproject.collect.KiwiLists.first;
 import static org.kiwiproject.test.util.DateTimeTestHelper.assertTimeDifferenceWithinTolerance;
 
@@ -52,7 +55,7 @@ class TaskDaoTest {
         void shouldInsertTaskSuccessfully(SoftAssertions softly) {
             var beforeInsert = ZonedDateTime.now();
 
-            var releaseId = saveTestReleaseRecord("42");
+            var releaseId = saveTestReleaseRecord(handle, "42");
 
             var taskToInsert = Task.builder()
                 .releaseId(releaseId)
@@ -90,8 +93,8 @@ class TaskDaoTest {
 
         @Test
         void shouldReturnListOfTasks() {
-            var releaseId = saveTestReleaseRecord("42");
-            saveTestTaskRecord("Sample", releaseId);
+            var releaseId = saveTestReleaseRecord(handle, "42");
+            saveTestTaskRecord(handle, "Sample", releaseId);
 
             var tasks = dao.findByReleaseId(releaseId);
             assertThat(tasks)
@@ -111,7 +114,7 @@ class TaskDaoTest {
 
         @Test
         void shouldUpdateTask() {
-            var taskId = saveTestTaskRecord("Old value");
+            var taskId = saveTestTaskRecord(handle, "Old value");
 
             var taskToUpdate = Task.builder()
                 .id(taskId)
@@ -139,7 +142,7 @@ class TaskDaoTest {
 
         @Test
         void shouldDeleteTaskSuccessfully() {
-            var id = saveTestTaskRecord("to be deleted");
+            var id = saveTestTaskRecord(handle, "to be deleted");
 
             dao.deleteById(id);
 
@@ -157,7 +160,7 @@ class TaskDaoTest {
 
         @Test
         void shouldFindTaskSuccessfully() {
-            var id = saveTestTaskRecord("to be found");
+            var id = saveTestTaskRecord(handle, "to be found");
 
             var task = dao.findById(id).orElseThrow();
             assertThat(task.getSummary()).isEqualTo("to be found");
@@ -175,8 +178,8 @@ class TaskDaoTest {
 
         @Test
         void shouldFindTaskSuccessfully() {
-            var id = saveTestTaskRecord("to be found");
-            var statusId = saveTestTaskStatusRecord(DeploymentTaskStatus.PENDING, id);
+            var id = saveTestTaskRecord(handle, "to be found");
+            var statusId = saveTestTaskStatusRecord(handle, DeploymentTaskStatus.PENDING, id);
 
             var task = dao.findByTaskStatusId(statusId).orElseThrow();
             assertThat(task.getId()).isEqualTo(id);
@@ -188,68 +191,6 @@ class TaskDaoTest {
             var task = dao.findByTaskStatusId(1L);
             assertThat(task).isEmpty();
         }
-    }
-
-    private long saveTestReleaseRecord(String releaseNumber) {
-        handle.execute("insert into manual_deployment_task_releases (release_number) values (?)", releaseNumber);
-
-        return handle.select("select * from manual_deployment_task_releases where release_number = ?", releaseNumber)
-                .mapToMap()
-                .findFirst()
-                .map(row -> (long) row.get("id"))
-                .orElseThrow();
-    }
-
-    private long saveTestTaskRecord(String summary) {
-        var releaseId = saveTestReleaseRecord("42");
-        return saveTestTaskRecord(summary, releaseId);
-    }
-
-    private long saveTestTaskRecord(String summary, long releaseId) {
-        handle.execute("insert into manual_deployment_tasks (manual_deployment_task_release_id, stage, summary, component) values (?, ?, ?, ?)", 
-            releaseId, ReleaseStage.POST, summary, "component");
-
-        return handle.select("select * from manual_deployment_tasks where summary = ?", summary)
-                .mapToMap()
-                .findFirst()
-                .map(row -> (long) row.get("id"))
-                .orElseThrow();
-    }
-
-    private long saveTestTaskStatusRecord(DeploymentTaskStatus status, long taskId) {
-        var envId = saveTestEnvironmentRecord("DEV");
-
-        handle.execute("insert into manual_deployment_task_statuses (manual_deployment_task_id, deployment_environment_id, status) values (?, ?, ?)",
-            taskId, envId, status);
-
-        return handle.select("select * from manual_deployment_task_statuses where status = ?", status)
-            .mapToMap()
-            .findFirst()
-            .map(row -> (long) row.get("id"))
-            .orElseThrow();
-    }
-
-    private long saveTestEnvironmentRecord(String env) {
-        var userId = saveTestUserRecord("jdoe");
-
-        handle.execute("insert into deployment_environments (environment_name, created_by, updated_by) values (?, ?, ?)", env, userId, userId);
-
-        return handle.select("select * from deployment_environments where environment_name = ?", env)
-                .mapToMap()
-                .findFirst()
-                .map(row -> (long) row.get("id"))
-                .orElseThrow();
-    }
-
-    private long saveTestUserRecord(String systemIdentifier) {
-        handle.execute("insert into users (system_identifier, first_name, last_name, display_name) values (?, ?, ?, ?)",
-                systemIdentifier, "John", "Doe", "John Doe");
-
-        return handle.select("select * from users where system_identifier = ?", systemIdentifier)
-                .mapToMap()
-                .findFirst()
-                .map(row -> (long) row.get("id"))
-                .orElseThrow();
     }
 
 }
