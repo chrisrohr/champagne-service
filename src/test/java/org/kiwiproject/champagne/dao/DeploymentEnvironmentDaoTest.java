@@ -53,7 +53,7 @@ class DeploymentEnvironmentDaoTest {
     class InsertEnvironment {
 
         @Test
-        void shouldInsertUserSuccessfully(SoftAssertions softly) {
+        void shouldInsertUserSuccessfully() {
             var beforeInsert = ZonedDateTime.now();
 
             var envToInsert = DeploymentEnvironment.builder()
@@ -69,12 +69,12 @@ class DeploymentEnvironmentDaoTest {
             assertThat(envs).hasSize(1);
 
             var env = first(envs);
-            softly.assertThat(env.getId()).isEqualTo(id);
+            assertThat(env.getId()).isEqualTo(id);
 
-            assertTimeDifferenceWithinTolerance(softly, "createdAt", beforeInsert, env.getCreatedAt().atZone(ZoneOffset.UTC), 1000L);
-            assertTimeDifferenceWithinTolerance(softly, "updatedAt", beforeInsert, env.getUpdatedAt().atZone(ZoneOffset.UTC), 1000L);
+            assertTimeDifferenceWithinTolerance("createdAt", beforeInsert, env.getCreatedAt().atZone(ZoneOffset.UTC), 1000L);
+            assertTimeDifferenceWithinTolerance("updatedAt", beforeInsert, env.getUpdatedAt().atZone(ZoneOffset.UTC), 1000L);
 
-            softly.assertThat(env.getName()).isEqualTo("PRODUCTION");
+            assertThat(env.getName()).isEqualTo("PRODUCTION");
         }
     }
 
@@ -82,7 +82,7 @@ class DeploymentEnvironmentDaoTest {
     class UpdateUser {
 
         @Test
-        void shouldUpdateDeploymentEnvironmentSuccessfully(SoftAssertions softly) {
+        void shouldUpdateDeploymentEnvironmentSuccessfully() {
             long envId = insertDeploymentEnvironmentRecord(handle, "TEST", testUserId);
 
             var envToUpdate = DeploymentEnvironment.builder()
@@ -99,7 +99,7 @@ class DeploymentEnvironmentDaoTest {
             assertThat(envs).hasSize(1);
 
             var user = first(envs);
-            softly.assertThat(user.getName()).isEqualTo("PRODUCTION");
+            assertThat(user.getName()).isEqualTo("PRODUCTION");
         }
     }
 

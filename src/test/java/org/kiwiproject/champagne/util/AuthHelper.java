@@ -4,6 +4,7 @@ import java.security.Principal;
 
 import org.dhatim.dropwizard.jwt.cookie.authentication.CurrentPrincipal;
 import org.dhatim.dropwizard.jwt.cookie.authentication.DefaultJwtCookiePrincipal;
+import org.kiwiproject.reflect.RuntimeReflectionException;
 
 import lombok.experimental.UtilityClass;
 
@@ -19,7 +20,7 @@ public class AuthHelper {
 
             method.invoke(null, principal);
         } catch (Exception e) {
-            throw new RuntimeException("Unable to set user", e);
+            throw new RuntimeReflectionException("Unable to set user", e);
         }
     }
 
@@ -30,7 +31,7 @@ public class AuthHelper {
 
             method.invoke(null);
         } catch (Exception e) {
-            throw new RuntimeException("Unable to remove user", e);
+            throw new RuntimeReflectionException("Unable to remove user", e);
         }
     }
 }

@@ -712,15 +712,6 @@ class TaskResourceTest {
                 && audit.getRecordType().equalsIgnoreCase(taskClass.getSimpleName()) 
                 && audit.getAction() == action;
         }));
-
-        // var argCapture = ArgumentCaptor.forClass(AuditRecord.class);
-        // verify(AUDIT_RECORD_DAO).insertAuditRecord(argCapture.capture());
-
-        // var audit = argCapture.getValue();
-
-        // assertThat(audit.getRecordId()).isEqualTo(id);
-        // assertThat(audit.getRecordType()).isEqualTo(taskClass.getSimpleName());
-        // assertThat(audit.getAction()).isEqualTo(action);
     }
 
     private void verifyMultipleStatusRecordsAuditRecorded(int times, Class<?> statusClass, Action action) {
@@ -728,13 +719,5 @@ class TaskResourceTest {
             return audit.getRecordType().equalsIgnoreCase(statusClass.getSimpleName()) 
                 && audit.getAction() == action;
         }));
-
-        // var argCapture = ArgumentCaptor.forClass(AuditRecord.class);
-        // verify(AUDIT_RECORD_DAO, times(times)).insertAuditRecord(argCapture.capture());
-
-        // var audit = argCapture.getValue();
-
-        // assertThat(audit.getRecordType()).isEqualTo(statusClass.getSimpleName());
-        // assertThat(audit.getAction()).isEqualTo(action);
     }
 }
