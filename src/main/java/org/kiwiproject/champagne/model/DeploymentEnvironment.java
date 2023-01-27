@@ -24,9 +24,7 @@ public class DeploymentEnvironment {
     @NotBlank
     String name;
 
-    long createdById;
     Instant createdAt;
-    long updatedById;
     Instant updatedAt;
 
     boolean deleted;

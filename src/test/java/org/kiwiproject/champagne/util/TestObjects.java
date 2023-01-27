@@ -35,11 +35,9 @@ public class TestObjects {
     public static long insertDeploymentEnvironmentRecord(Handle handle, String name, long userId) {
         var testDeploymentEnvironmentRecord = DeploymentEnvironment.builder()
             .name(name)
-            .createdById(userId)
-            .updatedById(userId)
             .build();
 
-        return handle.createUpdate("insert into deployment_environments (environment_name, created_by, updated_by) values (:name, :createdById, :updatedById)")
+        return handle.createUpdate("insert into deployment_environments (environment_name) values (:name)")
             .bindBean(testDeploymentEnvironmentRecord)
             .executeAndReturnGeneratedKeys("id")
             .mapTo(Long.class)
@@ -51,19 +49,14 @@ public class TestObjects {
     }
 
     public static long insertUserRecord(Handle handle, String systemIdentifier, String firstName, String lastName) {
-        return insertUserRecord(handle, systemIdentifier, firstName, lastName, false);
-    }
-
-    public static long insertUserRecord(Handle handle, String systemIdentifier, String firstName, String lastName, boolean deleted) {
         var testUserRecord = User.builder()
             .systemIdentifier(systemIdentifier)
             .firstName(firstName)
             .lastName(lastName)
             .displayName(firstName + " " + lastName)
-            .deleted(deleted)
             .build();
 
-        return handle.createUpdate("insert into users (system_identifier, first_name, last_name, display_name, deleted) values (:systemIdentifier, :firstName, :lastName, :displayName, :deleted)")
+        return handle.createUpdate("insert into users (system_identifier, first_name, last_name, display_name) values (:systemIdentifier, :firstName, :lastName, :displayName)")
             .bindBean(testUserRecord)
             .executeAndReturnGeneratedKeys("id")
             .mapTo(Long.class)

@@ -9,12 +9,14 @@ import static org.kiwiproject.search.KiwiSearching.zeroBasedOffset;
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
-import lombok.AllArgsConstructor;
+
+import org.kiwiproject.champagne.model.AuditRecord.Action;
 import org.kiwiproject.champagne.model.manualdeployment.DeploymentTaskStatus;
 import org.kiwiproject.champagne.model.manualdeployment.Release;
 import org.kiwiproject.champagne.model.manualdeployment.ReleaseStatus;
 import org.kiwiproject.champagne.model.manualdeployment.Task;
 import org.kiwiproject.champagne.model.manualdeployment.TaskStatus;
+import org.kiwiproject.champagne.dao.AuditRecordDao;
 import org.kiwiproject.champagne.dao.DeploymentEnvironmentDao;
 import org.kiwiproject.champagne.dao.ReleaseDao;
 import org.kiwiproject.champagne.dao.ReleaseStatusDao;
@@ -44,15 +46,30 @@ import javax.ws.rs.core.Response;
 @Path("/manual/deployment/tasks")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
-@AllArgsConstructor
 @PermitAll
-public class TaskResource {
+public class TaskResource extends AuditableResource {
 
     private final ReleaseDao releaseDao;
     private final ReleaseStatusDao releaseStatusDao;
     private final TaskDao taskDao;
     private final TaskStatusDao taskStatusDao;
     private final DeploymentEnvironmentDao deploymentEnvironmentDao;
+
+    public TaskResource (ReleaseDao releaseDao, 
+                         ReleaseStatusDao releaseStatusDao, 
+                         TaskDao taskDao, 
+                         TaskStatusDao taskStatusDao, 
+                         DeploymentEnvironmentDao deploymentEnvironmentDao, 
+                         AuditRecordDao auditRecordDao) {
+
+        super(auditRecordDao);
+
+        this.releaseDao = releaseDao;
+        this.releaseStatusDao = releaseStatusDao;
+        this.taskDao = taskDao;
+        this.taskStatusDao = taskStatusDao;
+        this.deploymentEnvironmentDao = deploymentEnvironmentDao;
+    }
 
     @GET
     @Path("/releases")
@@ -110,6 +127,7 @@ public class TaskResource {
     @ExceptionMetered
     public Response addNewRelease(@Valid @NotNull Release release) {
         var releaseId = releaseDao.insertRelease(release);
+        auditAction(releaseId, Release.class, Action.CREATED);
 
         deploymentEnvironmentDao.findAllEnvironments().forEach(env -> {
             var status = ReleaseStatus.builder()
@@ -118,7 +136,8 @@ public class TaskResource {
                 .status(DeploymentTaskStatus.PENDING)
                 .build(); 
 
-            releaseStatusDao.insertReleaseStatus(status);
+            var releaseStatusId = releaseStatusDao.insertReleaseStatus(status);
+            auditAction(releaseStatusId, ReleaseStatus.class, Action.CREATED);
         });
 
         return Response.accepted().build();
@@ -129,6 +148,7 @@ public class TaskResource {
     @ExceptionMetered
     public Response addNewTask(@Valid @NotNull Task task) {
         var taskId = taskDao.insertTask(task);
+        auditAction(taskId, Task.class, Action.CREATED);
 
         deploymentEnvironmentDao.findAllEnvironments().forEach(env -> {
             var status = TaskStatus.builder()
@@ -137,7 +157,8 @@ public class TaskResource {
                 .status(DeploymentTaskStatus.PENDING)
                 .build(); 
 
-            taskStatusDao.insertTaskStatus(status);
+            var taskStatusId = taskStatusDao.insertTaskStatus(status);
+            auditAction(taskStatusId, TaskStatus.class, Action.CREATED);
         });
 
         calculateReleaseStatus(task.getReleaseId());
@@ -162,6 +183,7 @@ public class TaskResource {
 
             if (status.getStatus() != newStatus) {
                 releaseStatusDao.updateStatus(status.getId(), newStatus);
+                auditAction(status.getId(), ReleaseStatus.class, Action.UPDATED);
             }
         });
     }
@@ -213,6 +235,8 @@ public class TaskResource {
 
         if (updatedCount == 0) {
             return standardNotFoundResponse("Unable to update release status with id" + statusId);
+        } else {
+            auditAction(statusId, ReleaseStatus.class, Action.UPDATED);
         }
 
         return Response.accepted().build();
@@ -228,6 +252,8 @@ public class TaskResource {
 
         if (updatedCount == 0) {
             return standardNotFoundResponse("Unable to update task status with id" + statusId);
+        } else {
+            auditAction(statusId, TaskStatus.class, Action.UPDATED);
         }
 
         taskDao.findByTaskStatusId(statusId).ifPresent(task -> calculateReleaseStatus(task.getReleaseId()));
@@ -241,6 +267,8 @@ public class TaskResource {
     public Response deleteRelease(@PathParam("releaseId") long releaseId) {
         releaseDao.deleteById(releaseId);
 
+        auditAction(releaseId, Release.class, Action.DELETED);
+
         return Response.accepted().build();
     }
 
@@ -253,6 +281,7 @@ public class TaskResource {
             .orElseThrow(() -> new JaxrsNotFoundException("Unable to find task with id" + taskId));
 
         taskDao.deleteById(taskId);
+        auditAction(taskId, Task.class, Action.DELETED);
 
         calculateReleaseStatus(releaseId);
 

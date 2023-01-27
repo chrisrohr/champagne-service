@@ -13,13 +13,11 @@ import org.kiwiproject.champagne.dao.mappers.DeploymentEnvironmentMapper;
 
 @RegisterRowMapper(DeploymentEnvironmentMapper.class)
 public interface DeploymentEnvironmentDao {
-    @SqlUpdate("insert into deployment_environments"
-            + " (environment_name, created_by, updated_by)"
-            + " values (:name, :createdById, :updatedById)")
+    @SqlUpdate("insert into deployment_environments (environment_name) values (:name)")
     @GetGeneratedKeys
     long insertEnvironment(@BindBean DeploymentEnvironment env);
 
-    @SqlUpdate("update deployment_environments set environment_name = :name, updated_at = current_timestamp, updated_by = :updatedById where id = :id")
+    @SqlUpdate("update deployment_environments set environment_name = :name, updated_at = current_timestamp where id = :id")
     void updateEnvironment(@BindBean DeploymentEnvironment env);
 
     @SqlQuery("select * from deployment_environments")
@@ -28,10 +26,10 @@ public interface DeploymentEnvironmentDao {
     @SqlUpdate("delete from deployment_environments where id = :id")
     void hardDeleteById(@Bind("id") long id);
 
-    @SqlUpdate("update deployment_environments set deleted = true, updated_at = current_timestamp, updated_by = :updatedById where id = :id")
+    @SqlUpdate("update deployment_environments set deleted = true, updated_at = current_timestamp where id = :id")
     void softDeleteById(@Bind("id") long id, @Bind("updatedById") long updatedById);
 
-    @SqlUpdate("update deployment_environments set deleted = false, updated_at = current_timestamp, updated_by = :updatedById where id = :id")
+    @SqlUpdate("update deployment_environments set deleted = false, updated_at = current_timestamp where id = :id")
     void unSoftDeleteById(@Bind("id") long id, @Bind("updatedById") long updatedById);
 
 }

@@ -11,7 +11,6 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -22,20 +21,22 @@ import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 
 import org.kiwiproject.champagne.model.User;
+import org.kiwiproject.champagne.model.AuditRecord.Action;
+import org.kiwiproject.champagne.dao.AuditRecordDao;
 import org.kiwiproject.champagne.dao.UserDao;
 import org.kiwiproject.spring.data.KiwiPage;
-
-import java.util.List;
 
 @Path("/users")
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
 @PermitAll
-public class UserResource {
+public class UserResource extends AuditableResource {
 
     private final UserDao userDao;
 
-    public UserResource(UserDao userDao) {
+    public UserResource(UserDao userDao, AuditRecordDao auditRecordDao) {
+        super(auditRecordDao);
+
         this.userDao = userDao;
     }
 
@@ -43,21 +44,12 @@ public class UserResource {
     @Timed
     @ExceptionMetered
     public Response listUsers(@QueryParam("pageNumber") @DefaultValue("1") int pageNumber, 
-                              @QueryParam("pageSize") @DefaultValue("25") int pageSize,
-                              @QueryParam("includeDeleted") @DefaultValue("false") boolean includeDeleted) {
+                              @QueryParam("pageSize") @DefaultValue("25") int pageSize) {
 
         var offset = zeroBasedOffset(pageNumber, pageSize);
 
-        List<User> users;
-        long total;
-
-        if (includeDeleted) {
-            users = userDao.findPagedUsersIncludingDeleted(offset, pageSize);
-            total = userDao.countUsersIncludingDeleted();
-        } else {
-            users = userDao.findPagedUsers(offset, pageSize);
-            total = userDao.countUsers();
-        }
+        var users = userDao.findPagedUsers(offset, pageSize);
+        var total = userDao.countUsers();
 
         var page = KiwiPage.of(pageNumber, pageSize, total, users);
         return Response.ok(page).build();
@@ -67,7 +59,10 @@ public class UserResource {
     @Timed
     @ExceptionMetered
     public Response addUser(@NotNull @Valid User user) {
-        userDao.insertUser(user);
+        var userId = userDao.insertUser(user);
+
+        auditAction(userId, User.class, Action.CREATED);
+
         return Response.noContent().build();
     }
 
@@ -77,15 +72,9 @@ public class UserResource {
     @ExceptionMetered
     public Response deleteUser(@PathParam("id") long id) {
         userDao.deleteUser(id);
-        return Response.noContent().build();
-    }
 
-    @PUT
-    @Path("/{id}/reactivate")
-    @Timed
-    @ExceptionMetered
-    public Response reactivateUser(@PathParam("id") long id) {
-        userDao.reactivateUser(id);
+        auditAction(id, User.class, Action.DELETED);
+
         return Response.noContent().build();
     }
 

@@ -176,4 +176,13 @@
             <column name="audit_timestamp"/>
         </createIndex>
     </changeSet>
+
+    <changeSet id="remove_user_soft_delete_and_user_foriegn_keys" author="crohr">
+        <dropColumn tableName="users" columnName="deleted"/>
+
+        <dropColumn tableName="deployment_environments">
+            <column name="created_by"/>
+            <column name="updated_by"/>
+        </dropColumn>
+    </changeSet>
 </databaseChangeLog>

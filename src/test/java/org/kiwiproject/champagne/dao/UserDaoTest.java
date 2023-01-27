@@ -77,7 +77,6 @@ class UserDaoTest {
             softly.assertThat(user.getFirstName()).isEqualTo("John");
             softly.assertThat(user.getLastName()).isEqualTo("Doe");
             softly.assertThat(user.getDisplayName()).isEqualTo("John Doe");
-            softly.assertThat(user.isDeleted()).isEqualTo(false);
         }
     }
 
@@ -145,8 +144,8 @@ class UserDaoTest {
 
             var users = dao.findPagedUsers(0, 10);
             assertThat(users)
-                .extracting("systemIdentifier", "firstName", "lastName", "deleted")
-                .contains(tuple("fooBar", "Foo", "Bar", false));
+                .extracting("systemIdentifier", "firstName", "lastName")
+                .contains(tuple("fooBar", "Foo", "Bar"));
         }
 
         @Test
@@ -154,28 +153,6 @@ class UserDaoTest {
             insertUserRecord(handle, "fooBar", "Foo", "Bar");
 
             var users = dao.findPagedUsers(10, 10);
-            assertThat(users).isEmpty();
-        }
-    }
-
-    @Nested
-    class FindPagedUsersIncludingDeleted {
-
-        @Test
-        void shouldReturnListOfUsers() {
-            insertUserRecord(handle, "fooBar", "Foo", "Bar", true);
-
-            var users = dao.findPagedUsersIncludingDeleted(0, 10);
-            assertThat(users)
-                    .extracting("systemIdentifier", "firstName", "lastName", "deleted")
-                    .contains(tuple("fooBar", "Foo", "Bar", true));
-        }
-
-        @Test
-        void shouldReturnEmptyListWhenNoUsersFound() {
-            insertUserRecord(handle, "fooBar", "Foo", "Bar");
-
-            var users = dao.findPagedUsersIncludingDeleted(10, 10);
             assertThat(users).isEmpty();
         }
     }
@@ -199,24 +176,6 @@ class UserDaoTest {
     }
 
     @Nested
-    class CountUsersIncludingDeleted {
-
-        @Test
-        void shouldReturnCountOfUsers() {
-            insertUserRecord(handle, "fooBar", "Foo", "Bar", true);
-
-            var count = dao.countUsersIncludingDeleted();
-            assertThat(count).isOne();
-        }
-
-        @Test
-        void shouldReturnZeroWhenNoUsersFound() {
-            var count = dao.countUsersIncludingDeleted();
-            assertThat(count).isZero();
-        }
-    }
-
-    @Nested
     class DeleteUser {
 
         @Test
@@ -226,30 +185,7 @@ class UserDaoTest {
             dao.deleteUser(userId);
 
             var users = handle.select("select * from users where id = ?", userId).map(new UserMapper()).list();
-            assertThat(users).hasSize(1);
-
-            var user = first(users);
-            softly.assertThat(user.getId()).isEqualTo(userId);
-            softly.assertThat(user.isDeleted()).isEqualTo(true);
-        }
-
-    }
-
-    @Nested
-    class ReactivateUser {
-
-        @Test
-        void shouldReactivateUserSuccessfully(SoftAssertions softly) {
-            var userId = insertUserRecord(handle, "jdoe", "John", "Doe", true);
-
-            dao.reactivateUser(userId);
-
-            var users = handle.select("select * from users where id = ?", userId).map(new UserMapper()).list();
-            assertThat(users).hasSize(1);
-
-            var user = first(users);
-            softly.assertThat(user.getId()).isEqualTo(userId);
-            softly.assertThat(user.isDeleted()).isEqualTo(false);
+            assertThat(users).isEmpty();
         }
 
     }
