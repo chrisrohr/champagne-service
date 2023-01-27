@@ -10,6 +10,7 @@ import org.dhatim.dropwizard.jwt.cookie.authentication.JwtCookieAuthBundle;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.jdbi.v3.postgres.PostgresPlugin;
 import org.kiwiproject.champagne.config.AppConfig;
+import org.kiwiproject.champagne.dao.AuditRecordDao;
 import org.kiwiproject.champagne.dao.DeploymentEnvironmentDao;
 import org.kiwiproject.champagne.dao.ReleaseDao;
 import org.kiwiproject.champagne.dao.ReleaseStatusDao;
@@ -58,6 +59,7 @@ public class App extends Application<AppConfig> {
 
         var jdbi = Jdbi3Builders.buildManagedJdbi(environment, configuration.getDataSourceFactory(), new PostgresPlugin());
         
+        var auditRecordDao = jdbi.onDemand(AuditRecordDao.class);
         var userDao = jdbi.onDemand(UserDao.class);
         var releaseDao = jdbi.onDemand(ReleaseDao.class);
         var releaseStatusDao = jdbi.onDemand(ReleaseStatusDao.class);
@@ -66,8 +68,8 @@ public class App extends Application<AppConfig> {
         var deploymentEnvironmentDao = jdbi.onDemand(DeploymentEnvironmentDao.class);
 
         environment.jersey().register(new AuthResource(userDao));
-        environment.jersey().register(new TaskResource(releaseDao, releaseStatusDao, taskDao, taskStatusDao, deploymentEnvironmentDao));
-        environment.jersey().register(new UserResource(userDao));
+        environment.jersey().register(new TaskResource(releaseDao, releaseStatusDao, taskDao, taskStatusDao, deploymentEnvironmentDao, auditRecordDao));
+        environment.jersey().register(new UserResource(userDao, auditRecordDao));
 
         configureCors(environment);
     }

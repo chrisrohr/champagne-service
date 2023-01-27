@@ -22,7 +22,6 @@ public class UserMapper implements RowMapper<User> {
                 .lastName(r.getString("last_name"))
                 .displayName(r.getString("display_name"))
                 .systemIdentifier(r.getString("system_identifier"))
-                .deleted(r.getBoolean("deleted"))
                 .build();
     }
 }

@@ -16,9 +16,7 @@ public class DeploymentEnvironmentMapper implements RowMapper<DeploymentEnvironm
         return DeploymentEnvironment.builder()
                 .id(rs.getLong("id"))
                 .createdAt(instantFromTimestamp(rs, "created_at"))
-                .createdById(rs.getLong("created_by"))
                 .updatedAt(instantFromTimestamp(rs, "updated_at"))
-                .updatedById(rs.getLong("updated_by"))
                 .name(rs.getString("environment_name"))
                 .deleted(rs.getBoolean("deleted"))
                 .build();

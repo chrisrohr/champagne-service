@@ -53,13 +53,11 @@ class DeploymentEnvironmentDaoTest {
     class InsertEnvironment {
 
         @Test
-        void shouldInsertUserSuccessfully(SoftAssertions softly) {
+        void shouldInsertUserSuccessfully() {
             var beforeInsert = ZonedDateTime.now();
 
             var envToInsert = DeploymentEnvironment.builder()
                     .name("PRODUCTION")
-                    .createdById(testUserId)
-                    .updatedById(testUserId)
                     .build();
 
             var id = dao.insertEnvironment(envToInsert);
@@ -71,14 +69,12 @@ class DeploymentEnvironmentDaoTest {
             assertThat(envs).hasSize(1);
 
             var env = first(envs);
-            softly.assertThat(env.getId()).isEqualTo(id);
+            assertThat(env.getId()).isEqualTo(id);
 
-            assertTimeDifferenceWithinTolerance(softly, "createdAt", beforeInsert, env.getCreatedAt().atZone(ZoneOffset.UTC), 1000L);
-            assertTimeDifferenceWithinTolerance(softly, "updatedAt", beforeInsert, env.getUpdatedAt().atZone(ZoneOffset.UTC), 1000L);
+            assertTimeDifferenceWithinTolerance("createdAt", beforeInsert, env.getCreatedAt().atZone(ZoneOffset.UTC), 1000L);
+            assertTimeDifferenceWithinTolerance("updatedAt", beforeInsert, env.getUpdatedAt().atZone(ZoneOffset.UTC), 1000L);
 
-            softly.assertThat(env.getName()).isEqualTo("PRODUCTION");
-            softly.assertThat(env.getCreatedById()).isEqualTo(testUserId);
-            softly.assertThat(env.getUpdatedById()).isEqualTo(testUserId);
+            assertThat(env.getName()).isEqualTo("PRODUCTION");
         }
     }
 
@@ -86,28 +82,24 @@ class DeploymentEnvironmentDaoTest {
     class UpdateUser {
 
         @Test
-        void shouldUpdateDeploymentEnvironmentSuccessfully(SoftAssertions softly) {
+        void shouldUpdateDeploymentEnvironmentSuccessfully() {
             long envId = insertDeploymentEnvironmentRecord(handle, "TEST", testUserId);
-            long testSecondUser = insertUserRecord(handle, "jadoe");
 
             var envToUpdate = DeploymentEnvironment.builder()
                     .id(envId)
                     .name("PRODUCTION")
-                    .updatedById(testSecondUser)
                     .build();
 
             dao.updateEnvironment(envToUpdate);
 
-            var users = handle.select("select * from deployment_environments where id = ?", envId)
+            var envs = handle.select("select * from deployment_environments where id = ?", envId)
                 .map(new DeploymentEnvironmentMapper())
                 .list();
 
-            assertThat(users).hasSize(1);
+            assertThat(envs).hasSize(1);
 
-            var user = first(users);
-            softly.assertThat(user.getName()).isEqualTo("PRODUCTION");
-            softly.assertThat(user.getCreatedById()).isEqualTo(1L);
-            softly.assertThat(user.getUpdatedById()).isEqualTo(2L);
+            var user = first(envs);
+            assertThat(user.getName()).isEqualTo("PRODUCTION");
         }
     }
 

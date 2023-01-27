@@ -10,7 +10,7 @@ import lombok.Value;
 import lombok.experimental.Delegate;
 
 /**
- * This model is used for the {@link TaskResource.class} to combine the task information with all of the statues for the stored environments.
+ * This model is used for the {@link TaskResource} to combine the task information with all of the statues for the stored environments.
  */
 @Value
 @Builder

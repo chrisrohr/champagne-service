@@ -12,6 +12,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -23,17 +24,21 @@ import java.util.Optional;
 import javax.ws.rs.core.GenericType;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kiwiproject.champagne.model.DeploymentEnvironment;
+import org.kiwiproject.champagne.model.AuditRecord.Action;
 import org.kiwiproject.champagne.model.manualdeployment.DeploymentTaskStatus;
 import org.kiwiproject.champagne.model.manualdeployment.Release;
 import org.kiwiproject.champagne.model.manualdeployment.ReleaseStage;
 import org.kiwiproject.champagne.model.manualdeployment.ReleaseStatus;
 import org.kiwiproject.champagne.model.manualdeployment.Task;
 import org.kiwiproject.champagne.model.manualdeployment.TaskStatus;
+import org.kiwiproject.champagne.util.AuthHelper;
+import org.kiwiproject.champagne.dao.AuditRecordDao;
 import org.kiwiproject.champagne.dao.DeploymentEnvironmentDao;
 import org.kiwiproject.champagne.dao.ReleaseDao;
 import org.kiwiproject.champagne.dao.ReleaseStatusDao;
@@ -55,8 +60,9 @@ class TaskResourceTest {
     private static final TaskDao TASK_DAO = mock(TaskDao.class);
     private static final TaskStatusDao TASK_STATUS_DAO = mock(TaskStatusDao.class);
     private static final DeploymentEnvironmentDao DEPLOYMENT_ENVIRONMENT_DAO = mock(DeploymentEnvironmentDao.class);
+    private static final AuditRecordDao AUDIT_RECORD_DAO = mock(AuditRecordDao.class);
 
-    private static final TaskResource RESOURCE = new TaskResource(RELEASE_DAO, RELEASE_STATUS_DAO, TASK_DAO, TASK_STATUS_DAO, DEPLOYMENT_ENVIRONMENT_DAO);
+    private static final TaskResource RESOURCE = new TaskResource(RELEASE_DAO, RELEASE_STATUS_DAO, TASK_DAO, TASK_STATUS_DAO, DEPLOYMENT_ENVIRONMENT_DAO, AUDIT_RECORD_DAO);
 
     private static final ResourceExtension RESOURCES = ResourceExtension.builder()
         .bootstrapLogging(false)
@@ -65,9 +71,15 @@ class TaskResourceTest {
         .addProvider(JaxrsExceptionMapper.class)
         .build();
 
+    @BeforeEach
+    void setUp() {
+        AuthHelper.setupCurrentPrincipalFor("bob");
+    }
+
     @AfterEach
     void cleanup() {
-        reset(RELEASE_DAO, RELEASE_STATUS_DAO, TASK_DAO, TASK_STATUS_DAO, DEPLOYMENT_ENVIRONMENT_DAO);
+        reset(RELEASE_DAO, RELEASE_STATUS_DAO, TASK_DAO, TASK_STATUS_DAO, DEPLOYMENT_ENVIRONMENT_DAO, AUDIT_RECORD_DAO);
+        AuthHelper.removePrincipal();
     }
 
     @Nested
@@ -115,7 +127,7 @@ class TaskResourceTest {
             verify(RELEASE_STATUS_DAO).findByReleaseId(1L);
 
             verifyNoMoreInteractions(RELEASE_DAO, RELEASE_STATUS_DAO);
-            verifyNoInteractions(TASK_DAO, TASK_STATUS_DAO, DEPLOYMENT_ENVIRONMENT_DAO);
+            verifyNoInteractions(TASK_DAO, TASK_STATUS_DAO, DEPLOYMENT_ENVIRONMENT_DAO, AUDIT_RECORD_DAO);
         }
 
         @Test
@@ -159,7 +171,7 @@ class TaskResourceTest {
             verify(RELEASE_STATUS_DAO).findByReleaseId(1L);
 
             verifyNoMoreInteractions(RELEASE_DAO, RELEASE_STATUS_DAO);
-            verifyNoInteractions(TASK_DAO, TASK_STATUS_DAO, DEPLOYMENT_ENVIRONMENT_DAO);
+            verifyNoInteractions(TASK_DAO, TASK_STATUS_DAO, DEPLOYMENT_ENVIRONMENT_DAO, AUDIT_RECORD_DAO);
         }
     }
     
@@ -210,7 +222,7 @@ class TaskResourceTest {
             verify(TASK_STATUS_DAO).findByTaskId(1L);
 
             verifyNoMoreInteractions(TASK_DAO, TASK_STATUS_DAO);
-            verifyNoInteractions(RELEASE_DAO, RELEASE_STATUS_DAO, DEPLOYMENT_ENVIRONMENT_DAO);
+            verifyNoInteractions(RELEASE_DAO, RELEASE_STATUS_DAO, DEPLOYMENT_ENVIRONMENT_DAO, AUDIT_RECORD_DAO);
         }
     }
 
@@ -232,6 +244,8 @@ class TaskResourceTest {
 
             when(DEPLOYMENT_ENVIRONMENT_DAO.findAllEnvironments()).thenReturn(List.of(env));
 
+            when(RELEASE_STATUS_DAO.insertReleaseStatus(any(ReleaseStatus.class))).thenReturn(2L);
+
             var response = RESOURCES.client()
                 .target("/manual/deployment/tasks/releases")
                 .request()
@@ -243,7 +257,10 @@ class TaskResourceTest {
             verify(RELEASE_STATUS_DAO).insertReleaseStatus(any(ReleaseStatus.class));
             verify(DEPLOYMENT_ENVIRONMENT_DAO).findAllEnvironments();
 
-            verifyNoMoreInteractions(RELEASE_DAO, RELEASE_STATUS_DAO, DEPLOYMENT_ENVIRONMENT_DAO);
+            verifyAuditRecorded(1L, Release.class, Action.CREATED);
+            verifyMultipleStatusRecordsAuditRecorded(1, ReleaseStatus.class, Action.CREATED);
+
+            verifyNoMoreInteractions(RELEASE_DAO, RELEASE_STATUS_DAO, DEPLOYMENT_ENVIRONMENT_DAO, AUDIT_RECORD_DAO);
             verifyNoInteractions(TASK_DAO, TASK_STATUS_DAO);
         }
     }
@@ -311,7 +328,11 @@ class TaskResourceTest {
             verify(RELEASE_STATUS_DAO).updateStatus(5L, DeploymentTaskStatus.COMPLETE);
             verify(DEPLOYMENT_ENVIRONMENT_DAO).findAllEnvironments();
 
-            verifyNoMoreInteractions(TASK_DAO, TASK_STATUS_DAO, RELEASE_STATUS_DAO, DEPLOYMENT_ENVIRONMENT_DAO);
+            verifyAuditRecorded(2L, Task.class, Action.CREATED);
+            verifyMultipleStatusRecordsAuditRecorded(1, TaskStatus.class, Action.CREATED);
+            verifyMultipleStatusRecordsAuditRecorded(1, ReleaseStatus.class, Action.UPDATED);
+
+            verifyNoMoreInteractions(TASK_DAO, TASK_STATUS_DAO, RELEASE_STATUS_DAO, DEPLOYMENT_ENVIRONMENT_DAO, AUDIT_RECORD_DAO);
             verifyNoInteractions(RELEASE_DAO);
 
         }
@@ -334,6 +355,8 @@ class TaskResourceTest {
             assertAcceptedResponse(response);
 
             verify(RELEASE_STATUS_DAO).updateStatus(1L, DeploymentTaskStatus.COMPLETE);
+
+            verifyAuditRecorded(1L, ReleaseStatus.class, Action.UPDATED);
         }
 
         @Test
@@ -368,6 +391,8 @@ class TaskResourceTest {
             assertAcceptedResponse(response);
 
             verify(TASK_STATUS_DAO).updateStatus(1L, DeploymentTaskStatus.COMPLETE);
+
+            verifyAuditRecorded(1L, TaskStatus.class, Action.UPDATED);
         }
 
         @Test
@@ -398,6 +423,8 @@ class TaskResourceTest {
 
             assertAcceptedResponse(response);
             verify(RELEASE_DAO).deleteById(1L);
+
+            verifyAuditRecorded(1L, Release.class, Action.DELETED);
         }
     }
 
@@ -421,6 +448,8 @@ class TaskResourceTest {
 
             assertAcceptedResponse(response);
             verify(TASK_DAO).deleteById(1L);
+
+            verifyAuditRecorded(1L, Task.class, Action.DELETED);
         }
 
         @Test
@@ -453,7 +482,7 @@ class TaskResourceTest {
             verify(RELEASE_STATUS_DAO).findByReleaseId(1L);
 
             verifyNoMoreInteractions(TASK_DAO, RELEASE_STATUS_DAO);
-            verifyNoInteractions(TASK_STATUS_DAO, RELEASE_DAO);
+            verifyNoInteractions(TASK_STATUS_DAO, RELEASE_DAO, AUDIT_RECORD_DAO);
         }
 
         private ReleaseStatus newReleaseStatus(DeploymentTaskStatus status) {
@@ -482,7 +511,7 @@ class TaskResourceTest {
             verify(RELEASE_STATUS_DAO).findByReleaseId(1L);
 
             verifyNoMoreInteractions(TASK_DAO, RELEASE_STATUS_DAO, TASK_STATUS_DAO);
-            verifyNoInteractions(RELEASE_DAO);
+            verifyNoInteractions(RELEASE_DAO, AUDIT_RECORD_DAO);
         }
 
         private TaskStatus newTaskStatus(DeploymentTaskStatus status) {
@@ -511,7 +540,9 @@ class TaskResourceTest {
             verify(RELEASE_STATUS_DAO).findByReleaseId(1L);
             verify(RELEASE_STATUS_DAO).updateStatus(1L, DeploymentTaskStatus.COMPLETE);
 
-            verifyNoMoreInteractions(TASK_DAO, RELEASE_STATUS_DAO, TASK_STATUS_DAO);
+            verifyAuditRecorded(1L, ReleaseStatus.class, Action.UPDATED);
+
+            verifyNoMoreInteractions(TASK_DAO, RELEASE_STATUS_DAO, TASK_STATUS_DAO, AUDIT_RECORD_DAO);
             verifyNoInteractions(RELEASE_DAO);
         }
 
@@ -536,7 +567,9 @@ class TaskResourceTest {
             verify(RELEASE_STATUS_DAO).findByReleaseId(1L);
             verify(RELEASE_STATUS_DAO).updateStatus(1L, DeploymentTaskStatus.COMPLETE);
 
-            verifyNoMoreInteractions(TASK_DAO, RELEASE_STATUS_DAO, TASK_STATUS_DAO);
+            verifyAuditRecorded(1L, ReleaseStatus.class, Action.UPDATED);
+
+            verifyNoMoreInteractions(TASK_DAO, RELEASE_STATUS_DAO, TASK_STATUS_DAO, AUDIT_RECORD_DAO);
             verifyNoInteractions(RELEASE_DAO);
         }
 
@@ -558,7 +591,9 @@ class TaskResourceTest {
             verify(RELEASE_STATUS_DAO).findByReleaseId(1L);
             verify(RELEASE_STATUS_DAO).updateStatus(1L, DeploymentTaskStatus.NOT_REQUIRED);
 
-            verifyNoMoreInteractions(TASK_DAO, RELEASE_STATUS_DAO, TASK_STATUS_DAO);
+            verifyAuditRecorded(1L, ReleaseStatus.class, Action.UPDATED);
+
+            verifyNoMoreInteractions(TASK_DAO, RELEASE_STATUS_DAO, TASK_STATUS_DAO, AUDIT_RECORD_DAO);
             verifyNoInteractions(RELEASE_DAO);
         }
 
@@ -582,8 +617,9 @@ class TaskResourceTest {
             verify(TASK_STATUS_DAO).findByTaskId(3L);
             verify(RELEASE_STATUS_DAO).findByReleaseId(1L);
             verify(RELEASE_STATUS_DAO).updateStatus(1L, DeploymentTaskStatus.NOT_REQUIRED);
+            verifyAuditRecorded(1L, ReleaseStatus.class, Action.UPDATED);
 
-            verifyNoMoreInteractions(TASK_DAO, RELEASE_STATUS_DAO, TASK_STATUS_DAO);
+            verifyNoMoreInteractions(TASK_DAO, RELEASE_STATUS_DAO, TASK_STATUS_DAO, AUDIT_RECORD_DAO);
             verifyNoInteractions(RELEASE_DAO);
         }
 
@@ -607,8 +643,9 @@ class TaskResourceTest {
             verify(TASK_STATUS_DAO).findByTaskId(3L);
             verify(RELEASE_STATUS_DAO).findByReleaseId(1L);
             verify(RELEASE_STATUS_DAO).updateStatus(1L, DeploymentTaskStatus.PENDING);
+            verifyAuditRecorded(1L, ReleaseStatus.class, Action.UPDATED);
 
-            verifyNoMoreInteractions(TASK_DAO, RELEASE_STATUS_DAO, TASK_STATUS_DAO);
+            verifyNoMoreInteractions(TASK_DAO, RELEASE_STATUS_DAO, TASK_STATUS_DAO, AUDIT_RECORD_DAO);
             verifyNoInteractions(RELEASE_DAO);
         }
 
@@ -634,8 +671,9 @@ class TaskResourceTest {
             verify(TASK_STATUS_DAO).findByTaskId(3L);
             verify(RELEASE_STATUS_DAO).findByReleaseId(1L);
             verify(RELEASE_STATUS_DAO).updateStatus(1L, DeploymentTaskStatus.PENDING);
+            verifyAuditRecorded(1L, ReleaseStatus.class, Action.UPDATED);
 
-            verifyNoMoreInteractions(TASK_DAO, RELEASE_STATUS_DAO, TASK_STATUS_DAO);
+            verifyNoMoreInteractions(TASK_DAO, RELEASE_STATUS_DAO, TASK_STATUS_DAO, AUDIT_RECORD_DAO);
             verifyNoInteractions(RELEASE_DAO);
         }
 
@@ -661,9 +699,25 @@ class TaskResourceTest {
             verify(TASK_STATUS_DAO).findByTaskId(3L);
             verify(RELEASE_STATUS_DAO).findByReleaseId(1L);
             verify(RELEASE_STATUS_DAO).updateStatus(1L, DeploymentTaskStatus.COMPLETE);
+            verifyAuditRecorded(1L, ReleaseStatus.class, Action.UPDATED);
 
-            verifyNoMoreInteractions(TASK_DAO, RELEASE_STATUS_DAO, TASK_STATUS_DAO);
+            verifyNoMoreInteractions(TASK_DAO, RELEASE_STATUS_DAO, TASK_STATUS_DAO, AUDIT_RECORD_DAO);
             verifyNoInteractions(RELEASE_DAO);
         }
+    }
+
+    private void verifyAuditRecorded(long id, Class<?> taskClass, Action action) {
+        verify(AUDIT_RECORD_DAO).insertAuditRecord(argThat(audit -> {
+            return audit.getRecordId() == id 
+                && audit.getRecordType().equalsIgnoreCase(taskClass.getSimpleName()) 
+                && audit.getAction() == action;
+        }));
+    }
+
+    private void verifyMultipleStatusRecordsAuditRecorded(int times, Class<?> statusClass, Action action) {
+        verify(AUDIT_RECORD_DAO, times(times)).insertAuditRecord(argThat(audit -> {
+            return audit.getRecordType().equalsIgnoreCase(statusClass.getSimpleName()) 
+                && audit.getAction() == action;
+        }));
     }
 }

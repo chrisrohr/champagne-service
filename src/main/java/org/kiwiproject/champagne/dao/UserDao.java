@@ -25,21 +25,12 @@ public interface UserDao {
     @SqlQuery("select * from users where system_identifier = :systemIdentifier")
     Optional<User> findBySystemIdentifier(@Bind("systemIdentifier") String systemIdentifier);
 
-    @SqlQuery("select * from users where deleted = false offset :offset limit :limit")
+    @SqlQuery("select * from users offset :offset limit :limit")
     List<User> findPagedUsers(@Bind("offset") int offset, @Bind("limit") int limit);
 
-    @SqlQuery("select * from users offset :offset limit :limit")
-    List<User> findPagedUsersIncludingDeleted(@Bind("offset") int offset, @Bind("limit") int limit);
-
-    @SqlQuery("select count(*) from users where deleted = false")
+    @SqlQuery("select count(*) from users")
     long countUsers();
 
-    @SqlQuery("select count(*) from users")
-    long countUsersIncludingDeleted();
-
-    @SqlUpdate("update users set deleted = true, updated_at = current_timestamp where id = :id")
+    @SqlUpdate("delete from users where id = :id")
     void deleteUser(@Bind("id") long id);
-
-    @SqlUpdate("update users set deleted = false, updated_at = current_timestamp where id = :id")
-    void reactivateUser(@Bind("id") long id);
 }
