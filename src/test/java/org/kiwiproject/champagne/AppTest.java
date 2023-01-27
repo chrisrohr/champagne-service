@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.kiwiproject.champagne.config.AppConfig;
 import org.kiwiproject.champagne.resource.AuthResource;
+import org.kiwiproject.champagne.resource.DeploymentEnvironmentResource;
 import org.kiwiproject.champagne.resource.TaskResource;
 import org.kiwiproject.champagne.resource.UserResource;
 import org.kiwiproject.test.dropwizard.app.PostgresAppTestExtension;
@@ -26,6 +27,7 @@ class AppTest {
     void shouldRegisterResources() {
         assertThat(registeredResourceClassesOf(APP)).contains(
             AuthResource.class,
+            DeploymentEnvironmentResource.class,
             TaskResource.class,
             UserResource.class
         );

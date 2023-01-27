@@ -18,6 +18,7 @@ import org.kiwiproject.champagne.dao.TaskDao;
 import org.kiwiproject.champagne.dao.TaskStatusDao;
 import org.kiwiproject.champagne.dao.UserDao;
 import org.kiwiproject.champagne.resource.AuthResource;
+import org.kiwiproject.champagne.resource.DeploymentEnvironmentResource;
 import org.kiwiproject.champagne.resource.TaskResource;
 import org.kiwiproject.champagne.resource.UserResource;
 import org.kiwiproject.dropwizard.jdbi3.Jdbi3Builders;
@@ -68,6 +69,7 @@ public class App extends Application<AppConfig> {
         var deploymentEnvironmentDao = jdbi.onDemand(DeploymentEnvironmentDao.class);
 
         environment.jersey().register(new AuthResource(userDao));
+        environment.jersey().register(new DeploymentEnvironmentResource(deploymentEnvironmentDao, auditRecordDao));
         environment.jersey().register(new TaskResource(releaseDao, releaseStatusDao, taskDao, taskStatusDao, deploymentEnvironmentDao, auditRecordDao));
         environment.jersey().register(new UserResource(userDao, auditRecordDao));
 
