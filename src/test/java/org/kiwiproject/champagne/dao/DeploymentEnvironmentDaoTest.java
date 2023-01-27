@@ -145,7 +145,7 @@ class DeploymentEnvironmentDaoTest {
         void shouldSoftDeleteDeploymentEnvironmentSuccessfully(SoftAssertions softly) {
             var id = insertDeploymentEnvironmentRecord(handle, "TEST", testUserId);
 
-            dao.softDeleteById(id, testUserId);
+            dao.softDeleteById(id);
 
             var envs = handle.select("select * from deployment_environments where id = ?", id)
                 .map(new DeploymentEnvironmentMapper())
@@ -168,7 +168,7 @@ class DeploymentEnvironmentDaoTest {
             var id = insertDeploymentEnvironmentRecord(handle, "TEST", testUserId);
             handle.execute("update deployment_environments set deleted=true where id = ?", id);
 
-            dao.unSoftDeleteById(id, testUserId);
+            dao.unSoftDeleteById(id);
 
             var envs = handle.select("select * from deployment_environments where id = ?", id)
                 .map(new DeploymentEnvironmentMapper())

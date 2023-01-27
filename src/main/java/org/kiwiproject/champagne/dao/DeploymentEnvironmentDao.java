@@ -18,18 +18,18 @@ public interface DeploymentEnvironmentDao {
     long insertEnvironment(@BindBean DeploymentEnvironment env);
 
     @SqlUpdate("update deployment_environments set environment_name = :name, updated_at = current_timestamp where id = :id")
-    void updateEnvironment(@BindBean DeploymentEnvironment env);
+    int updateEnvironment(@BindBean DeploymentEnvironment env);
 
     @SqlQuery("select * from deployment_environments")
     List<DeploymentEnvironment> findAllEnvironments();
 
     @SqlUpdate("delete from deployment_environments where id = :id")
-    void hardDeleteById(@Bind("id") long id);
+    int hardDeleteById(@Bind("id") long id);
 
     @SqlUpdate("update deployment_environments set deleted = true, updated_at = current_timestamp where id = :id")
-    void softDeleteById(@Bind("id") long id, @Bind("updatedById") long updatedById);
+    int softDeleteById(@Bind("id") long id);
 
     @SqlUpdate("update deployment_environments set deleted = false, updated_at = current_timestamp where id = :id")
-    void unSoftDeleteById(@Bind("id") long id, @Bind("updatedById") long updatedById);
+    int unSoftDeleteById(@Bind("id") long id);
 
 }
