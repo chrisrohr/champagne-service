@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public abstract class AuditableResource {
     
-    private AuditRecordDao auditRecordDao;
+    private final AuditRecordDao auditRecordDao;
 
     protected AuditableResource(AuditRecordDao auditRecordDao) {
         this.auditRecordDao = auditRecordDao;
