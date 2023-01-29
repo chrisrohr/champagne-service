@@ -30,7 +30,7 @@ jobs:
       # Cache all the things
       - name: Cache SonarCloud packages
         uses: actions/cache@v3
-        if: ${{ env.SERVICE_SONAR_TOKEN != null && env.SERVICE_SONAR_TOKEN != '' }}
+        if: ${{ env.SONAR_TOKEN != null && env.SONAR_TOKEN != '' }}
         env:
           SONAR_TOKEN: ${{ secrets.SERVICE_SONAR_TOKEN }}
         with:
@@ -61,7 +61,7 @@ jobs:
 
       # Run Sonar Analysis
       - name: Analyze with SonarCloud on service
-        if: ${{ env.SERVICE_SONAR_TOKEN != null && env.SERVICE_SONAR_TOKEN != '' }}
+        if: ${{ env.SONAR_TOKEN != null && env.SONAR_TOKEN != '' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SERVICE_SONAR_TOKEN }}
@@ -87,7 +87,7 @@ jobs:
       # Cache all the things
       - name: Cache SonarCloud packages
         uses: actions/cache@v3
-        if: ${{ env.UI_SONAR_TOKEN != null && env.UI_SONAR_TOKEN != '' }}
+        if: ${{ env.SONAR_TOKEN != null && env.SONAR_TOKEN != '' }}
         env:
           SONAR_TOKEN: ${{ secrets.UI_SONAR_TOKEN }}
         with:
