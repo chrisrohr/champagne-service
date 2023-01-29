@@ -1,4 +1,3 @@
-# Created by .ignore support plugin (hsz.mobi)
 ### Maven template
 target/
 pom.xml.tag
@@ -22,3 +21,17 @@ maven-central-deploy.log
 
 # VS Code configuration files
 .vscode
+
+# Node template
+node_modules/
+
+# Coverage directory used by tools like istanbul
+coverage
+*.lcov
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

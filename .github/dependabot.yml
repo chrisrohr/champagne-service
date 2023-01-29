@@ -1,7 +1,18 @@
 version: 2
 updates:
   - package-ecosystem: "maven"
-    directory: "/"
+    directory: "/service"
+    schedule:
+      interval: "daily"
+    assignees:
+      - "sleberknight"
+      - "chrisrohr"
+    reviewers:
+      - "sleberknight"
+      - "chrisrohr"
+    open-pull-requests-limit: 10
+  - package-ecosystem: "yarn"
+    directory: "/ui"
     schedule:
       interval: "daily"
     assignees:
