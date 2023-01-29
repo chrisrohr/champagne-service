@@ -83,6 +83,7 @@ jobs:
         with:
           node-version: 16
           cache: 'yarn'
+        working-directory: ./ui
 
       # Cache all the things
       - name: Cache SonarCloud packages
@@ -94,13 +95,6 @@ jobs:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
-
-      - name: Cache Node packages
-        uses: actions/cache@v3
-        with:
-          path: ./ui/node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: ${{ runner.os }}-node
 
       # Install dependencies
       - name: Install Dependencies
