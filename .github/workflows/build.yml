@@ -9,6 +9,9 @@ jobs:
   build-service:
     name: Build Service
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: service
     strategy:
       fail-fast: false
       matrix:
@@ -50,14 +53,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
         run: mvn -B -V compile
-        working-directory: ./service
 
       # Run the tests
       - name: Run service tests
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
         run: mvn -B -V verify
-        working-directory: ./service
 
       # Run Sonar Analysis
       - name: Analyze with SonarCloud on service
@@ -66,10 +67,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SERVICE_SONAR_TOKEN }}
         run: mvn -B -V -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml org.jacoco:jacoco-maven-plugin:prepare-agent verify org.jacoco:jacoco-maven-plugin:report org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
-        working-directory: ./service
+
   build-ui:
     name: Build UI
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ui
     strategy:
       fail-fast: false
     steps:
@@ -83,7 +87,6 @@ jobs:
         with:
           node-version: 16
           cache: 'yarn'
-        working-directory: ./ui
 
       # Cache all the things
       - name: Cache SonarCloud packages
@@ -99,21 +102,18 @@ jobs:
       # Install dependencies
       - name: Install Dependencies
         run: yarn install
-        working-directory: ./ui
 
       # Compile the project
       - name: Build ui
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
         run: yarn build
-        working-directory: ./ui
 
       # Run the tests
       - name: Run ui tests
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
         run: yarn test
-        working-directory: ./ui
 
       # Run Sonar Analysis
       - name: SonarCloud Scan
@@ -121,5 +121,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.UI_SONAR_TOKEN }}
-        with:
-          projectBaseDir: ui
