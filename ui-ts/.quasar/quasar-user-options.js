@@ -1,4 +1,3 @@
-/* eslint-disable */
 /**
  * THIS FILE IS GENERATED AUTOMATICALLY.
  * DO NOT EDIT.
@@ -13,7 +12,9 @@
 
 
 
+import {Dialog,Notify} from 'quasar'
 
 
-export default { config: {} }
+
+export default { config: {},plugins: {Dialog,Notify} }
 

@@ -31,7 +31,7 @@
       :breakpoint="800"
       side="left"
     >
-    <q-scroll-area style="height: 100%; border-right: 1px solid #ddd">
+      <q-scroll-area style="height: 100%; border-right: 1px solid #ddd">
         <q-list padding>
           <q-item to="/" exact clickable v-ripple>
             <q-item-section avatar>
@@ -57,14 +57,30 @@
     <q-page-container>
       <router-view />
     </q-page-container>
+
+    <q-footer elevated class="bg-grey-8 text-white">
+      <q-toolbar>
+        <div class="text-subtitle2">v{{ $q.version }}</div>
+      </q-toolbar>
+    </q-footer>
   </q-layout>
 </template>
 
-<script setup>
-import { ref } from 'vue'
-const leftDrawerOpen = ref(false)
+<script lang="ts">
+import { defineComponent, ref } from 'vue';
 
-function toggleLeftDrawer () {
-  leftDrawerOpen.value = !leftDrawerOpen.value
-}
+export default defineComponent({
+  name: 'MainLayout',
+
+  setup () {
+    const leftDrawerOpen = ref(false)
+
+    return {
+      leftDrawerOpen,
+      toggleLeftDrawer () {
+        leftDrawerOpen.value = !leftDrawerOpen.value
+      }
+    }
+  }
+});
 </script>
