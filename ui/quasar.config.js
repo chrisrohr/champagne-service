@@ -10,7 +10,7 @@
 
 const { configure } = require('quasar/wrappers')
 
-module.exports = configure(function (/* ctx */) {
+module.exports = configure(function (ctx) {
   return {
     eslint: {
       // fix: true,
@@ -48,7 +48,8 @@ module.exports = configure(function (/* ctx */) {
       // 'roboto-font-latin-ext', // this or either 'roboto-font', NEVER both!
 
       'roboto-font', // optional, you are not bound to it
-      'material-icons' // optional, you are not bound to it
+      'material-icons', // optional, you are not bound to it
+      'fontawesome-v6'
     ],
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#build
@@ -56,6 +57,10 @@ module.exports = configure(function (/* ctx */) {
       target: {
         browser: ['es2019', 'edge88', 'firefox78', 'chrome87', 'safari13.1'],
         node: 'node16'
+      },
+
+      env: {
+        API_BASE_URL: ctx.dev ? 'http://localhost:8080/' : '/'
       },
 
       vueRouterMode: 'hash' // available values: 'hash', 'history'
@@ -103,7 +108,9 @@ module.exports = configure(function (/* ctx */) {
       // directives: [],
 
       // Quasar plugins
-      plugins: []
+      plugins: [
+        'Dialog'
+      ]
     },
 
     // animations: 'all', // --- includes all animations

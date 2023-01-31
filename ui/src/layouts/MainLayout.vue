@@ -61,10 +61,17 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
+import { useAuthStore } from 'stores/auth'
+
 const leftDrawerOpen = ref(false)
+const authStore = useAuthStore()
 
 function toggleLeftDrawer () {
   leftDrawerOpen.value = !leftDrawerOpen.value
 }
+
+onMounted(() => {
+  leftDrawerOpen.value = authStore.isLoggedIn
+})
 </script>

@@ -32,12 +32,11 @@ export default route(function () {
     // redirect to login page if not logged in and trying to access a restricted page
     const publicPages = ['LoginPage']
     const authRequired = !publicPages.includes(to.name)
+
     const auth = useAuthStore()
 
     if (authRequired && !auth.user) {
       auth.returnUrl = to.fullPath
-      console.log(auth.returnUrl)
-
       next({ name: 'LoginPage' })
       return true
     }

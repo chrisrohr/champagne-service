@@ -2,8 +2,10 @@ package org.kiwiproject.champagne.resource;
 
 import static javax.ws.rs.client.Entity.json;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.kiwiproject.base.KiwiStrings.f;
 import static org.kiwiproject.collect.KiwiLists.first;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertNoContentResponse;
+import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertNotFoundResponse;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertOkResponse;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertResponseStatusCode;
 import static org.mockito.ArgumentMatchers.any;
@@ -15,6 +17,8 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import io.dropwizard.testing.ResourceHelpers;
+import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import org.assertj.core.api.junit.jupiter.SoftAssertionsExtension;
@@ -24,18 +28,22 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.kiwiproject.champagne.model.AuditRecord;
-import org.kiwiproject.champagne.model.User;
-import org.kiwiproject.champagne.model.AuditRecord.Action;
-import org.kiwiproject.champagne.util.AuthHelper;
+import org.kiwiproject.champagne.config.AppConfig;
 import org.kiwiproject.champagne.dao.AuditRecordDao;
 import org.kiwiproject.champagne.dao.UserDao;
+import org.kiwiproject.champagne.model.AuditRecord;
+import org.kiwiproject.champagne.model.AuditRecord.Action;
+import org.kiwiproject.champagne.model.User;
+import org.kiwiproject.champagne.resource.apps.TestUserApp;
+import org.kiwiproject.champagne.util.AuthHelper;
 import org.kiwiproject.jaxrs.exception.JaxrsExceptionMapper;
 import org.kiwiproject.spring.data.KiwiPage;
 import org.mockito.ArgumentCaptor;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import javax.ws.rs.core.GenericType;
 
 @DisplayName("UserResource")
@@ -215,5 +223,86 @@ public class UserResourceTest {
         assertThat(audit.getRecordId()).isEqualTo(id);
         assertThat(audit.getRecordType()).isEqualTo(User.class.getSimpleName());
         assertThat(audit.getAction()).isEqualTo(action);
+    }
+
+    @Nested
+    class GetLoggedInUser {
+
+        static {
+            TestUserApp.userDao = USER_DAO;
+            TestUserApp.auditRecordDao = AUDIT_RECORD_DAO;
+        }
+
+        static DropwizardAppExtension<AppConfig> EXT = new DropwizardAppExtension<>(
+                TestUserApp.class,
+                ResourceHelpers.resourceFilePath("config-unit-test.yml")
+        );
+
+        @Test
+        void shouldReturnLoggedInUser() {
+            var bob = User.builder()
+                    .id(1L)
+                    .firstName("Robert")
+                    .lastName("Bob")
+                    .systemIdentifier("bob")
+                    .displayName("Robert Bob")
+                    .build();
+
+            when(USER_DAO.findBySystemIdentifier("bob")).thenReturn(Optional.of(bob));
+
+            var loginResponse = EXT.client().target(f("http://localhost:{}/auth", EXT.getLocalPort()))
+                    .path("/login")
+                    .request()
+                    .post(json(Map.of("username", "bob")));
+
+            var token = loginResponse.getCookies().get("sessionToken");
+
+            var response = EXT.client().target(f("http://localhost:{}/users", EXT.getLocalPort()))
+                    .path("/current")
+                    .request()
+                    .cookie("sessionToken", token.getValue())
+                    .get();
+
+            assertOkResponse(response);
+
+            var user = response.readEntity(User.class);
+
+            assertThat(user)
+                    .usingRecursiveComparison()
+                    .ignoringFields("createdAt", "updatedAt")
+                    .isEqualTo(bob);
+
+        }
+
+        @Test
+        void shouldReturn404WhenUserIsNotFound() {
+            var bob = User.builder()
+                    .id(1L)
+                    .firstName("Robert")
+                    .lastName("Bob")
+                    .systemIdentifier("bob")
+                    .displayName("Robert Bob")
+                    .build();
+
+            when(USER_DAO.findBySystemIdentifier("bob"))
+                    .thenReturn(Optional.of(bob))
+                    .thenReturn(Optional.empty());
+
+            var loginResponse = EXT.client().target(f("http://localhost:{}/auth", EXT.getLocalPort()))
+                    .path("/login")
+                    .request()
+                    .post(json(Map.of("username", "bob")));
+
+            var token = loginResponse.getCookies().get("sessionToken");
+
+            var response = EXT.client().target(f("http://localhost:{}/users", EXT.getLocalPort()))
+                    .path("/current")
+                    .request()
+                    .cookie("sessionToken", token.getValue())
+                    .get();
+
+            assertNotFoundResponse(response);
+
+        }
     }
 }
