@@ -19,6 +19,7 @@ import org.kiwiproject.champagne.model.User;
 import org.kiwiproject.champagne.dao.UserDao;
 import org.kiwiproject.jaxrs.exception.JaxrsExceptionMapper;
 
+import java.util.Map;
 import java.util.Optional;
 
 @DisplayName("AuthResource")
@@ -49,7 +50,7 @@ class AuthResourceTest {
 
             var response = APP.client().target("/auth/login")
                     .request()
-                    .post(json("jdoe"));
+                    .post(json(Map.of("username", "jdoe")));
 
             assertUnauthorizedResponse(response);
         }
@@ -64,7 +65,7 @@ class AuthResourceTest {
 
             var response = APP.client().target("/auth/login")
                     .request()
-                    .post(json("jdoe"));
+                    .post(json(Map.of("username", "jdoe")));
 
             assertOkResponse(response);
             // TODO: When the bundle is added, a cookie is setup in the response, need to figure out how to test
