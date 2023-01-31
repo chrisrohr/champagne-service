@@ -1,3 +1,4 @@
+/* eslint-disable */
 /**
  * THIS FILE IS GENERATED AUTOMATICALLY.
  * DO NOT EDIT.
@@ -31,7 +32,7 @@ export default async function (createAppFn, quasarUserOptions) {
   const app = createAppFn(RootComponent)
 
   
-  app.config.devtools = true
+  app.config.performance = true
   
 
   app.use(Quasar, quasarUserOptions)

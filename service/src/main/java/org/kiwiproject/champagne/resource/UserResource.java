@@ -1,7 +1,18 @@
 package org.kiwiproject.champagne.resource;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.kiwiproject.jaxrs.KiwiStandardResponses.standardGetResponse;
 import static org.kiwiproject.search.KiwiSearching.zeroBasedOffset;
+
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
+import io.dropwizard.auth.Auth;
+import org.dhatim.dropwizard.jwt.cookie.authentication.DefaultJwtCookiePrincipal;
+import org.kiwiproject.champagne.dao.AuditRecordDao;
+import org.kiwiproject.champagne.dao.UserDao;
+import org.kiwiproject.champagne.model.AuditRecord.Action;
+import org.kiwiproject.champagne.model.User;
+import org.kiwiproject.spring.data.KiwiPage;
 
 import javax.annotation.security.PermitAll;
 import javax.validation.Valid;
@@ -16,15 +27,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
-
-import com.codahale.metrics.annotation.ExceptionMetered;
-import com.codahale.metrics.annotation.Timed;
-
-import org.kiwiproject.champagne.model.User;
-import org.kiwiproject.champagne.model.AuditRecord.Action;
-import org.kiwiproject.champagne.dao.AuditRecordDao;
-import org.kiwiproject.champagne.dao.UserDao;
-import org.kiwiproject.spring.data.KiwiPage;
 
 @Path("/users")
 @Produces(APPLICATION_JSON)
@@ -76,6 +78,16 @@ public class UserResource extends AuditableResource {
         auditAction(id, User.class, Action.DELETED);
 
         return Response.noContent().build();
+    }
+
+    @GET
+    @Path("/current")
+    @Timed
+    @ExceptionMetered
+    public Response getLoggedInUser(@Auth DefaultJwtCookiePrincipal principal) {
+        var loggedInUser = userDao.findBySystemIdentifier(principal.getName());
+
+        return standardGetResponse(loggedInUser, "Unable to find logged in user");
     }
 
     // TODO: Add endpoint to update a user

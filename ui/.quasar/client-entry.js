@@ -1,3 +1,4 @@
+/* eslint-disable */
 /**
  * THIS FILE IS GENERATED AUTOMATICALLY.
  * DO NOT EDIT.
@@ -22,6 +23,8 @@ import { createApp } from 'vue'
 import '@quasar/extras/roboto-font/roboto-font.css'
 
 import '@quasar/extras/material-icons/material-icons.css'
+
+import '@quasar/extras/fontawesome-v6/fontawesome-v6.css'
 
 
 
@@ -48,9 +51,7 @@ console.info('[Quasar] Running SPA.')
 
 
 
-
-const publicPath = ``
-
+const publicPath = `/`
 
 async function start ({
   app,
@@ -136,15 +137,29 @@ async function start ({
 createQuasarApp(createApp, quasarUserOptions)
 
   .then(app => {
-    return Promise.all([
+    // eventually remove this when Cordova/Capacitor/Electron support becomes old
+    const [ method, mapFn ] = Promise.allSettled !== void 0
+      ? [
+        'allSettled',
+        bootFiles => bootFiles.map(result => {
+          if (result.status === 'rejected') {
+            console.error('[Quasar] boot error:', result.reason)
+            return
+          }
+          return result.value.default
+        })
+      ]
+      : [
+        'all',
+        bootFiles => bootFiles.map(entry => entry.default)
+      ]
+
+    return Promise[ method ]([
       
-      import(/* webpackMode: "eager" */ 'boot/axios')
+      import('boot/axios')
       
     ]).then(bootFiles => {
-      const boot = bootFiles
-        .map(entry => entry.default)
-        .filter(entry => typeof entry === 'function')
-
+      const boot = mapFn(bootFiles).filter(entry => typeof entry === 'function')
       start(app, boot)
     })
   })

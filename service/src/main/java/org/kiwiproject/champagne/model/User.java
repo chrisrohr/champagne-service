@@ -32,6 +32,4 @@ public class User {
 
     @NotBlank
     String systemIdentifier;
-
-    boolean deleted;
 }

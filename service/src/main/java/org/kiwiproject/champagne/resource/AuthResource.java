@@ -3,6 +3,7 @@ package org.kiwiproject.champagne.resource;
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import org.dhatim.dropwizard.jwt.cookie.authentication.DefaultJwtCookiePrincipal;
 import org.dhatim.dropwizard.jwt.cookie.authentication.JwtCookiePrincipal;
 import org.kiwiproject.champagne.dao.UserDao;
@@ -35,10 +36,10 @@ public class AuthResource {
     @Path("/login")
     @Timed
     @ExceptionMetered
-    public Response login(@Context ContainerRequestContext context, String name) {
+    public Response login(@Context ContainerRequestContext context, LoginRequest request) {
 
         // TODO: Need to actually check password or valid login not just user lookup
-        var user = userDao.findBySystemIdentifier(name).orElse(null);
+        var user = userDao.findBySystemIdentifier(request.getUsername()).orElse(null);
 
         if (isNull(user)) {
             throw new JaxrsNotAuthorizedException("Invalid login");
@@ -47,7 +48,7 @@ public class AuthResource {
         var principal = new DefaultJwtCookiePrincipal(user.getSystemIdentifier());
         principal.addInContext(context);
 
-        return Response.ok().build();
+        return Response.ok(user).build();
     }
 
     @DELETE
@@ -57,5 +58,10 @@ public class AuthResource {
     public Response logout(@Context ContainerRequestContext context) {
         JwtCookiePrincipal.removeFromContext(context);
         return Response.noContent().build();
+    }
+
+    @Getter
+    static class LoginRequest {
+        private String username;
     }
 }
