@@ -130,7 +130,6 @@ function loadEnvs () {
 function createEnv () {
   showEnvAdd.value = false
 
-  console.log(activeEnv.value)
   api.post('/environments', activeEnv.value)
     .then(() => loadEnvs())
 }
