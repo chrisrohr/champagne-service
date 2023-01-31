@@ -1,6 +1,5 @@
 import { boot } from 'quasar/wrappers'
 import axios from 'axios'
-import router from 'src/router'
 import { notifyError } from 'src/utils/alerts'
 
 // Be careful when using SSR for cross-request state pollution
