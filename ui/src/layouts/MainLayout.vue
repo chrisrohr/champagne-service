@@ -13,7 +13,7 @@
         />
 
         <q-avatar>
-          <q-icon name="wine_bar" size="41px" color="grey-4"/>
+          <q-icon name="fa-solid fa-champagne-glasses" size="26px" color="grey-4"/>
         </q-avatar>
 
         <q-toolbar-title>
@@ -39,6 +39,15 @@
             </q-item-section>
             <q-item-section>
               Dashboard
+            </q-item-section>
+          </q-item>
+
+          <q-item to="/environments" exact clickable v-ripple>
+            <q-item-section avatar>
+              <q-icon name="fa-solid fa-server"/>
+            </q-item-section>
+            <q-item-section>
+              Environments
             </q-item-section>
           </q-item>
 

@@ -4,10 +4,10 @@
         <div class="row">
           <q-card square class="shadow-24" style="width:300px;height:485px;">
             <q-card-section class="bg-deep-purple-7">
-              <h4 class="text-h5 text-white q-my-md">Login</h4>
+              <h4 class="text-h5 text-white q-my-sm">Login</h4>
             </q-card-section>
             <q-card-section>
-              <q-form class="q-px-sm q-pt-xl">
+              <q-form class="q-px-sm q-pt-sm">
                 <q-input square clearable v-model="userLogin.username" type="text" label="Username">
                   <template v-slot:prepend>
                     <q-icon name="badge" />
