@@ -60,7 +60,7 @@ module.exports = configure(function (ctx) {
       },
 
       env: {
-        API_BASE_URL: ctx.dev ? 'http://localhost:8080/' : '/'
+        API_BASE_URL: process.env.API_BASE_URL
       },
 
       vueRouterMode: 'hash' // available values: 'hash', 'history'
@@ -109,7 +109,8 @@ module.exports = configure(function (ctx) {
 
       // Quasar plugins
       plugins: [
-        'Dialog'
+        'Dialog',
+        'Notify'
       ]
     },
 

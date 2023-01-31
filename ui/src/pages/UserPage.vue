@@ -1,17 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <q-table :columns="userColumns" :rows="users" :loading="loading" :pagination="pagination">
-      <template v-slot:top>
-        <q-space/>
-        <span>
-          <q-btn icon="add" @click="showUserAdd = true"/>
-          <q-tooltip>Add new user</q-tooltip>
-        </span>
-        <span>
-          <q-btn icon="sync" @click="loadUsers"/>
-          <q-tooltip>Refresh users</q-tooltip>
-        </span>
-      </template>
+    <q-table title="System Users" :columns="userColumns" :rows="users" :loading="loading" :pagination="pagination">
 
       <template v-slot:body-cell-createdAt="props">
         <q-td :props="props">
@@ -44,6 +33,10 @@
       </template>
 
     </q-table>
+
+    <q-page-sticky position="bottom-right" :offset="[18, 18]">
+      <q-btn fab icon="add" color="accent" @click="showUserAdd = true" />
+    </q-page-sticky>
 
     <q-dialog v-model="showUserAdd">
       <q-card>
