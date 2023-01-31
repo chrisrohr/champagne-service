@@ -14,23 +14,6 @@ const api = axios.create({
   baseURL: process.env.API_BASE_URL
 })
 
-axios.interceptors.response.use((response) => {
-  return response
-}, (error) => {
-  console.log(error.response.status)
-  if (error.response.status) {
-    switch (error.response.status) {
-      case 401:
-        console.log('Pushing to login')
-        router.push('/login')
-        break
-      case 500:
-        notifyError(error.response.data.message)
-        break
-    }
-  }
-})
-
 export default boot(({ app, router }) => {
   // for use inside Vue files (Options API) through this.$axios and this.$api
 
