@@ -7,7 +7,8 @@ const routes = [
       { path: '', name: 'DashboardPage', component: () => import('pages/DashboardPage.vue') },
       { path: '/users', name: 'UsersPage', component: () => import('pages/UserPage.vue') },
       { path: '/login', name: 'LoginPage', component: () => import('pages/LoginPage.vue') },
-      { path: '/environments', name: 'DeploymentEnvironmentPage', component: () => import('pages/DeploymentEnvironmentPage.vue') }
+      { path: '/environments', name: 'DeploymentEnvironmentPage', component: () => import('pages/DeploymentEnvironmentPage.vue') },
+      { path: '/audits', name: 'AuditRecordsPage', component: () => import('pages/AuditRecordsPage.vue') }
     ]
   },
 
