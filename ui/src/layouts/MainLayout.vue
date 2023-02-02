@@ -59,6 +59,15 @@
               Users
             </q-item-section>
           </q-item>
+
+          <q-item to="/audits" exact clickable v-ripple>
+            <q-item-section avatar>
+              <q-icon name="assignment"/>
+            </q-item-section>
+            <q-item-section>
+              Audit
+            </q-item-section>
+          </q-item>
         </q-list>
       </q-scroll-area>
     </q-drawer>
