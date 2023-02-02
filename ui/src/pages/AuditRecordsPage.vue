@@ -57,7 +57,7 @@ const auditColumns = [
     align: 'left'
   },
   {
-    name: 'reocrdId',
+    name: 'recordId',
     label: 'Record Id',
     field: 'recordId',
     align: 'left'
