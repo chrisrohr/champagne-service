@@ -1,5 +1,6 @@
 package org.kiwiproject.champagne.resource;
 
+import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
@@ -27,6 +28,7 @@ import org.kiwiproject.spring.data.KiwiPage;
 
 import java.util.List;
 import java.util.Set;
+
 import javax.annotation.security.PermitAll;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -89,7 +91,7 @@ public class TaskResource extends AuditableResource {
 
     private ReleaseWithStatus buildReleaseWithStatusFrom(Release release) {
         var statuses = releaseStatusDao.findByReleaseId(release.getId());
-        var environmentStatus = statuses.stream().collect(toMap(ReleaseStatus::getEnvironmentId, ReleaseStatus::getStatus));
+        var environmentStatus = statuses.stream().collect(toMap(ReleaseStatus::getEnvironmentId, identity()));
 
         return ReleaseWithStatus.builder()
             .release(release)
@@ -113,7 +115,7 @@ public class TaskResource extends AuditableResource {
 
     private TaskWithStatus buildTaskWithStatusFrom(Task task) {
         var statuses = taskStatusDao.findByTaskId(task.getId());
-        var environmentStatus = statuses.stream().collect(toMap(TaskStatus::getEnvironmentId, TaskStatus::getStatus));
+        var environmentStatus = statuses.stream().collect(toMap(TaskStatus::getEnvironmentId, identity()));
 
         return TaskWithStatus.builder()
             .task(task)
