@@ -2,8 +2,8 @@ package org.kiwiproject.champagne.resource;
 
 import java.util.Map;
 
-import org.kiwiproject.champagne.model.manualdeployment.DeploymentTaskStatus;
 import org.kiwiproject.champagne.model.manualdeployment.Release;
+import org.kiwiproject.champagne.model.manualdeployment.ReleaseStatus;
 
 import lombok.Builder;
 import lombok.Value;
@@ -19,5 +19,5 @@ class ReleaseWithStatus {
     @Delegate
     Release release;
 
-    Map<Long, DeploymentTaskStatus> environmentStatus;
+    Map<Long, ReleaseStatus> environmentStatus;
 }

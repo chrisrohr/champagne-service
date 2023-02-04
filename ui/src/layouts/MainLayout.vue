@@ -51,6 +51,15 @@
             </q-item-section>
           </q-item>
 
+          <q-item to="/tasks" exact clickable v-ripple>
+            <q-item-section avatar>
+              <q-icon name="task"/>
+            </q-item-section>
+            <q-item-section>
+              Manual Tasks
+            </q-item-section>
+          </q-item>
+
           <q-item to="/users" exact clickable v-ripple>
             <q-item-section avatar>
               <q-icon name="manage_accounts"/>

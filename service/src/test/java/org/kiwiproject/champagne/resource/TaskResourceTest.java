@@ -120,7 +120,7 @@ class TaskResourceTest {
             var releaseWithStatus = first(result.getContent());
             assertThat(releaseWithStatus.getId()).isOne();
             assertThat(releaseWithStatus.getReleaseNumber()).isEqualTo("2023.42");
-            assertThat(releaseWithStatus.getEnvironmentStatus()).contains(entry(1L, DeploymentTaskStatus.PENDING));
+            assertThat(releaseWithStatus.getEnvironmentStatus()).contains(entry(1L, releaseStatus));
 
             verify(RELEASE_DAO).findPagedReleases(0, 10);
             verify(RELEASE_DAO).countReleases();
@@ -164,7 +164,7 @@ class TaskResourceTest {
             var releaseWithStatus = first(result.getContent());
             assertThat(releaseWithStatus.getId()).isOne();
             assertThat(releaseWithStatus.getReleaseNumber()).isEqualTo("2023.42");
-            assertThat(releaseWithStatus.getEnvironmentStatus()).contains(entry(1L, DeploymentTaskStatus.PENDING));
+            assertThat(releaseWithStatus.getEnvironmentStatus()).contains(entry(1L, releaseStatus));
 
             verify(RELEASE_DAO).findPagedReleases(0, 50);
             verify(RELEASE_DAO).countReleases();
@@ -216,7 +216,7 @@ class TaskResourceTest {
             assertThat(taskWithStatus.getSummary()).isEqualTo(task.getSummary());
             assertThat(taskWithStatus.getDescription()).isEqualTo(task.getDescription());
             assertThat(taskWithStatus.getStage()).isEqualTo(task.getStage());
-            assertThat(taskWithStatus.getEnvironmentStatus()).contains(entry(1L, DeploymentTaskStatus.PENDING));
+            assertThat(taskWithStatus.getEnvironmentStatus()).contains(entry(1L, taskStatus));
 
             verify(TASK_DAO).findByReleaseId(1L);
             verify(TASK_STATUS_DAO).findByTaskId(1L);

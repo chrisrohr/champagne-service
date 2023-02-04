@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { api } from 'src/boot/axios'
+import _ from 'lodash'
 
 export const useEnvStore = defineStore({
   id: 'env',
@@ -9,6 +10,9 @@ export const useEnvStore = defineStore({
   getters: {
     getActiveEnvs () {
       return this.envs.filter((env) => !env.deleted)
+    },
+    getEnvIdForName () {
+      return (name) => _.first(this.getActiveEnvs.filter((env) => env.name === name)).id
     }
   },
   actions: {
