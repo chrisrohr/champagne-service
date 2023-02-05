@@ -22,20 +22,20 @@ import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import org.assertj.core.api.junit.jupiter.SoftAssertionsExtension;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.kiwiproject.champagne.config.AppConfig;
 import org.kiwiproject.champagne.dao.AuditRecordDao;
 import org.kiwiproject.champagne.dao.UserDao;
+import org.kiwiproject.champagne.junit.jupiter.JwtExtension;
 import org.kiwiproject.champagne.model.AuditRecord;
 import org.kiwiproject.champagne.model.AuditRecord.Action;
 import org.kiwiproject.champagne.model.User;
 import org.kiwiproject.champagne.resource.apps.TestUserApp;
-import org.kiwiproject.champagne.util.AuthHelper;
 import org.kiwiproject.jaxrs.exception.JaxrsExceptionMapper;
 import org.kiwiproject.spring.data.KiwiPage;
 import org.mockito.ArgumentCaptor;
@@ -59,17 +59,13 @@ public class UserResourceTest {
             .addResource(USER_RESOURCE)
             .addProvider(JaxrsExceptionMapper.class)
             .build();
+
+    @RegisterExtension
+    private final JwtExtension jwtExtension = new JwtExtension("bob");
     
     @BeforeEach
     void setUp() {
         reset(USER_DAO, AUDIT_RECORD_DAO);
-
-        AuthHelper.setupCurrentPrincipalFor("bob");
-    }
-
-    @AfterEach
-    void tearDown() {
-        AuthHelper.removePrincipal();
     }
 
     @Nested
