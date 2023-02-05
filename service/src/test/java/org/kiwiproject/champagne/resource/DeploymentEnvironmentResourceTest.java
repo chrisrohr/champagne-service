@@ -16,26 +16,24 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
-
-import org.junit.jupiter.api.AfterEach;
+import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+import io.dropwizard.testing.junit5.ResourceExtension;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.kiwiproject.champagne.dao.AuditRecordDao;
 import org.kiwiproject.champagne.dao.DeploymentEnvironmentDao;
+import org.kiwiproject.champagne.junit.jupiter.JwtExtension;
 import org.kiwiproject.champagne.model.AuditRecord;
-import org.kiwiproject.champagne.model.DeploymentEnvironment;
 import org.kiwiproject.champagne.model.AuditRecord.Action;
-import org.kiwiproject.champagne.util.AuthHelper;
+import org.kiwiproject.champagne.model.DeploymentEnvironment;
 import org.kiwiproject.jaxrs.exception.JaxrsExceptionMapper;
 import org.mockito.ArgumentCaptor;
 
-import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
-import io.dropwizard.testing.junit5.ResourceExtension;
-
+import java.util.List;
 import javax.ws.rs.core.GenericType;
 
 @DisplayName("DeploymentEnvironmentResource")
@@ -50,17 +48,13 @@ class DeploymentEnvironmentResourceTest {
             .addResource(DEPLOYMENT_ENVIRONMENT_RESOURCE)
             .addProvider(JaxrsExceptionMapper.class)
             .build();
+
+    @RegisterExtension
+    private final JwtExtension jwtExtension = new JwtExtension("bob");
     
     @BeforeEach
     void setUp() {
         reset(DEPLOYMENT_ENVIRONMENT_DAO, AUDIT_RECORD_DAO);
-
-        AuthHelper.setupCurrentPrincipalFor("bob");
-    }
-
-    @AfterEach
-    void tearDown() {
-        AuthHelper.removePrincipal();
     }
 
     @Nested

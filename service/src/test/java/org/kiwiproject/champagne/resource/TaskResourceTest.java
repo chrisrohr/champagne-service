@@ -18,38 +18,36 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
-import java.util.Optional;
-
-import javax.ws.rs.core.GenericType;
-
+import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+import io.dropwizard.testing.junit5.ResourceExtension;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.kiwiproject.champagne.model.DeploymentEnvironment;
-import org.kiwiproject.champagne.model.AuditRecord.Action;
-import org.kiwiproject.champagne.model.manualdeployment.DeploymentTaskStatus;
-import org.kiwiproject.champagne.model.manualdeployment.Release;
-import org.kiwiproject.champagne.model.manualdeployment.ReleaseStage;
-import org.kiwiproject.champagne.model.manualdeployment.ReleaseStatus;
-import org.kiwiproject.champagne.model.manualdeployment.Task;
-import org.kiwiproject.champagne.model.manualdeployment.TaskStatus;
-import org.kiwiproject.champagne.util.AuthHelper;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.kiwiproject.champagne.dao.AuditRecordDao;
 import org.kiwiproject.champagne.dao.DeploymentEnvironmentDao;
 import org.kiwiproject.champagne.dao.ReleaseDao;
 import org.kiwiproject.champagne.dao.ReleaseStatusDao;
 import org.kiwiproject.champagne.dao.TaskDao;
 import org.kiwiproject.champagne.dao.TaskStatusDao;
+import org.kiwiproject.champagne.junit.jupiter.JwtExtension;
+import org.kiwiproject.champagne.model.AuditRecord.Action;
+import org.kiwiproject.champagne.model.DeploymentEnvironment;
+import org.kiwiproject.champagne.model.manualdeployment.DeploymentTaskStatus;
+import org.kiwiproject.champagne.model.manualdeployment.Release;
+import org.kiwiproject.champagne.model.manualdeployment.ReleaseStage;
+import org.kiwiproject.champagne.model.manualdeployment.ReleaseStatus;
+import org.kiwiproject.champagne.model.manualdeployment.Task;
+import org.kiwiproject.champagne.model.manualdeployment.TaskStatus;
 import org.kiwiproject.dropwizard.util.exception.JerseyViolationExceptionMapper;
 import org.kiwiproject.jaxrs.exception.JaxrsExceptionMapper;
 import org.kiwiproject.spring.data.KiwiPage;
 
-import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
-import io.dropwizard.testing.junit5.ResourceExtension;
+import java.util.List;
+import java.util.Optional;
+import javax.ws.rs.core.GenericType;
 
 @DisplayName("TaskResource")
 @ExtendWith(DropwizardExtensionsSupport.class)
@@ -71,15 +69,12 @@ class TaskResourceTest {
         .addProvider(JaxrsExceptionMapper.class)
         .build();
 
-    @BeforeEach
-    void setUp() {
-        AuthHelper.setupCurrentPrincipalFor("bob");
-    }
+    @RegisterExtension
+    private final JwtExtension jwtExtension = new JwtExtension("bob");
 
     @AfterEach
     void cleanup() {
         reset(RELEASE_DAO, RELEASE_STATUS_DAO, TASK_DAO, TASK_STATUS_DAO, DEPLOYMENT_ENVIRONMENT_DAO, AUDIT_RECORD_DAO);
-        AuthHelper.removePrincipal();
     }
 
     @Nested
@@ -715,9 +710,8 @@ class TaskResourceTest {
     }
 
     private void verifyMultipleStatusRecordsAuditRecorded(int times, Class<?> statusClass, Action action) {
-        verify(AUDIT_RECORD_DAO, times(times)).insertAuditRecord(argThat(audit -> {
-            return audit.getRecordType().equalsIgnoreCase(statusClass.getSimpleName()) 
-                && audit.getAction() == action;
-        }));
+        verify(AUDIT_RECORD_DAO, times(times)).insertAuditRecord(
+                argThat(audit -> audit.getRecordType().equalsIgnoreCase(statusClass.getSimpleName())
+                        && audit.getAction() == action));
     }
 }

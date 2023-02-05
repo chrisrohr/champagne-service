@@ -2,34 +2,32 @@ package org.kiwiproject.champagne.resource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.kiwiproject.collect.KiwiLists.first;
+import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertOkResponse;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertOkResponse;
 
-import java.util.List;
-
-import javax.ws.rs.core.GenericType;
-
+import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+import io.dropwizard.testing.junit5.ResourceExtension;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.kiwiproject.champagne.dao.AuditRecordDao;
+import org.kiwiproject.champagne.junit.jupiter.JwtExtension;
 import org.kiwiproject.champagne.model.AuditRecord;
-import org.kiwiproject.champagne.model.User;
 import org.kiwiproject.champagne.model.AuditRecord.Action;
-import org.kiwiproject.champagne.util.AuthHelper;
+import org.kiwiproject.champagne.model.User;
 import org.kiwiproject.dropwizard.util.exception.JerseyViolationExceptionMapper;
 import org.kiwiproject.jaxrs.exception.JaxrsExceptionMapper;
 import org.kiwiproject.spring.data.KiwiPage;
 
-import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
-import io.dropwizard.testing.junit5.ResourceExtension;
+import java.util.List;
+import javax.ws.rs.core.GenericType;
 
 @DisplayName("AuditRecordResource")
 @ExtendWith(DropwizardExtensionsSupport.class)
@@ -45,15 +43,12 @@ class AuditRecordResourceTest {
         .addProvider(JaxrsExceptionMapper.class)
         .build();
 
-    @BeforeEach
-    void setUp() {
-        AuthHelper.setupCurrentPrincipalFor("bob");
-    }
+    @RegisterExtension
+    private final JwtExtension jwtExtension = new JwtExtension("bob");
 
     @AfterEach
     void cleanup() {
         reset(AUDIT_RECORD_DAO);
-        AuthHelper.removePrincipal();
     }
 
     @Nested
