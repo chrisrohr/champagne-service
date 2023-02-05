@@ -1,6 +1,8 @@
 package org.kiwiproject.champagne;
 
 import io.dropwizard.Application;
+import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
+import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.jdbi3.bundles.JdbiExceptionsBundle;
 import io.dropwizard.migrations.MigrationsBundle;
@@ -39,6 +41,12 @@ public class App extends Application<AppConfig> {
 
     @Override
     public void initialize(Bootstrap<AppConfig> bootstrap) {
+        bootstrap.setConfigurationSourceProvider(
+                new SubstitutingSourceProvider(bootstrap.getConfigurationSourceProvider(),
+                        new EnvironmentVariableSubstitutor(false)
+                )
+        );
+
         bootstrap.addBundle(new JdbiExceptionsBundle());
         bootstrap.addBundle(new MigrationsBundle<>() {
             @Override
