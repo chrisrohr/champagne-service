@@ -1,7 +1,10 @@
 package org.kiwiproject.champagne.util;
 
+import java.util.Map;
+
 import org.jdbi.v3.core.Handle;
 import org.kiwiproject.champagne.model.AuditRecord;
+import org.kiwiproject.champagne.model.Build;
 import org.kiwiproject.champagne.model.DeploymentEnvironment;
 import org.kiwiproject.champagne.model.User;
 import org.kiwiproject.champagne.model.AuditRecord.Action;
@@ -129,6 +132,30 @@ public class TestObjects {
 
         return handle.createUpdate("insert into manual_deployment_task_statuses (manual_deployment_task_id, deployment_environment_id, status) values (:taskId, :environmentId, :status)")
             .bindBean(testTaskStatusRecord)
+            .executeAndReturnGeneratedKeys("id")
+            .mapTo(Long.class)
+            .first();
+    }
+
+    public static long insertBuildRecord(Handle handle, String identifier, String version) {
+        var buildToInsert = Build.builder()
+                .repoNamespace("kiwiproject")
+                .repoName(identifier)
+                .commitRef("abc1234")
+                .commitUser("jdoe")
+                .sourceBranch("main")
+                .componentIdentifier(identifier)
+                .componentVersion(version)
+                .distributionLocation("https://some-nexus-server.net/foo")
+                .extraDeploymentInfo(Map.of())
+                .build();
+
+        return handle.createUpdate("insert into builds " 
+                + "(repo_namespace, repo_name, commit_ref, commit_user, source_branch, component_identifier, component_version, distribution_location, extra_deployment_info) " 
+                + "values " 
+                + "(:repoNamespace, :repoName, :commitRef, :commitUser, :sourceBranch, :componentIdentifier, :componentVersion, :distributionLocation, :extraData)")
+            .bindBean(buildToInsert)
+            .bind("extraData", "{}")
             .executeAndReturnGeneratedKeys("id")
             .mapTo(Long.class)
             .first();
