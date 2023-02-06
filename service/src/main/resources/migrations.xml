@@ -185,4 +185,42 @@
             <column name="updated_by"/>
         </dropColumn>
     </changeSet>
+
+    <changeSet id="add_build_table" author="crohr">
+        <createTable tableName="builds">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="created_at" type="timestamp without time zone" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="repo_namespace" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="repo_name" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="commit_ref" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="commit_user" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="source_branch" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="component_identifier" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="component_version" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="distribution_location" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="extra_deployment_info" type="text">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
 </databaseChangeLog>

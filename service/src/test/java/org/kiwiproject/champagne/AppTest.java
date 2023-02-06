@@ -7,7 +7,9 @@ import static org.kiwiproject.test.dropwizard.app.DropwizardAppTests.registeredR
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.kiwiproject.champagne.config.AppConfig;
+import org.kiwiproject.champagne.resource.AuditRecordResource;
 import org.kiwiproject.champagne.resource.AuthResource;
+import org.kiwiproject.champagne.resource.BuildResource;
 import org.kiwiproject.champagne.resource.DeploymentEnvironmentResource;
 import org.kiwiproject.champagne.resource.TaskResource;
 import org.kiwiproject.champagne.resource.UserResource;
@@ -27,6 +29,8 @@ class AppTest {
     void shouldRegisterResources() {
         assertThat(registeredResourceClassesOf(APP)).contains(
             AuthResource.class,
+            AuditRecordResource.class,
+            BuildResource.class,
             DeploymentEnvironmentResource.class,
             TaskResource.class,
             UserResource.class
