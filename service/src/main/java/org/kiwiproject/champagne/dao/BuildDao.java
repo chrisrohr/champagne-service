@@ -70,9 +70,9 @@ public interface BuildDao {
     long countBuildsWithVersionAndIdentifierFilters(@Bind("version") String componentVersionFilter, @Bind("identifier") String componentIdentifierFilter);
 
     @SqlUpdate("insert into builds " 
-        + "(repo_namespace, repo_name, commit_ref, commit_user, source_branch, component_identifier, component_version, distribution_location, extra_deployment_info) " 
+        + "(repo_namespace, repo_name, commit_ref, commit_user, source_branch, component_identifier, component_version, distribution_location, extra_deployment_info, change_log) " 
         + "values " 
-        + "(:repoNamespace, :repoName, :commitRef, :commitUser, :sourceBranch, :componentIdentifier, :componentVersion, :distributionLocation, :extraData)")
+        + "(:repoNamespace, :repoName, :commitRef, :commitUser, :sourceBranch, :componentIdentifier, :componentVersion, :distributionLocation, :extraData, :changeLog)")
     @GetGeneratedKeys
     long insertBuild(@BindBean Build build, @Bind("extraData") String extraDataJson);
 }

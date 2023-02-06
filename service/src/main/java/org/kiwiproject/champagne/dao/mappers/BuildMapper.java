@@ -33,6 +33,7 @@ public class BuildMapper implements RowMapper<Build>{
             .componentVersion(rs.getString("component_version"))
             .distributionLocation(rs.getString("distribution_location"))
             .extraDeploymentInfo(jsonToMap(rs, "extra_deployment_info"))
+            .changeLog(rs.getString("change_log"))
             .build();
     }
 
