@@ -30,6 +30,7 @@ public class Build {
     private String commitRef;
     private String commitUser;
     private String sourceBranch;
+    private String changeLog;
 
     // Artifact info
     private String componentIdentifier;

@@ -223,4 +223,9 @@
             </column>
         </createTable>
     </changeSet>
+    <changeSet id="add_changelog_to_builds" author="crohr">
+        <addColumn tableName="builds">
+            <column name="change_log" type="text"/>
+        </addColumn> 
+    </changeSet>
 </databaseChangeLog>

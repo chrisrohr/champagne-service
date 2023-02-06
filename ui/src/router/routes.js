@@ -9,7 +9,8 @@ const routes = [
       { path: '/login', name: 'LoginPage', component: () => import('pages/LoginPage.vue') },
       { path: '/environments', name: 'DeploymentEnvironmentPage', component: () => import('pages/DeploymentEnvironmentPage.vue') },
       { path: '/audits', name: 'AuditRecordsPage', component: () => import('pages/AuditRecordsPage.vue') },
-      { path: '/tasks', name: 'ManualTaskPage', component: () => import('pages/ManualTaskPage.vue') }
+      { path: '/tasks', name: 'ManualTaskPage', component: () => import('pages/ManualTaskPage.vue') },
+      { path: '/builds', name: 'BuildsPage', component: () => import('pages/BuildsPage.vue') }
     ]
   },
 

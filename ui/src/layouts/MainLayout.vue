@@ -42,6 +42,15 @@
             </q-item-section>
           </q-item>
 
+          <q-item to="/builds" exact clickable v-ripple>
+            <q-item-section avatar>
+              <q-icon name="build"/>
+            </q-item-section>
+            <q-item-section>
+              Builds
+            </q-item-section>
+          </q-item>
+
           <q-item to="/environments" exact clickable v-ripple>
             <q-item-section avatar>
               <q-icon name="fa-solid fa-server"/>
