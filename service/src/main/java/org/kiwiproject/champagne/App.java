@@ -1,5 +1,7 @@
 package org.kiwiproject.champagne;
 
+import static org.kiwiproject.dropwizard.util.job.MonitoredJobs.registerJob;
+
 import io.dropwizard.Application;
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
@@ -21,6 +23,7 @@ import org.kiwiproject.champagne.dao.TaskDao;
 import org.kiwiproject.champagne.dao.TaskStatusDao;
 import org.kiwiproject.champagne.dao.UserDao;
 import org.kiwiproject.champagne.dao.mappers.BuildMapper;
+import org.kiwiproject.champagne.job.CleanOutAuditsJob;
 import org.kiwiproject.champagne.model.Build;
 import org.kiwiproject.champagne.resource.AuditRecordResource;
 import org.kiwiproject.champagne.resource.AuthResource;
@@ -94,6 +97,10 @@ public class App extends Application<AppConfig> {
         environment.jersey().register(new UserResource(userDao, auditRecordDao));
 
         configureCors(environment);
+
+        // Setup jobs
+        var cleanOutAuditsJob = new CleanOutAuditsJob(auditRecordDao, configuration.getAuditRecordsMaxRetain().toMilliseconds());
+        registerJob(environment, "Clean Out Audits", configuration.getAuditCleanup(), cleanOutAuditsJob);
     }
 
     private static void setupJsonProcessing(Environment environment) {
