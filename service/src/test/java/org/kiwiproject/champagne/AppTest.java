@@ -39,6 +39,11 @@ class AppTest {
 
     @Test
     void shouldRegisterHealthChecks() {
-        assertThat(healthCheckNamesOf(APP)).contains("deadlocks");
+        assertThat(healthCheckNamesOf(APP)).contains(
+                "database",
+                "deadlocks",
+                "Job: Clean Out Audits",
+                "Unknown JSON Properties"
+        );
     }
 }

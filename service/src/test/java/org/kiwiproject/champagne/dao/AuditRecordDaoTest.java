@@ -9,10 +9,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.kiwiproject.champagne.model.AuditRecord;
 import org.kiwiproject.champagne.dao.mappers.AuditRecordMapper;
+import org.kiwiproject.champagne.model.AuditRecord;
 import org.kiwiproject.test.junit.jupiter.Jdbi3DaoExtension;
 import org.kiwiproject.test.junit.jupiter.PostgresLiquibaseTestExtension;
+
+import java.time.Instant;
 
 @DisplayName("AuditRecordDao")
 class AuditRecordDaoTest {
@@ -99,6 +101,20 @@ class AuditRecordDaoTest {
         void shouldReturnZeroWhenNoAuditRecordsFound() {
             var count = dao.countAuditRecords();
             assertThat(count).isZero();
+        }
+    }
+
+    @Nested
+    class DeleteAuditRecordsOlderThan {
+
+        @Test
+        void shouldDeleteFoundRecords() {
+            insertAuditRecord(handle);
+
+            var deleteDate = Instant.now().plusSeconds(60);
+
+            var deletedCount = dao.deleteAuditRecordsOlderThan(deleteDate);
+            assertThat(deletedCount).isOne();
         }
     }
 }
