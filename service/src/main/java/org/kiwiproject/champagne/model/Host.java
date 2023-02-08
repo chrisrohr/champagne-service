@@ -4,14 +4,14 @@ import java.time.Instant;
 import java.util.List;
 
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Value;
 
 /**
  * Representation of a host used to deploy components. A Host could be created and stored in the database or 
  * dynamically pulls from a cloud provider like AWS.
  */
 @Builder
-@Getter
+@Value
 public class Host {
 
     public enum Source {

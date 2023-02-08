@@ -3,13 +3,13 @@ package org.kiwiproject.champagne.model;
 import java.time.Instant;
 
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Value;
 
 /**
  * Representation of a deployable component in the system.
  */
 @Builder
-@Getter
+@Value
 public class Component {
     
     Long id;
