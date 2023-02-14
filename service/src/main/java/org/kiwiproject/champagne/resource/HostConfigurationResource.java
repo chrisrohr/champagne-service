@@ -1,5 +1,7 @@
 package org.kiwiproject.champagne.resource;
 
+import static org.apache.commons.lang3.StringUtils.isBlank;
+
 import java.util.List;
 
 import javax.annotation.security.PermitAll;
@@ -42,13 +44,7 @@ public class HostConfigurationResource extends AuditableResource {
     @Timed
     @ExceptionMetered
     public Response listHostsForEnvironment(@PathParam("environment") Long envId, @QueryParam("componentFilter") String componentFilter) {
-        List<Host> hosts;
-
-        if (StringUtils.isBlank(componentFilter)) {
-            hosts = hostDao.findHostsByEnvId(envId);
-        } else {
-            hosts = List.of();
-        }
+        var hosts = isBlank(componentFilter) ? hostDao.findHostsByEnvId(envId) : List.of();
 
         return Response.ok(hosts).build();
     }
