@@ -11,6 +11,7 @@ import org.kiwiproject.champagne.resource.AuditRecordResource;
 import org.kiwiproject.champagne.resource.AuthResource;
 import org.kiwiproject.champagne.resource.BuildResource;
 import org.kiwiproject.champagne.resource.DeploymentEnvironmentResource;
+import org.kiwiproject.champagne.resource.HostConfigurationResource;
 import org.kiwiproject.champagne.resource.TaskResource;
 import org.kiwiproject.champagne.resource.UserResource;
 import org.kiwiproject.test.dropwizard.app.PostgresAppTestExtension;
@@ -32,6 +33,7 @@ class AppTest {
             AuditRecordResource.class,
             BuildResource.class,
             DeploymentEnvironmentResource.class,
+            HostConfigurationResource.class,
             TaskResource.class,
             UserResource.class
         );

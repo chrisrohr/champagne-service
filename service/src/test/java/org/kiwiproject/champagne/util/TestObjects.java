@@ -1,11 +1,14 @@
 package org.kiwiproject.champagne.util;
 
+import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 import org.kiwiproject.champagne.model.AuditRecord;
 import org.kiwiproject.champagne.model.Build;
 import org.kiwiproject.champagne.model.DeploymentEnvironment;
+import org.kiwiproject.champagne.model.Host;
 import org.kiwiproject.champagne.model.User;
 import org.kiwiproject.champagne.model.AuditRecord.Action;
 import org.kiwiproject.champagne.model.manualdeployment.DeploymentTaskStatus;
@@ -35,7 +38,7 @@ public class TestObjects {
             .first();
     }
 
-    public static long insertDeploymentEnvironmentRecord(Handle handle, String name, long userId) {
+    public static long insertDeploymentEnvironmentRecord(Handle handle, String name) {
         var testDeploymentEnvironmentRecord = DeploymentEnvironment.builder()
             .name(name)
             .build();
@@ -84,8 +87,7 @@ public class TestObjects {
     }
 
     public static long insertReleaseStatusRecord(Handle handle, DeploymentTaskStatus status, long releaseId) {
-        var userId = insertUserRecord(handle, "jdoe");
-        var envId = insertDeploymentEnvironmentRecord(handle, "DEV", userId);
+        var envId = insertDeploymentEnvironmentRecord(handle, "DEV");
 
         var testReleaseStatusRecord = ReleaseStatus.builder()
             .releaseId(releaseId)
@@ -121,8 +123,7 @@ public class TestObjects {
     }
 
     public static long insertTaskStatusRecord(Handle handle, DeploymentTaskStatus status, long taskId) {
-        var userId = insertUserRecord(handle, "jdoe");
-        var envId = insertDeploymentEnvironmentRecord(handle, "DEV", userId);
+        var envId = insertDeploymentEnvironmentRecord(handle, "DEV");
 
         var testTaskStatusRecord = TaskStatus.builder()
             .taskId(taskId)
@@ -156,6 +157,25 @@ public class TestObjects {
                 + "(:repoNamespace, :repoName, :commitRef, :commitUser, :sourceBranch, :componentIdentifier, :componentVersion, :distributionLocation, :extraData)")
             .bindBean(buildToInsert)
             .bind("extraData", "{}")
+            .executeAndReturnGeneratedKeys("id")
+            .mapTo(Long.class)
+            .first();
+    }
+
+    public static long insertHostRecord(Handle handle, String hostname, long envId) {
+        var hostToInsert = Host.builder()
+                .environmentId(envId)
+                .hostname(hostname)
+                .source(Host.Source.CHAMPAGNE)
+                .tags(List.of("foo"))
+                .build();
+
+        return handle.createUpdate("insert into hosts " 
+                + "(environment_id, hostname, source, tags) " 
+                + "values " 
+                + "(:environmentId, :hostname, :source, :tagCsv)")
+            .bindBean(hostToInsert)
+            .bind("tagCsv", StringUtils.join(hostToInsert.getTags(), ","))
             .executeAndReturnGeneratedKeys("id")
             .mapTo(Long.class)
             .first();

@@ -228,4 +228,46 @@
             <column name="change_log" type="text"/>
         </addColumn> 
     </changeSet>
+    <changeSet id="add_host_configuration_tables" author="crohr">
+        <createTable tableName="hosts">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="created_at" type="timestamp without time zone" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp without time zone" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="environment_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_host_deployment_environment" references="deployment_environments(id)" deleteCascade="true"/>
+            </column>
+            <column name="hostname" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tags" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="source" type="text">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createTable tableName="components">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="created_at" type="timestamp without time zone" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp without time zone" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="component_name" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tag" type="text">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
 </databaseChangeLog>

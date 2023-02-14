@@ -42,6 +42,15 @@
             </q-item-section>
           </q-item>
 
+          <q-item to="/hostConfig" exact clickable v-ripple>
+            <q-item-section avatar>
+              <q-icon name="precision_manufacturing"/>
+            </q-item-section>
+            <q-item-section>
+              Host Config
+            </q-item-section>
+          </q-item>
+
           <q-item to="/builds" exact clickable v-ripple>
             <q-item-section avatar>
               <q-icon name="build"/>

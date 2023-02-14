@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.kiwiproject.champagne.util.TestObjects.insertDeploymentEnvironmentRecord;
 import static org.kiwiproject.champagne.util.TestObjects.insertTaskRecord;
 import static org.kiwiproject.champagne.util.TestObjects.insertTaskStatusRecord;
-import static org.kiwiproject.champagne.util.TestObjects.insertUserRecord;
 import static org.kiwiproject.collect.KiwiLists.first;
 import static org.kiwiproject.test.util.DateTimeTestHelper.assertTimeDifferenceWithinTolerance;
 
@@ -56,8 +55,7 @@ class TaskStatusDaoTest {
             var beforeInsert = ZonedDateTime.now();
 
             var taskId = insertTaskRecord(handle, "Some task");
-            var userId = insertUserRecord(handle, "jdoe");
-            var envId = insertDeploymentEnvironmentRecord(handle, "TEST", userId);
+            var envId = insertDeploymentEnvironmentRecord(handle, "TEST");
 
             var taskStatusToInsert = TaskStatus.builder()
                 .environmentId(envId)

@@ -2,11 +2,8 @@ package org.kiwiproject.champagne.resource;
 
 import static javax.ws.rs.client.Entity.json;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.entry;
-import static org.kiwiproject.collect.KiwiLists.first;
 import static org.kiwiproject.test.constants.KiwiTestConstants.JSON_HELPER;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertAcceptedResponse;
-import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertNotFoundResponse;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertOkResponse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
