@@ -10,7 +10,8 @@ const routes = [
       { path: '/environments', name: 'DeploymentEnvironmentPage', component: () => import('pages/DeploymentEnvironmentPage.vue') },
       { path: '/audits', name: 'AuditRecordsPage', component: () => import('pages/AuditRecordsPage.vue') },
       { path: '/tasks', name: 'ManualTaskPage', component: () => import('pages/ManualTaskPage.vue') },
-      { path: '/builds', name: 'BuildsPage', component: () => import('pages/BuildsPage.vue') }
+      { path: '/builds', name: 'BuildsPage', component: () => import('pages/BuildsPage.vue') },
+      { path: '/hostConfig', name: 'HostConfigurationPage', component: () => import('pages/HostConfigurationPage.vue') }
     ]
   },
 

@@ -1,6 +1,8 @@
 package org.kiwiproject.champagne.dao;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.kiwiproject.base.KiwiStrings.f;
+import static org.kiwiproject.champagne.dao.DaoHelper.LIKE_QUERY_FORMAT;
 
 import java.util.List;
 
@@ -19,10 +21,10 @@ public interface BuildDao {
             return findPagedBuildsNoFilter(offset, limit);
         } else if (isBlank(componentIdentifierFilter)) {
             // Version only filter
-            return findPagedBuildsWithVersionFilter(offset, limit, componentVersionFilter);
+            return findPagedBuildsWithVersionFilter(offset, limit, f(LIKE_QUERY_FORMAT, componentVersionFilter));
         } else if (isBlank(componentVersionFilter)) {
             // Name only filter
-            return findPagedBuildsWithIdentiferFilter(offset, limit, componentIdentifierFilter);
+            return findPagedBuildsWithIdentiferFilter(offset, limit, f(LIKE_QUERY_FORMAT, componentIdentifierFilter));
         }
 
         // Both name and version filtering

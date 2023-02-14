@@ -17,6 +17,7 @@ import org.kiwiproject.champagne.config.AppConfig;
 import org.kiwiproject.champagne.dao.AuditRecordDao;
 import org.kiwiproject.champagne.dao.BuildDao;
 import org.kiwiproject.champagne.dao.DeploymentEnvironmentDao;
+import org.kiwiproject.champagne.dao.HostDao;
 import org.kiwiproject.champagne.dao.ReleaseDao;
 import org.kiwiproject.champagne.dao.ReleaseStatusDao;
 import org.kiwiproject.champagne.dao.TaskDao;
@@ -29,6 +30,7 @@ import org.kiwiproject.champagne.resource.AuditRecordResource;
 import org.kiwiproject.champagne.resource.AuthResource;
 import org.kiwiproject.champagne.resource.BuildResource;
 import org.kiwiproject.champagne.resource.DeploymentEnvironmentResource;
+import org.kiwiproject.champagne.resource.HostConfigurationResource;
 import org.kiwiproject.champagne.resource.TaskResource;
 import org.kiwiproject.champagne.resource.UserResource;
 import org.kiwiproject.dropwizard.jdbi3.Jdbi3Builders;
@@ -85,6 +87,7 @@ public class App extends Application<AppConfig> {
         var taskStatusDao = jdbi.onDemand(TaskStatusDao.class);
         var deploymentEnvironmentDao = jdbi.onDemand(DeploymentEnvironmentDao.class);
         var buildDao = jdbi.onDemand(BuildDao.class);
+        var hostDao = jdbi.onDemand(HostDao.class);
 
         var jsonHelper = JsonHelper.newDropwizardJsonHelper();
         jdbi.registerRowMapper(Build.class, new BuildMapper(jsonHelper));
@@ -93,6 +96,7 @@ public class App extends Application<AppConfig> {
         environment.jersey().register(new AuditRecordResource(auditRecordDao));
         environment.jersey().register(new BuildResource(buildDao, jsonHelper));
         environment.jersey().register(new DeploymentEnvironmentResource(deploymentEnvironmentDao, auditRecordDao));
+        environment.jersey().register(new HostConfigurationResource(hostDao, auditRecordDao));
         environment.jersey().register(new TaskResource(releaseDao, releaseStatusDao, taskDao, taskStatusDao, deploymentEnvironmentDao, auditRecordDao));
         environment.jersey().register(new UserResource(userDao, auditRecordDao));
 

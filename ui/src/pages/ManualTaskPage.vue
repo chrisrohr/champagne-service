@@ -149,14 +149,9 @@
 
 <script setup>
 import { onMounted, ref } from 'vue'
-// import { formatDate, fromNow } from '../utils/time'
-// import { useQuasar } from 'quasar'
 import { api } from 'boot/axios'
 import { notifyError } from 'src/utils/alerts'
-// import _ from 'lodash'
 import { useEnvStore } from 'src/stores/deploymentEnvironment'
-
-// const $q = useQuasar()
 
 // Reactive data
 const releases = ref([])
