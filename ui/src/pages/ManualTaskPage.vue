@@ -236,12 +236,12 @@ const taskColumns = ref([
   }
 ])
 
-// Computed data
-const stageOptions = computed(() => releaseStages.stages)
-
 // Stores
 const envs = useEnvStore()
 const releaseStages = useReleaseStageStore()
+
+// Computed data
+const stageOptions = computed(() => releaseStages.stages)
 
 // Constant data
 const statusOptions = ['PENDING', 'COMPLETE', 'NOT_REQUIRED']
