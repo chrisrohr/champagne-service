@@ -148,10 +148,11 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { api } from 'boot/axios'
 import { notifyError } from 'src/utils/alerts'
 import { useEnvStore } from 'src/stores/deploymentEnvironment'
+import { useReleaseStageStore } from 'src/stores/releaseStageStore'
 
 // Reactive data
 const releases = ref([])
@@ -235,12 +236,15 @@ const taskColumns = ref([
   }
 ])
 
+// Computed data
+const stageOptions = computed(() => releaseStages.stages)
+
 // Stores
 const envs = useEnvStore()
+const releaseStages = useReleaseStageStore()
 
 // Constant data
 const statusOptions = ['PENDING', 'COMPLETE', 'NOT_REQUIRED']
-const stageOptions = ['PRE', 'POST']
 const taskListingPagination = {
   rowsPerPage: 200
 }
@@ -410,6 +414,8 @@ function deleteTask (task) {
 }
 
 onMounted(() => {
+  releaseStages.load()
+
   envs.load()
     .then(() => {
       const envCols = envColumns()

@@ -14,6 +14,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.kiwiproject.champagne.model.AuditRecord.Action;
 import org.kiwiproject.champagne.model.manualdeployment.DeploymentTaskStatus;
 import org.kiwiproject.champagne.model.manualdeployment.Release;
+import org.kiwiproject.champagne.model.manualdeployment.ReleaseStage;
 import org.kiwiproject.champagne.model.manualdeployment.ReleaseStatus;
 import org.kiwiproject.champagne.model.manualdeployment.Task;
 import org.kiwiproject.champagne.model.manualdeployment.TaskStatus;
@@ -288,5 +289,13 @@ public class TaskResource extends AuditableResource {
         calculateReleaseStatus(releaseId);
 
         return Response.accepted().build();
+    }
+
+    @GET
+    @Path("/stages")
+    @Timed
+    @ExceptionMetered
+    public Response getReleaseStages() {
+        return Response.ok(ReleaseStage.values()).build();
     }
 }

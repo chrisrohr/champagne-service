@@ -701,6 +701,26 @@ class TaskResourceTest {
         }
     }
 
+    @Nested
+    class GetReleaseStages {
+
+        @Test
+        void shouldReleaseStages() {
+            var response = RESOURCES.client()
+                .target("/manual/deployment/tasks/stages")
+                .request()
+                .get();
+
+            assertOkResponse(response);
+
+            var result = response.readEntity(new GenericType<List<ReleaseStage>>(){});
+
+            assertThat(result).contains(ReleaseStage.values());
+        }
+        
+    }
+    
+
     private void verifyAuditRecorded(long id, Class<?> taskClass, Action action) {
         verify(AUDIT_RECORD_DAO).insertAuditRecord(argThat(audit -> {
             return audit.getRecordId() == id 
