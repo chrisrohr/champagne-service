@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { api } from 'src/boot/axios'
 import { ref } from 'vue'
+import { doPagedRequest } from 'src/utils/data'
 
 export const useReleaseStore = defineStore('release', () => {
   const releases = ref([])
@@ -12,22 +13,7 @@ export const useReleaseStore = defineStore('release', () => {
   })
 
   async function load (props) {
-    loading.value = true
-
-    if (props !== undefined) {
-      pagination.value.page = props.pagination.page
-      pagination.value.rowsPerPage = props.pagination.rowsPerPage
-    }
-
-    const params = {
-      pageNumber: pagination.value.page,
-      pageSize: pagination.value.rowsPerPage
-    }
-
-    const response = await api.get('/manual/deployment/tasks/releases', { params })
-    releases.value = response.data.content
-    pagination.value.rowsNumber = response.data.totalElements
-    loading.value = false
+    doPagedRequest(loading, props, pagination, '/manual/deployment/tasks/releases', releases)
   }
 
   function create (releaseData, callback = () => {}) {
