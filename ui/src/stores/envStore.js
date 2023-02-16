@@ -11,6 +11,10 @@ export const useEnvStore = defineStore('env', () => {
     return envs.value.filter((env) => !env.deleted)
   })
 
+  const envsAsOptions = computed(() => {
+    return getActiveEnvs.value.map(e => { return { label: e.name, value: e.id } })
+  })
+
   function getEnvIdForName (name) {
     return _.first(getActiveEnvs.value.filter((env) => env.name === name)).id
   }
@@ -42,5 +46,5 @@ export const useEnvStore = defineStore('env', () => {
       .then(() => load())
   }
 
-  return { envs, loading, getActiveEnvs, getEnvIdForName, load, create, deactivate, activate, deleteEnv }
+  return { envs, loading, getActiveEnvs, envsAsOptions, getEnvIdForName, load, create, deactivate, activate, deleteEnv }
 })
