@@ -8,8 +8,9 @@
           round
           icon="menu"
           aria-label="Menu"
-          @click="toggleLeftDrawer"
+          @click="drawer = !drawer"
           class="text-grey-4"
+          v-if="authStore.isLoggedIn"
         />
 
         <q-avatar>
@@ -24,12 +25,17 @@
     </q-header>
 
     <q-drawer
-      v-model="leftDrawerOpen"
+      v-model="drawer"
       show-if-above
+
+      :mini="miniState"
+      @mouseover="miniState = false"
+      @mouseout="miniState = true"
+
       bordered
       :width="200"
       :breakpoint="800"
-      side="left"
+      v-if="authStore.isLoggedIn"
     >
     <q-scroll-area style="height: 100%; border-right: 1px solid #ddd">
         <q-list padding>
@@ -106,17 +112,14 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import { useAuthStore } from 'stores/auth'
 
-const leftDrawerOpen = ref(false)
+// Stores
 const authStore = useAuthStore()
 
-function toggleLeftDrawer () {
-  leftDrawerOpen.value = !leftDrawerOpen.value
-}
+// Reactive data
+const drawer = ref(false)
+const miniState = ref(true)
 
-onMounted(() => {
-  leftDrawerOpen.value = authStore.isLoggedIn
-})
 </script>
