@@ -160,14 +160,14 @@ class HostConfigurationResourceTest {
         }
     }
 
-    private void verifyAuditRecorded(long id, Class<?> recordClass, Action action) {
+    private void verifyAuditRecorded(long id, Class<?> auditRecordClass, Action action) {
         var argCapture = ArgumentCaptor.forClass(AuditRecord.class);
         verify(AUDIT_RECORD_DAO).insertAuditRecord(argCapture.capture());
 
         var audit = argCapture.getValue();
 
         assertThat(audit.getRecordId()).isEqualTo(id);
-        assertThat(audit.getRecordType()).isEqualTo(recordClass.getSimpleName());
+        assertThat(audit.getRecordType()).isEqualTo(auditRecordClass.getSimpleName());
         assertThat(audit.getAction()).isEqualTo(action);
     }
     
