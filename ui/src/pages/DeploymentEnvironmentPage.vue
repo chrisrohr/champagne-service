@@ -1,6 +1,6 @@
 <template>
   <q-page padding>
-    <q-table title="Deployment Environments" :columns="envColumns" :rows="envs" :loading="loading" :pagination="pagination">
+    <q-table title="Deployment Environments" :columns="envColumns" :rows="envStore.envs" :loading="envStore.loading" :pagination="pagination" hide-pagination>
 
       <template v-slot:body-cell-name="props">
         <q-td :props="props">
@@ -32,10 +32,10 @@
 
       <template v-slot:body-cell-actions="props">
         <q-td :props="props">
-          <q-btn size="sm" icon="visibility_off" @click="deactivateEnv(props.row)" v-if="!props.row.deleted">
+          <q-btn size="sm" icon="visibility_off" @click="envStore.deactivate(props.row.id)" v-if="!props.row.deleted">
             <q-tooltip>Deactivate Environment</q-tooltip>
           </q-btn>
-          <q-btn size="sm" icon="visibility" @click="activateEnv(props.row)" v-if="props.row.deleted">
+          <q-btn size="sm" icon="visibility" @click="envStore.activate(props.row.id)" v-if="props.row.deleted">
             <q-tooltip>Activate Environment</q-tooltip>
           </q-btn>
           <q-btn size="sm" icon="delete" @click="deleteEnv(props.row)">
@@ -73,24 +73,22 @@
 import { onMounted, ref } from 'vue'
 import { formatDate, fromNow } from '../utils/time'
 import { useQuasar } from 'quasar'
-import { api } from 'boot/axios'
-import { useEnvStore } from 'stores/deploymentEnvironment'
+import { useEnvStore } from 'stores/envStore'
 
 const $q = useQuasar()
 const envStore = useEnvStore()
 
 // Reactive data
-const envs = ref([])
-const loading = ref(false)
-const pagination = ref({
-  rowsPerPage: 20
-})
 const showEnvAdd = ref(false)
 const activeEnv = ref({
   name: ''
 })
 
 // Constant data
+const pagination = {
+  rowsPerPage: 200
+}
+
 const envColumns = [
   {
     name: 'name',
@@ -116,32 +114,9 @@ const envColumns = [
 ]
 
 // Methods
-function loadEnvs () {
-  loading.value = true
-  envStore.load()
-    .then(() => {
-      envs.value = envStore.envs
-    })
-    .finally(() => {
-      loading.value = false
-    })
-}
-
 function createEnv () {
   showEnvAdd.value = false
-
-  api.post('/environments', activeEnv.value)
-    .then(() => loadEnvs())
-}
-
-function deactivateEnv (env) {
-  api.delete(`/environments/${env.id}/deactivate`)
-    .then(() => loadEnvs())
-}
-
-function activateEnv (env) {
-  api.put(`/environments/${env.id}/activate`)
-    .then(() => loadEnvs())
+  envStore.create(activeEnv.value)
 }
 
 function deleteEnv (env) {
@@ -151,8 +126,7 @@ function deleteEnv (env) {
     cancel: true,
     persistent: true
   }).onOk(() => {
-    api.delete(`/environments/${env.id}/delete`)
-      .then(() => loadEnvs())
+    envStore.deleteEnv(env.id)
   })
 }
 
@@ -161,6 +135,6 @@ function envTextClass (env) {
 }
 
 onMounted(() => {
-  loadEnvs()
+  envStore.load()
 })
 </script>

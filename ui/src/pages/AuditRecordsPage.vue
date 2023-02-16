@@ -1,6 +1,6 @@
 <template>
     <q-page padding>
-      <q-table title="Audits" :columns="auditColumns" :rows="audits" :loading="loading" v-model:pagination="pagination" @request="loadAudits">
+      <q-table title="Audits" :columns="auditColumns" :rows="auditStore.audits" :loading="auditStore.loading" v-model:pagination="auditStore.pagination" @request="auditStore.load">
 
         <template v-slot:body-cell-timestamp="props">
           <q-td :props="props">
@@ -18,18 +18,14 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted } from 'vue'
 import { formatDate, fromNow } from '../utils/time'
-import { api } from 'boot/axios'
+import { useAuditStore } from 'stores/auditStore'
+
+// Stores
+const auditStore = useAuditStore()
 
 // Reactive data
-const audits = ref([])
-const loading = ref(false)
-const pagination = ref({
-  page: 1,
-  rowsPerPage: 20,
-  rowsNumber: 0
-})
 
 // Constant data
 const auditColumns = [
@@ -65,33 +61,8 @@ const auditColumns = [
 ]
 
 // Methods
-function loadAudits (props) {
-  loading.value = true
-
-  let { page, rowsPerPage } = pagination.value
-
-  if (props !== undefined) {
-    page = props.pagination.page
-    rowsPerPage = props.pagination.rowsPerPage
-  }
-
-  const params = {
-    pageNumber: page,
-    pageSize: rowsPerPage
-  }
-
-  api.get('/audit', { params })
-    .then((response) => {
-      const { data } = response
-      audits.value = data.content
-      pagination.value.page = page
-      pagination.value.rowsPerPage = rowsPerPage
-      pagination.value.rowsNumber = data.totalElements
-    })
-    .finally(() => { loading.value = false })
-}
 
 onMounted(() => {
-  loadAudits()
+  auditStore.load()
 })
 </script>

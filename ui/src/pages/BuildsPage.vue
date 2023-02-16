@@ -1,10 +1,10 @@
 <template>
   <q-page class="q-pa-md">
-    <q-table title="Recent Builds" :columns="buildColumns" :rows="builds" :loading="loading" v-model:pagination="pagination" @request="loadBuilds">
+    <q-table title="Recent Builds" :columns="buildColumns" :rows="buildStore.builds" :loading="buildStore.loading" v-model:pagination="buildStore.pagination" @request="buildStore.load">
 
       <template v-slot:top-right>
-        <q-select outlined emit-value map-options v-model="filterType" :options="filterTypes" label="Filter By" dense style="min-width: 150px"/>
-        <q-input outlined v-model="filter" debounce="300" label="Type value to search" placeholder="Search" dense class="q-ml-xs" style="min-width: 250px">
+        <q-select outlined emit-value map-options v-model="buildStore.filterType" :options="filterTypes" label="Filter By" dense style="min-width: 150px" @update:model-value="buildStore.load()"/>
+        <q-input outlined v-model="buildStore.filter" debounce="300" label="Type value to search" placeholder="Search" dense class="q-ml-xs" style="min-width: 250px" @update:model-value="buildStore.load()">
           <template v-slot:append>
             <q-icon name="search" />
           </template>
@@ -55,20 +55,14 @@
 </template>
 
 <script setup>
-import { onMounted, ref, watch } from 'vue'
+import { onMounted } from 'vue'
 import { formatDate, fromNow } from '../utils/time'
-import { api } from 'boot/axios'
+import { useBuildStore } from 'stores/buildStore'
+
+// Stores
+const buildStore = useBuildStore()
 
 // Reactive data
-const builds = ref([])
-const loading = ref(false)
-const pagination = ref({
-  page: 1,
-  rowsPerPage: 20,
-  rowsNumber: 0
-})
-const filter = ref('')
-const filterType = ref('componentIdentifierFilter')
 
 // Constant data
 const buildColumns = [
@@ -130,36 +124,6 @@ const filterTypes = [
 ]
 
 // Methods
-function loadBuilds (props) {
-  loading.value = true
-
-  let { page, rowsPerPage } = pagination.value
-
-  if (props !== undefined) {
-    page = props.pagination.page
-    rowsPerPage = props.pagination.rowsPerPage
-  }
-
-  const params = {
-    pageNumber: page,
-    pageSize: rowsPerPage
-  }
-
-  if (filter.value !== '') {
-    params[filterType.value] = filter.value
-  }
-
-  api.get('/build', { params })
-    .then((response) => {
-      const { data } = response
-      builds.value = data.content
-      pagination.value.page = page
-      pagination.value.rowsPerPage = rowsPerPage
-      pagination.value.rowsNumber = data.totalElements
-    })
-    .finally(() => { loading.value = false })
-}
-
 function formatChangeLog (line, build) {
   // TODO: Need to track which git provider is being used so we can create links to the commit ref
   return line
@@ -170,14 +134,10 @@ function startPromotionOfBuild (build) {
 }
 
 function startPreviewPromotion (build) {
-  alert('Comming soon')
+  alert('Coming soon')
 }
 
-watch(filter, () => {
-  loadBuilds()
-})
-
 onMounted(() => {
-  loadBuilds()
+  buildStore.load()
 })
 </script>

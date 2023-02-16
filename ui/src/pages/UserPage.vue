@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <q-table title="System Users" :columns="userColumns" :rows="users" :loading="loading" :pagination="pagination">
+    <q-table title="System Users" :columns="userColumns" :rows="userStore.users" :loading="userStore.loading" v-model:pagination="userStore.pagination" @request="userStore.load">
 
       <template v-slot:body-cell-createdAt="props">
         <q-td :props="props">
@@ -75,16 +75,14 @@
 import { onMounted, ref } from 'vue'
 import { formatDate, fromNow } from '../utils/time'
 import { useQuasar } from 'quasar'
-import { api } from 'boot/axios'
+import { useUserStore } from 'stores/userStore'
 
 const $q = useQuasar()
 
+// Stores
+const userStore = useUserStore()
+
 // Reactive data
-const users = ref([])
-const loading = ref(false)
-const pagination = ref({
-  rowsPerPage: 20
-})
 const showUserAdd = ref(false)
 const activeUser = ref({
   firstName: '',
@@ -119,27 +117,13 @@ const userColumns = [
 ]
 
 // Methods
-// TODO: Should we switch this local use of users to a store?
-function loadUsers () {
-  loading.value = true
-  api.get('/users')
-    .then((response) => {
-      users.value = response.data.content
-    })
-    .finally(() => {
-      loading.value = false
-    })
-}
-
 function updateDisplayName () {
   activeUser.value.displayName = `${activeUser.value.firstName} ${activeUser.value.lastName}`
 }
 
 function createUser () {
   showUserAdd.value = false
-
-  api.post('/users', activeUser.value)
-    .then(() => loadUsers())
+  userStore.create(activeUser.value)
 }
 
 function deleteUser (name, id) {
@@ -149,12 +133,11 @@ function deleteUser (name, id) {
     cancel: true,
     persistent: true
   }).onOk(() => {
-    api.delete(`/users/${id}`)
-      .then(() => loadUsers())
+    userStore.deleteUser(id)
   })
 }
 
 onMounted(() => {
-  loadUsers()
+  userStore.load()
 })
 </script>
