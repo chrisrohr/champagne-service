@@ -67,7 +67,7 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { useEnvStore } from 'src/stores/deploymentEnvironment'
+import { useEnvStore } from 'stores/envStore'
 import { api } from 'src/boot/axios'
 import { useQuasar } from 'quasar'
 import { _ } from 'lodash'
