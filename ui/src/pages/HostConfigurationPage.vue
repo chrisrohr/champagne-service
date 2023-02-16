@@ -13,7 +13,7 @@
       <template v-slot:body="props">
         <q-tr :props="props">
           <q-td>
-            <q-btn round size="sm" color="primary" :icon="props.expand ? 'remove' : 'add'" @click="props.expand = !props.expand"/>
+            <q-btn round size="sm" color="primary" :icon="props.expand ? 'remove' : 'add'" @click="handleHostExpansion(props)"/>
           </q-td>
           <q-td key="hostname" :props="props">
             {{ props.row.hostname }}
@@ -33,11 +33,37 @@
             </q-btn>
           </q-td>
         </q-tr>
+        <q-tr v-show="props.expand" :props="props">
+          <q-td colspan="100%">
+            <q-table :columns="componentColumns" :rows="componentsByHost[props.row.id]" :pagination="pagination" :loading="componentsByHostLoading[props.row.id]" hide-pagination>
+              <template v-slot:body-cell-currentVersion="props">
+                <q-td :props="props">
+                  Coming Soon
+                </q-td>
+              </template>
+
+              <template v-slot:body-cell-actions="props">
+                <q-td :props="props">
+                  <q-btn size="sm" icon="delete" @click="deleteComponent(props.row)">
+                    <q-tooltip>Remove component</q-tooltip>
+                  </q-btn>
+                </q-td>
+              </template>
+            </q-table>
+          </q-td>
+        </q-tr>
       </template>
     </q-table>
 
     <q-page-sticky position="bottom-right" :offset="[18, 18]">
-      <q-btn fab icon="add" color="accent" @click="showHostAdd = true" />
+      <q-fab icon="add" direction="up" color="accent">
+        <q-fab-action @click="showHostAdd = true" color="primary" icon="computer">
+          <q-tooltip anchor="top left">New Host</q-tooltip>
+        </q-fab-action>
+        <q-fab-action @click="showComponentAdd = true" color="primary" icon="fa-solid fa-cube">
+          <q-tooltip anchor="top left">New Component</q-tooltip>
+        </q-fab-action>
+      </q-fab>
     </q-page-sticky>
 
     <q-dialog v-model="showHostAdd">
@@ -49,7 +75,7 @@
           <q-input v-model="host.hostname" type="text" label="Hostname" outlined dense style="min-width: 205px"/>
         </q-card-section>
         <q-card-section class="row">
-          <q-input v-model="host.tag" label="Tags" debounce="300" @keyup.enter="addTag" outlined dense style="min-width: 205px"/>
+          <q-input v-model="host.tag" type="text" label="Tags" debounce="300" @keyup.enter="addTag" outlined dense style="min-width: 205px"/>
         </q-card-section>
         <q-card-section class="row q-pt-none">
           <q-chip removable @remove="deleteTag(tag)" v-for="tag in host.tags" v-bind:key="tag">
@@ -59,6 +85,24 @@
         <q-card-actions align="right">
           <q-btn flat label="Cancel" v-close-popup/>
           <q-btn flat label="Save" class="text-primary" @click="createHost"/>
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="showComponentAdd">
+      <q-card>
+        <q-card-section>
+          <div class="text-h6">Add New Component</div>
+        </q-card-section>
+        <q-card-section class="row">
+          <q-input v-model="component.componentName" type="text" label="Name" outlined dense style="min-width: 205px"/>
+        </q-card-section>
+        <q-card-section class="row">
+          <q-input v-model="component.tag" type="text" label="Tag" outlined dense style="min-width: 205px"/>
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Cancel" v-close-popup/>
+          <q-btn flat label="Save" class="text-primary" @click="createComponent"/>
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -88,6 +132,13 @@ const host = ref({
   tags: []
 })
 const showHostAdd = ref(false)
+const componentsByHost = ref({})
+const componentsByHostLoading = ref({})
+const showComponentAdd = ref(false)
+const component = ref({
+  componentName: '',
+  tag: ''
+})
 
 // Computed data
 const environments = computed(() => envs.getActiveEnvs.map(e => { return { label: e.name, value: e.id } }))
@@ -119,6 +170,30 @@ const hostColumns = [
   {
     name: 'source',
     label: 'Source',
+    align: 'left'
+  },
+  {
+    name: 'actions',
+    label: 'Actions',
+    align: 'left'
+  }
+]
+const componentColumns = [
+  {
+    name: 'componentName',
+    label: 'Component Name',
+    field: 'componentName',
+    align: 'left'
+  },
+  {
+    name: 'currentVersion',
+    label: 'Current Version',
+    align: 'left'
+  },
+  {
+    name: 'tag',
+    label: 'Tag',
+    field: 'tag',
     align: 'left'
   },
   {
@@ -177,6 +252,42 @@ function deleteHost (host) {
     persistent: true
   }).onOk(() => {
     api.delete(`/host/${host.id}`)
+      .then(() => loadHosts())
+  })
+}
+
+function handleHostExpansion (props) {
+  props.expand = !props.expand
+
+  if (props.expand) {
+    componentsByHostLoading.value[props.row.id] = true
+
+    api.get(`/host/${props.row.id}/components`)
+      .then(response => {
+        componentsByHost.value[props.row.id] = response.data
+      })
+      .finally(() => {
+        componentsByHostLoading.value[props.row.id] = false
+      })
+  }
+}
+
+function createComponent () {
+  api.post('/host/component', component.value)
+    .then(() => {
+      showComponentAdd.value = false
+      loadHosts()
+    })
+}
+
+function deleteComponent (component) {
+  $q.dialog({
+    title: 'Hold Up!',
+    message: `Are you sure you want to delete component ${component.componentName}?`,
+    cancel: true,
+    persistent: true
+  }).onOk(() => {
+    api.delete(`/host/component/${component.id}`)
       .then(() => loadHosts())
   })
 }

@@ -16,6 +16,7 @@ import org.jdbi.v3.postgres.PostgresPlugin;
 import org.kiwiproject.champagne.config.AppConfig;
 import org.kiwiproject.champagne.dao.AuditRecordDao;
 import org.kiwiproject.champagne.dao.BuildDao;
+import org.kiwiproject.champagne.dao.ComponentDao;
 import org.kiwiproject.champagne.dao.DeploymentEnvironmentDao;
 import org.kiwiproject.champagne.dao.HostDao;
 import org.kiwiproject.champagne.dao.ReleaseDao;
@@ -88,6 +89,7 @@ public class App extends Application<AppConfig> {
         var deploymentEnvironmentDao = jdbi.onDemand(DeploymentEnvironmentDao.class);
         var buildDao = jdbi.onDemand(BuildDao.class);
         var hostDao = jdbi.onDemand(HostDao.class);
+        var componentDao = jdbi.onDemand(ComponentDao.class);
 
         var jsonHelper = JsonHelper.newDropwizardJsonHelper();
         jdbi.registerRowMapper(Build.class, new BuildMapper(jsonHelper));
@@ -96,7 +98,7 @@ public class App extends Application<AppConfig> {
         environment.jersey().register(new AuditRecordResource(auditRecordDao));
         environment.jersey().register(new BuildResource(buildDao, jsonHelper));
         environment.jersey().register(new DeploymentEnvironmentResource(deploymentEnvironmentDao, auditRecordDao));
-        environment.jersey().register(new HostConfigurationResource(hostDao, auditRecordDao));
+        environment.jersey().register(new HostConfigurationResource(hostDao, componentDao, auditRecordDao));
         environment.jersey().register(new TaskResource(releaseDao, releaseStatusDao, taskDao, taskStatusDao, deploymentEnvironmentDao, auditRecordDao));
         environment.jersey().register(new UserResource(userDao, auditRecordDao));
 

@@ -121,4 +121,29 @@ class HostDaoTest {
 
     }
 
+    @Nested
+    class FindById {
+
+        @Test
+        void shouldReturnHostWhenFound() {
+            var envId = insertDeploymentEnvironmentRecord(handle, "dev");
+            var hostId = insertHostRecord(handle, "localhost", envId);
+
+            var host = dao.findById(hostId).orElseThrow();
+
+            assertThat(host.getHostname()).isEqualTo("localhost");
+            assertThat(host.getId()).isEqualTo(hostId);
+            assertThat(host.getEnvironmentId()).isEqualTo(envId);
+        }
+
+        @Test
+        void shouldReturnEmptyWhenNoHostFound() {
+            var envId = insertDeploymentEnvironmentRecord(handle, "dev");
+            insertHostRecord(handle, "localhost", envId);
+
+            var hosts = dao.findById(0L);
+            assertThat(hosts).isEmpty();
+        }
+    }
+
 }
