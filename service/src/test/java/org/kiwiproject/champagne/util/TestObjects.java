@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 import org.kiwiproject.champagne.model.AuditRecord;
 import org.kiwiproject.champagne.model.Build;
+import org.kiwiproject.champagne.model.Component;
 import org.kiwiproject.champagne.model.DeploymentEnvironment;
 import org.kiwiproject.champagne.model.Host;
 import org.kiwiproject.champagne.model.User;
@@ -176,6 +177,22 @@ public class TestObjects {
                 + "(:environmentId, :hostname, :source, :tagCsv)")
             .bindBean(hostToInsert)
             .bind("tagCsv", StringUtils.join(hostToInsert.getTags(), ","))
+            .executeAndReturnGeneratedKeys("id")
+            .mapTo(Long.class)
+            .first();
+    }
+
+    public static long insertComponentRecord(Handle handle, String componentName, String tag) {
+        var componentToInsert = Component.builder()
+                .componentName(componentName)
+                .tag(tag)
+                .build();
+
+        return handle.createUpdate("insert into components " 
+                + "(component_name, tag) " 
+                + "values " 
+                + "(:componentName, :tag)")
+            .bindBean(componentToInsert)
             .executeAndReturnGeneratedKeys("id")
             .mapTo(Long.class)
             .first();

@@ -1,6 +1,7 @@
 package org.kiwiproject.champagne.dao;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -23,4 +24,7 @@ public interface HostDao {
 
     @SqlUpdate("delete from hosts where id = :id")
     int deleteHost(@Bind("id") long id);
+
+    @SqlQuery("select * from hosts where id = :id")
+    Optional<Host> findById(@Bind("id") long id);
 }
