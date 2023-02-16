@@ -1,6 +1,6 @@
 <template>
   <q-page padding>
-    <q-table :columns="releaseColumns" :rows="releases" :loading="releaseLoading" v-model:pagination="releasePagination" row-key="releaseId" @request="loadReleases" title="Manual Deployment Tasks">
+    <q-table :columns="releaseColumns" :rows="releaseStore.releases" :loading="releaseStore.loading" v-model:pagination="releaseStore.pagination" row-key="releaseId" @request="releaseStore.load" title="Manual Deployment Tasks">
       <template v-slot:body="props">
         <q-tr :props="props">
           <q-td>
@@ -39,7 +39,7 @@
         </q-tr>
         <q-tr v-show="props.expand" :props="props">
           <q-td colspan="100%">
-            <q-table :columns="taskColumns" :rows="taskListingData[props.row.id]" :pagination="taskListingPagination" hide-pagination row-key="id" :loading="taskListingLoading[props.row.id]">
+            <q-table :columns="taskColumns" :rows="taskStore.tasksForRelease(props.row.id)" :pagination="taskListingPagination" hide-pagination row-key="id" :loading="taskStore.loadingForTasks(props.row.id)">
               <template v-slot:body="props">
                 <q-td key="stage" :props="props">
                   {{ props.row.stage }}
@@ -136,7 +136,7 @@
           <q-input v-model="task.component" type="text" disabled="true" outlined dense style="min-width: 205px" label="Component"/>
         </q-card-section>
         <q-card-section class="row">
-          <q-select v-model="task.stage" :options="stageOptions" label="Stage" outlined dense style="min-width: 205px"/>
+          <q-select v-model="task.stage" :options="releaseStagesStore.stages" label="Stage" outlined dense style="min-width: 205px"/>
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Cancel" v-close-popup />
@@ -148,24 +148,35 @@
 </template>
 
 <script setup>
-import { onMounted, ref, computed } from 'vue'
-import { api } from 'boot/axios'
+import { onMounted, ref } from 'vue'
 import { notifyError } from 'src/utils/alerts'
-import { useEnvStore } from 'src/stores/deploymentEnvironment'
+import { useEnvStore } from 'stores/envStore'
 import { useReleaseStageStore } from 'src/stores/releaseStageStore'
+import { useReleaseStore } from 'stores/releaseStore'
+import { useTaskStore } from 'stores/taskStore'
+
+// Stores
+const envStore = useEnvStore()
+const releaseStagesStore = useReleaseStageStore()
+const releaseStore = useReleaseStore()
+const taskStore = useTaskStore()
 
 // Reactive data
-const releases = ref([])
-const releaseLoading = ref(false)
-const releasePagination = ref({
-  page: 1,
-  rowsPerPage: 20,
-  rowsNumber: 0
-})
 const showReleaseAdd = ref(false)
 const release = ref({
   releaseNumber: ''
 })
+
+const showAddTaskDialog = ref(false)
+const task = ref({
+  releaseId: null,
+  stage: '',
+  summary: '',
+  description: '',
+  component: ''
+})
+
+const showUpdateStatusDialog = ref(false)
 const update = ref({
   type: '',
   id: null,
@@ -174,17 +185,6 @@ const update = ref({
   status: '',
   releaseId: null
 })
-const showUpdateStatusDialog = ref(false)
-const task = ref({
-  releaseId: null,
-  stage: '',
-  summary: '',
-  description: '',
-  component: ''
-})
-const showAddTaskDialog = ref(false)
-const taskListingLoading = ref({})
-const taskListingData = ref({})
 
 const releaseColumns = ref([
   {
@@ -236,13 +236,6 @@ const taskColumns = ref([
   }
 ])
 
-// Stores
-const envs = useEnvStore()
-const releaseStages = useReleaseStageStore()
-
-// Computed data
-const stageOptions = computed(() => releaseStages.stages)
-
 // Constant data
 const statusOptions = ['PENDING', 'COMPLETE', 'NOT_REQUIRED']
 const taskListingPagination = {
@@ -251,42 +244,13 @@ const taskListingPagination = {
 
 // Methods
 function envColumns () {
-  const envNames = envs.getActiveEnvs.map((env) => {
+  return envStore.getActiveEnvs.map((env) => {
     return {
       name: `${env.name}Status`,
       label: env.name,
       align: 'center'
     }
   })
-  return envNames
-}
-
-function loadReleases (props) {
-  releaseLoading.value = true
-
-  let { page, rowsPerPage } = releasePagination.value
-
-  if (props !== undefined) {
-    page = props.releasePagination.page
-    rowsPerPage = props.pagination.rowsPerPage
-  }
-
-  const params = {
-    pageNumber: page,
-    pageSize: rowsPerPage
-  }
-
-  api.get('/manual/deployment/tasks/releases', { params })
-    .then((response) => {
-      const { data } = response
-      releases.value = data.content
-      releasePagination.value.page = page
-      releasePagination.value.rowsPerPage = rowsPerPage
-      releasePagination.value.rowsNumber = data.totalElements
-    })
-    .finally(() => {
-      releaseLoading.value = false
-    })
 }
 
 function createRelease () {
@@ -295,12 +259,10 @@ function createRelease () {
     return
   }
 
-  api.post('/manual/deployment/tasks/releases', release.value)
-    .then(() => {
-      release.value.releaseNumber = ''
-      showReleaseAdd.value = false
-      loadReleases()
-    })
+  releaseStore.create(release.value, () => {
+    showReleaseAdd.value = false
+    release.value.releaseNumber = ''
+  })
 }
 
 function handleExpansion (props) {
@@ -312,21 +274,14 @@ function handleExpansion (props) {
 }
 
 function isInStatus (env, release, status) {
-  const envId = envs.getEnvIdForName(env)
+  const envId = envStore.getEnvIdForName(env)
   return release.environmentStatus[envId].status === status
-}
-
-function deleteRelease (release) {
-  api.delete(`/manual/deployment/tasks/releases/${release.id}`)
-    .then(() => {
-      loadReleases()
-    })
 }
 
 function startStatusUpdate (type, row, env) {
   update.value.type = type
   update.value.env = env
-  update.value.envId = envs.getEnvIdForName(env)
+  update.value.envId = envStore.getEnvIdForName(env)
   update.value.id = row.environmentStatus[update.value.envId].id
   update.value.status = row.environmentStatus[update.value.envId].status
   update.value.releaseId = row.releaseId
@@ -340,24 +295,26 @@ function updateStatus () {
   }
 
   const updateType = update.value.type
-  const baseUri = updateType === 'RELEASE' ? '/releases' : ''
 
-  api.put(`/manual/deployment/tasks${baseUri}/${update.value.id}/${update.value.status}`)
-    .then(() => {
-      if (updateType === 'RELEASE') {
-        loadReleases()
-      } else {
-        loadTasksForRelease(update.value.releaseId)
-      }
-
-      update.value.type = ''
-      update.value.id = null
-      update.value.env = ''
-      update.value.envId = null
-      update.value.status = ''
-      update.value.releaseId = null
-      showUpdateStatusDialog.value = false
+  if (updateType === 'RELEASE') {
+    releaseStore.updateStatus(update.value.id, update.value.status, resetUpdateStatusDialog)
+  } else {
+    taskStore.updateStatus(update.value.id, update.value.status, () => {
+      taskStore.load(update.value.releaseId)
+      releaseStore.load()
+      resetUpdateStatusDialog()
     })
+  }
+}
+
+function resetUpdateStatusDialog () {
+  update.value.type = ''
+  update.value.id = null
+  update.value.env = ''
+  update.value.envId = null
+  update.value.status = ''
+  update.value.releaseId = null
+  showUpdateStatusDialog.value = false
 }
 
 function startAddTask (release) {
@@ -381,48 +338,38 @@ function createTask () {
     return
   }
 
-  api.post('/manual/deployment/tasks', task.value)
-    .then(() => {
-      loadTasksForRelease(task.value.releaseId)
+  taskStore.create(task.value, () => {
+    task.value.releaseId = null
+    task.value.summary = ''
+    task.value.description = ''
+    task.value.component = ''
+    task.value.stage = ''
 
-      task.value.releaseId = null
-      task.value.summary = ''
-      task.value.description = ''
-      task.value.component = ''
-      task.value.stage = ''
-
-      showAddTaskDialog.value = false
-    })
+    showAddTaskDialog.value = false
+  })
 }
 
 function loadTasksForRelease (releaseId) {
-  taskListingLoading.value[releaseId] = true
-  api.get(`/manual/deployment/tasks/releases/${releaseId}`)
-    .then((response) => {
-      taskListingData.value[releaseId] = response.data
-    })
-    .finally(() => {
-      taskListingLoading.value[releaseId] = false
-    })
+  taskStore.load(releaseId)
 }
 
 function deleteTask (task) {
-  api.delete(`/manual/deployment/tasks/${task.id}`)
-    .then(() => {
-      loadTasksForRelease(task.releaseId)
-    })
+  taskStore.deleteTask(task.id, task.releaseId)
+}
+
+function deleteRelease (release) {
+  releaseStore.deleteRelease(release.id)
 }
 
 onMounted(() => {
-  releaseStages.load()
-
-  envs.load()
+  releaseStagesStore.load()
+  envStore.load()
     .then(() => {
       const envCols = envColumns()
       releaseColumns.value.splice(releaseColumns.value.length - 1, 0, ...envCols)
       taskColumns.value.splice(taskColumns.value.length - 1, 0, ...envCols)
 
-      loadReleases()
+      releaseStore.load()
     })
 })
 </script>
