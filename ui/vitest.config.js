@@ -6,6 +6,7 @@ import jsconfigPaths from 'vite-jsconfig-paths';
 // https://vitejs.dev/config/
 export default defineConfig({
   test: {
+    globals: true,
     environment: 'happy-dom',
     setupFiles: 'test/vitest/setup-file.js',
     include: [
@@ -14,6 +15,11 @@ export default defineConfig({
       'src/**/*.vitest.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
       'test/vitest/__tests__/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
     ],
+    coverage: {
+      all: true,
+      exclude: ['*.config.js', '.quasar/**/*', '.eslintrc.js', 'test/**/*', 'src/stores/store-flag.d.ts', 'src/stores/index.js', 'src/boot/**/*'],
+      reporter: ['lcov', 'text', 'html']
+    }
   },
   plugins: [
     vue({

@@ -38,7 +38,7 @@
           <q-btn size="sm" icon="visibility" @click="envStore.activate(props.row.id)" v-if="props.row.deleted">
             <q-tooltip>Activate Environment</q-tooltip>
           </q-btn>
-          <q-btn size="sm" icon="delete" @click="deleteEnv(props.row)">
+          <q-btn size="sm" icon="delete" @click="confirmDelete(props.row)">
             <q-tooltip>Delete Environment</q-tooltip>
           </q-btn>
         </q-td>
@@ -72,10 +72,9 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { formatDate, fromNow } from '../utils/time'
-import { useQuasar } from 'quasar'
+import { confirmAction } from '../utils/alerts'
 import { useEnvStore } from 'stores/envStore'
 
-const $q = useQuasar()
 const envStore = useEnvStore()
 
 // Reactive data
@@ -119,15 +118,15 @@ function createEnv () {
   envStore.create(activeEnv.value)
 }
 
-function deleteEnv (env) {
-  $q.dialog({
-    title: 'Hold Up!',
-    message: `Are you sure you want to delete environment ${env.name}? This will cause all related deployments to be deleted as well!`,
-    cancel: true,
-    persistent: true
-  }).onOk(() => {
-    envStore.deleteEnv(env.id)
-  })
+function confirmDelete (env) {
+  confirmAction(
+    `Are you sure you want to delete environment ${env.name}? This will cause all related deployments to be deleted as well!`,
+    () => deleteEnv(env.id)
+  )
+}
+
+function deleteEnv (id) {
+  envStore.deleteEnv(id)
 }
 
 function envTextClass (env) {
