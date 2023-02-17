@@ -1,9 +1,9 @@
 <template>
   <q-page class="q-pa-md">
-    <q-table :columns="hostColumns" :rows="hosts" :loading="hostLoading" :pagination="pagination" title="Hosts" hide-pagination>
+    <q-table :columns="hostColumns" :rows="hostStore.hosts" :loading="hostStore.loading" :pagination="pagination" title="Hosts" hide-pagination>
       <template v-slot:top>
-        <q-select outlined dense v-model="environmentFilter" :options="environments" label="Environment" style="min-width: 150px" :display-value="`${environmentFilter.label}`"/>
-        <q-input outlined dense v-model="componentFilter" debounce="300" label="Type component name to search" class="q-ml-xs" style="min-width: 300px">
+        <q-select outlined dense v-model="hostStore.environmentFilter" :options="envStore.envsAsOptions" label="Environment" style="min-width: 150px" :display-value="`${hostStore.environmentFilter.label}`"/>
+        <q-input outlined dense v-model="hostStore.componentFilter" debounce="300" label="Type component name to search" class="q-ml-xs" style="min-width: 300px">
           <template v-slot:append>
             <q-icon name="search" />
           </template>
@@ -35,7 +35,7 @@
         </q-tr>
         <q-tr v-show="props.expand" :props="props">
           <q-td colspan="100%">
-            <q-table :columns="componentColumns" :rows="componentsByHost[props.row.id]" :pagination="pagination" :loading="componentsByHostLoading[props.row.id]" hide-pagination>
+            <q-table :columns="componentColumns" :rows="componentStore.componentsByHost(props.row.id)" :pagination="pagination" :loading="componentStore.loadingForComponents(props.row.id)" hide-pagination>
               <template v-slot:body-cell-currentVersion="props">
                 <q-td :props="props">
                   Coming Soon
@@ -110,38 +110,33 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useEnvStore } from 'stores/envStore'
-import { api } from 'src/boot/axios'
+import { useHostStore } from 'stores/hostStore'
+import { useComponentStore } from 'stores/componentStore'
 import { useQuasar } from 'quasar'
 import { _ } from 'lodash'
 
 const $q = useQuasar()
 
 // Stores
-const envs = useEnvStore()
+const envStore = useEnvStore()
+const hostStore = useHostStore()
+const componentStore = useComponentStore()
 
 // Reactive data
-const hosts = ref([])
-const hostLoading = ref(false)
-const environmentFilter = ref('')
-const componentFilter = ref('')
+const showHostAdd = ref(false)
 const host = ref({
   hostname: '',
   tag: '',
   tags: []
 })
-const showHostAdd = ref(false)
-const componentsByHost = ref({})
-const componentsByHostLoading = ref({})
+
 const showComponentAdd = ref(false)
 const component = ref({
   componentName: '',
   tag: ''
 })
-
-// Computed data
-const environments = computed(() => envs.getActiveEnvs.map(e => { return { label: e.name, value: e.id } }))
 
 // Constant data
 const pagination = {
@@ -204,18 +199,6 @@ const componentColumns = [
 ]
 
 // Methods
-function loadHosts () {
-  hostLoading.value = true
-
-  api.get(`/host/${environmentFilter.value.value}`, { componentFilter: componentFilter.value })
-    .then((response) => {
-      hosts.value = response.data
-    })
-    .finally(() => {
-      hostLoading.value = false
-    })
-}
-
 function addTag () {
   host.value.tags.push(host.value.tag)
   host.value.tag = ''
@@ -229,14 +212,12 @@ function createHost () {
   const hostData = {
     hostname: host.value.hostname,
     tags: host.value.tags,
-    source: 'CHAMPAGNE',
-    environmentId: environmentFilter.value.value
+    source: 'CHAMPAGNE'
   }
 
-  api.post('/host', hostData)
+  hostStore.create(hostData)
     .then(() => {
       showHostAdd.value = false
-      loadHosts()
     })
 }
 
@@ -251,8 +232,7 @@ function deleteHost (host) {
     cancel: true,
     persistent: true
   }).onOk(() => {
-    api.delete(`/host/${host.id}`)
-      .then(() => loadHosts())
+    hostStore.deleteHost(host.id)
   })
 }
 
@@ -260,23 +240,18 @@ function handleHostExpansion (props) {
   props.expand = !props.expand
 
   if (props.expand) {
-    componentsByHostLoading.value[props.row.id] = true
-
-    api.get(`/host/${props.row.id}/components`)
-      .then(response => {
-        componentsByHost.value[props.row.id] = response.data
-      })
-      .finally(() => {
-        componentsByHostLoading.value[props.row.id] = false
-      })
+    componentStore.load(props.row.id)
+    componentStore.expandedHosts.push(props.row.id)
+  } else {
+    _.pull(componentStore.expandedHosts, props.row.id)
   }
 }
 
 function createComponent () {
-  api.post('/host/component', component.value)
+  componentStore.create(component.value)
     .then(() => {
       showComponentAdd.value = false
-      loadHosts()
+      hostStore.load()
     })
 }
 
@@ -287,19 +262,15 @@ function deleteComponent (component) {
     cancel: true,
     persistent: true
   }).onOk(() => {
-    api.delete(`/host/component/${component.id}`)
-      .then(() => loadHosts())
+    componentStore.deleteComponent(component.id)
+      .then(() => hostStore.load())
   })
 }
 
-watch(environmentFilter, () => {
-  loadHosts()
-})
-
 onMounted(() => {
-  envs.load()
+  envStore.load()
     .then(() => {
-      environmentFilter.value = { label: envs.getActiveEnvs[0].name, value: envs.getActiveEnvs[0].id }
+      hostStore.environmentFilter = { label: envStore.getActiveEnvs[0].name, value: envStore.getActiveEnvs[0].id }
     })
 })
 </script>
