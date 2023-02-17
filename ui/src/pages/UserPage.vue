@@ -26,7 +26,7 @@
 
       <template v-slot:body-cell-actions="props">
         <q-td :props="props">
-          <q-btn size="sm" icon="delete" @click="deleteUser(props.row.displayName, props.row.id)">
+          <q-btn size="sm" icon="delete" @click="confirmDelete(props.row.displayName, props.row.id)">
             <q-tooltip>Delete User</q-tooltip>
           </q-btn>
         </q-td>
@@ -74,10 +74,8 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { formatDate, fromNow } from '../utils/time'
-import { useQuasar } from 'quasar'
 import { useUserStore } from 'stores/userStore'
-
-const $q = useQuasar()
+import { confirmAction } from 'src/utils/alerts'
 
 // Stores
 const userStore = useUserStore()
@@ -126,15 +124,15 @@ function createUser () {
   userStore.create(activeUser.value)
 }
 
-function deleteUser (name, id) {
-  $q.dialog({
-    title: 'Hold Up!',
-    message: `Are you sure you want to deactivate user ${name}?`,
-    cancel: true,
-    persistent: true
-  }).onOk(() => {
-    userStore.deleteUser(id)
-  })
+function confirmDelete (name, id) {
+  confirmAction(
+    `Are you sure you want to deactivate user ${name}?`,
+    () => deleteUser(id)
+  )
+}
+
+function deleteUser (id) {
+  userStore.deleteUser(id)
 }
 
 onMounted(() => {
