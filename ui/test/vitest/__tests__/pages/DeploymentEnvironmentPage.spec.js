@@ -1,18 +1,17 @@
-import { installQuasar } from '@quasar/quasar-app-extension-testing-unit-vitest';
-import { mount } from '@vue/test-utils';
-import { describe, expect, it } from 'vitest';
+import { installQuasar } from '@quasar/quasar-app-extension-testing-unit-vitest'
+import { mount } from '@vue/test-utils'
+import { describe, expect, it } from 'vitest'
 import DeploymentEnvironmentPage from 'pages/DeploymentEnvironmentPage.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { useEnvStore } from 'stores/envStore'
-import { Dialog } from 'quasar'
 
-installQuasar({ plugins: { Dialog }})
+installQuasar()
 
 const wrapper = mount(DeploymentEnvironmentPage, {
   global: {
     plugins: [createTestingPinia()]
   }
-});
+})
 
 describe('DeploymentEnvironmentPage', () => {
   it('should mount the deployment environments page without errors', () => {
@@ -28,7 +27,7 @@ describe('createEnv', () => {
     wrapper.vm.createEnv()
     expect(wrapper.vm.showEnvAdd).toBeFalsy()
     expect(envStore.create).toHaveBeenCalledTimes(1)
-    expect(envStore.create).toHaveBeenLastCalledWith({name: 'Bob'})
+    expect(envStore.create).toHaveBeenLastCalledWith({ name: 'Bob' })
   })
 })
 
@@ -47,24 +46,6 @@ describe('envTextClass', () => {
     }
     const textClass = wrapper.vm.envTextClass(env)
     expect(textClass).toBe('text-black')
-  })
-})
-
-describe('confirmDelete', () => {
-  it('should prompt for confirmation and call delete on the store if Ok', () => {
-    // TODO: I have no idea why this test can't find Dialog when the DialogComponent test works fine
-    // const envStore = useEnvStore()
-    //
-    // const env = {
-    //   id: 1
-    // }
-    //
-    // const spy = vi.spyOn(Dialog, 'create');
-    // wrapper.vm.confirmDelete(env)
-    // expect(spy).toHaveBeenCalled()
-    //
-    // expect(envStore.deleteEnv).toHaveBeenCalledTimes(1)
-    // expect(envStore.deleteEnv).toHaveBeenLastCalledWith({id: 1})
   })
 })
 

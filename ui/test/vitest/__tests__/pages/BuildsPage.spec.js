@@ -1,6 +1,6 @@
-import { installQuasar } from '@quasar/quasar-app-extension-testing-unit-vitest';
-import { shallowMount } from '@vue/test-utils';
-import { describe, expect, it, vi } from 'vitest';
+import { installQuasar } from '@quasar/quasar-app-extension-testing-unit-vitest'
+import { shallowMount } from '@vue/test-utils'
+import { describe, expect, it, vi } from 'vitest'
 import BuildsPage from 'pages/BuildsPage.vue'
 import { createTestingPinia } from '@pinia/testing'
 
@@ -8,9 +8,9 @@ installQuasar()
 
 const wrapper = shallowMount(BuildsPage, {
   global: {
-    plugins: [createTestingPinia()],
+    plugins: [createTestingPinia()]
   }
-});
+})
 
 describe('BuildsPage', () => {
   it('should mount the builds page without errors', () => {
