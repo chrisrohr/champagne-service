@@ -16,10 +16,9 @@ export const useReleaseStore = defineStore('release', () => {
     doPagedRequest(loading, props, pagination, '/manual/deployment/tasks/releases', releases)
   }
 
-  function create (releaseData, callback = () => {}) {
-    api.post('/manual/deployment/tasks/releases', releaseData)
+  function create (releaseData) {
+    return api.post('/manual/deployment/tasks/releases', releaseData)
       .then(() => load())
-      .then(callback)
   }
 
   function deleteRelease (id) {
@@ -27,10 +26,9 @@ export const useReleaseStore = defineStore('release', () => {
       .then(() => load())
   }
 
-  function updateStatus (statusId, status, callback = () => {}) {
-    api.put(`/manual/deployment/tasks/releases/${statusId}/${status}`)
+  function updateStatus (statusId, status) {
+    return api.put(`/manual/deployment/tasks/releases/${statusId}/${status}`)
       .then(() => load())
-      .then(callback)
   }
 
   return { releases, loading, pagination, load, create, deleteRelease, updateStatus }

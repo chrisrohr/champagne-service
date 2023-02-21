@@ -4,8 +4,15 @@ import { describe, expect, it, vi } from 'vitest'
 import UserPage from 'pages/UserPage.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { useUserStore } from 'src/stores/userStore'
+import { confirmAction } from "src/utils/alerts";
 
 installQuasar()
+
+vi.mock('src/utils/alerts', () => {
+  const confirmAction = vi.fn()
+
+  return { confirmAction }
+})
 
 const wrapper = shallowMount(UserPage, {
   global: {
@@ -54,5 +61,14 @@ describe('deleteUser', () => {
 
     expect(userStore.deleteUser).toHaveBeenCalledTimes(1)
     expect(userStore.deleteUser).toHaveBeenLastCalledWith(1)
+  })
+})
+
+describe('confirmDeleteUser', () => {
+  it('should call confirm utility', () => {
+    wrapper.vm.confirmDelete('Joe', 1)
+
+    expect(confirmAction).toHaveBeenCalled()
+    expect(confirmAction).toHaveBeenCalledWith('Are you sure you want to deactivate user Joe?', expect.any(Function))
   })
 })

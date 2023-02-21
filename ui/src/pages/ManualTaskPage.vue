@@ -259,7 +259,7 @@ function createRelease () {
     return
   }
 
-  releaseStore.create(release.value, () => {
+  releaseStore.create(release.value).then(() => {
     showReleaseAdd.value = false
     release.value.releaseNumber = ''
   })
@@ -297,9 +297,9 @@ function updateStatus () {
   const updateType = update.value.type
 
   if (updateType === 'RELEASE') {
-    releaseStore.updateStatus(update.value.id, update.value.status, resetUpdateStatusDialog)
+    releaseStore.updateStatus(update.value.id, update.value.status).then(resetUpdateStatusDialog)
   } else {
-    taskStore.updateStatus(update.value.id, update.value.status, () => {
+    taskStore.updateStatus(update.value.id, update.value.status).then(() => {
       taskStore.load(update.value.releaseId)
       releaseStore.load()
       resetUpdateStatusDialog()
@@ -338,7 +338,7 @@ function createTask () {
     return
   }
 
-  taskStore.create(task.value, () => {
+  taskStore.create(task.value).then(() => {
     task.value.releaseId = null
     task.value.summary = ''
     task.value.description = ''

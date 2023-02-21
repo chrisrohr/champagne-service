@@ -268,9 +268,7 @@ function deleteComponent (id) {
 onMounted(() => {
   envStore.load()
     .then(() => {
-      if (envStore.getActiveEnvs.length > 0) {
-        hostStore.environmentFilter = { label: envStore.getActiveEnvs[0].name, value: envStore.getActiveEnvs[0].id }
-      }
+      hostStore.environmentFilter = _.first(envStore.envsAsOptions)
     })
 })
 </script>

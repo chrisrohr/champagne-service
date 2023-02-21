@@ -1,7 +1,11 @@
 <template>
     <q-page>
-        Coming Soon
+        {{ msg }}
     </q-page>
 </template>
 
-<script setup/>
+<script setup>
+import { ref } from 'vue'
+
+const msg = ref('Coming Soon')
+</script>

@@ -4,8 +4,15 @@ import { describe, expect, it } from 'vitest'
 import DeploymentEnvironmentPage from 'pages/DeploymentEnvironmentPage.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { useEnvStore } from 'stores/envStore'
+import { confirmAction } from 'src/utils/alerts'
 
 installQuasar()
+
+vi.mock('src/utils/alerts', () => {
+  const confirmAction = vi.fn()
+
+  return { confirmAction }
+})
 
 const wrapper = mount(DeploymentEnvironmentPage, {
   global: {
@@ -57,5 +64,14 @@ describe('deleteEnv', () => {
 
     expect(envStore.deleteEnv).toHaveBeenCalledTimes(1)
     expect(envStore.deleteEnv).toHaveBeenLastCalledWith(1)
+  })
+})
+
+describe('confirmDelete', () => {
+  it('should call confirm utility', () => {
+    wrapper.vm.confirmDelete({name: 'dev'})
+
+    expect(confirmAction).toHaveBeenCalled()
+    expect(confirmAction).toHaveBeenCalledWith('Are you sure you want to delete environment dev? This will cause all related deployments to be deleted as well!', expect.any(Function))
   })
 })

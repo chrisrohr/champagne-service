@@ -5,20 +5,22 @@ import { ref, watch } from 'vue'
 export const useHostStore = defineStore('host', () => {
   const hosts = ref([])
   const loading = ref(false)
-  const environmentFilter = ref('')
+  const environmentFilter = ref({})
   const componentFilter = ref('')
 
   watch(environmentFilter, load)
 
   async function load () {
     loading.value = true
-    api.get(`/host/${environmentFilter.value.value}`, { componentFilter: componentFilter.value })
-      .then((response) => {
-        hosts.value = response.data
-      })
-      .finally(() => {
-        loading.value = false
-      })
+    if (environmentFilter.value !== undefined) {
+      api.get(`/host/${environmentFilter.value.value}`, { componentFilter: componentFilter.value })
+        .then((response) => {
+          hosts.value = response.data
+        })
+        .finally(() => {
+          loading.value = false
+        })
+    }
   }
 
   function create (hostData) {

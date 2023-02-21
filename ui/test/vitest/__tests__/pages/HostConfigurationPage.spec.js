@@ -6,13 +6,22 @@ import { createTestingPinia } from '@pinia/testing'
 import { useEnvStore } from 'stores/envStore'
 import { useHostStore } from 'stores/hostStore'
 import { useComponentStore } from 'src/stores/componentStore'
+import { confirmAction } from "src/utils/alerts";
 
 installQuasar()
 
+vi.mock('src/utils/alerts', () => {
+  const confirmAction = vi.fn()
+
+  return { confirmAction }
+})
+
 const pinia = createTestingPinia()
 const envStore = useEnvStore(pinia)
+const hostStore = useHostStore(pinia)
 
 envStore.load.mockImplementation(() => Promise.resolve(123))
+hostStore.load.mockImplementation(() => Promise.resolve(123))
 
 const wrapper = shallowMount(HostConfigurationPage, {
   global: {
@@ -55,7 +64,6 @@ describe('deleteTag', () => {
 
 describe('createHost', () => {
   it('should call the host store to create a new host', () => {
-    const hostStore = useHostStore(pinia)
     hostStore.create.mockImplementation(() => Promise.resolve(1))
 
     wrapper.vm.host.hostname = 'localhost'
@@ -78,8 +86,6 @@ describe('tagListAsCsv', () => {
 
 describe('deleteHost', () => {
   it('should call deleteHost on the host store', () => {
-    const hostStore = useHostStore(pinia)
-
     wrapper.vm.deleteHost(1)
 
     expect(hostStore.deleteHost).toHaveBeenCalledTimes(1)
@@ -111,8 +117,6 @@ describe('handleHostExpansion', () => {
 describe('createComponent', () => {
   it('should call the component store to create a new component', async () => {
     const componentStore = useComponentStore(pinia)
-    const hostStore = useHostStore(pinia)
-
     componentStore.create.mockImplementation(() => Promise.resolve(1))
 
     wrapper.vm.component.componentName = 'my-service'
@@ -128,8 +132,6 @@ describe('createComponent', () => {
 describe('deleteComponent', () => {
   it('should call deleteComponent on the component store', async () => {
     const componentStore = useComponentStore(pinia)
-    const hostStore = useHostStore(pinia)
-
     componentStore.deleteComponent.mockImplementation(() => Promise.resolve(1))
 
     await wrapper.vm.deleteComponent(1)
@@ -138,5 +140,23 @@ describe('deleteComponent', () => {
     expect(componentStore.deleteComponent).toHaveBeenLastCalledWith(1)
 
     expect(hostStore.load).toHaveBeenCalled()
+  })
+})
+
+describe('confirmDeleteHost', () => {
+  it('should call confirm utility', () => {
+    wrapper.vm.confirmDeleteHost({hostname: 'localhost'})
+
+    expect(confirmAction).toHaveBeenCalled()
+    expect(confirmAction).toHaveBeenCalledWith('Are you sure you want to delete host localhost?', expect.any(Function))
+  })
+})
+
+describe('confirmDeleteComponent', () => {
+  it('should call confirm utility', () => {
+    wrapper.vm.confirmDeleteComponent({componentName: 'foo-service'})
+
+    expect(confirmAction).toHaveBeenCalled()
+    expect(confirmAction).toHaveBeenCalledWith('Are you sure you want to delete component foo-service?', expect.any(Function))
   })
 })
