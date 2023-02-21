@@ -17,7 +17,7 @@ export default defineConfig({
     ],
     coverage: {
       all: true,
-      exclude: ['*.config.js', '.quasar/**/*', '.eslintrc.js', 'test/**/*', 'src/stores/store-flag.d.ts', 'src/stores/index.js', 'src/boot/**/*'],
+      exclude: ['*.config.js', '.quasar/**/*', '.eslintrc.js', 'test/**/*', 'src/stores/store-flag.d.ts', 'src/stores/index.js', 'src/boot/**/*', 'src/router/**/*'],
       reporter: ['lcov', 'text', 'html']
     }
   },

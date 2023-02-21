@@ -30,7 +30,7 @@ export const useHostStore = defineStore('host', () => {
   }
 
   function deleteHost (id) {
-    api.delete(`host/${id}`)
+    api.delete(`/host/${id}`)
       .then(() => load())
   }
 

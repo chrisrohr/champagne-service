@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
-import { api } from 'src/boot/axios'
 import { ref } from 'vue'
+import { doPagedRequest } from "src/utils/data";
 
 export const useBuildStore = defineStore('build', () => {
   const builds = ref([])
@@ -14,26 +14,13 @@ export const useBuildStore = defineStore('build', () => {
   const filterType = ref('componentIdentifierFilter')
 
   async function load (props) {
-    loading.value = true
-
-    if (props !== undefined) {
-      pagination.value.page = props.pagination.page
-      pagination.value.rowsPerPage = props.pagination.rowsPerPage
-    }
-
-    const params = {
-      pageNumber: pagination.value.page,
-      pageSize: pagination.value.rowsPerPage
-    }
+    let filters = {}
 
     if (filter.value !== '') {
-      params[filterType.value] = filter.value
+      filters[filterType.value] = filter.value
     }
 
-    const response = await api.get('/build', { params })
-    builds.value = response.data.content
-    pagination.value.rowsNumber = response.data.totalElements
-    loading.value = false
+    doPagedRequest(loading, props, pagination, '/build', builds, filters)
   }
 
   return { builds, loading, pagination, filter, filterType, load }
