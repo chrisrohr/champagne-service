@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { doPagedRequest } from "src/utils/data";
+import { doPagedRequest } from 'src/utils/data'
 
 export const useBuildStore = defineStore('build', () => {
   const builds = ref([])
@@ -14,7 +14,7 @@ export const useBuildStore = defineStore('build', () => {
   const filterType = ref('componentIdentifierFilter')
 
   async function load (props) {
-    let filters = {}
+    const filters = {}
 
     if (filter.value !== '') {
       filters[filterType.value] = filter.value

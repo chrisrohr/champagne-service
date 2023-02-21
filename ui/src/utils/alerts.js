@@ -14,7 +14,7 @@ function notifyError (message, error) {
 function confirmAction (message, okCallback) {
   Dialog.create({
     title: 'Hold Up!',
-    message: message,
+    message,
     cancel: true,
     persistent: true
   }).onOk(okCallback)
