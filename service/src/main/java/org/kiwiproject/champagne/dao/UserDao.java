@@ -20,7 +20,7 @@ public interface UserDao {
     long insertUser(@BindBean User user);
 
     @SqlUpdate("update users set first_name = :firstName, last_name = :lastName, display_name = :displayName, system_identifier = :systemIdentifier, admin = :admin, updated_at = now() where id = :id")
-    void updateUser(@BindBean User user);
+    int updateUser(@BindBean User user);
 
     @SqlQuery("select * from users where system_identifier = :systemIdentifier")
     Optional<User> findBySystemIdentifier(@Bind("systemIdentifier") String systemIdentifier);
@@ -32,5 +32,5 @@ public interface UserDao {
     long countUsers();
 
     @SqlUpdate("delete from users where id = :id")
-    void deleteUser(@Bind("id") long id);
+    int deleteUser(@Bind("id") long id);
 }

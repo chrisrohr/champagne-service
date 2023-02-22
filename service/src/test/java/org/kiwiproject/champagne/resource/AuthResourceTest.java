@@ -68,9 +68,6 @@ class AuthResourceTest {
                     .post(json(Map.of("username", "jdoe")));
 
             assertOkResponse(response);
-            // TODO: When the bundle is added, a cookie is setup in the response, need to figure out how to test
-            //       that the cookie is being set correctly. Currently response.getCookies() returns an empty map.
-            //       Probably need to figure out how to access/use the ContainerRequestContext in the test.
         }
 
         @Test
@@ -87,10 +84,6 @@ class AuthResourceTest {
                     .post(json(Map.of("username", "jdoe")));
 
             assertOkResponse(response);
-            // TODO: When the bundle is added, a cookie is setup in the response, need to figure out how to test
-            //       that the cookie is being set correctly. Currently response.getCookies() returns an empty map.
-            //       Probably need to figure out how to access/use the ContainerRequestContext in the test.
-            //       Will need to check the claims as well for the role
         }
     }
 
@@ -104,10 +97,6 @@ class AuthResourceTest {
                     .delete();
 
             assertNoContentResponse(response);
-
-            // TODO: Need to figure out how to inspect the ContainerRequestContext so we can verify
-            //       that the cookie expiration date has been set to the past. This is how the JWT
-            //       is invalidated in a stateless system.
         }
     }
 

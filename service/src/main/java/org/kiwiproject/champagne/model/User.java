@@ -17,7 +17,7 @@ import lombok.Value;
 @Builder
 public class User {
     
-    long id;
+    Long id;
     Instant createdAt;
     Instant updatedAt;
     
