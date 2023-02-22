@@ -40,6 +40,7 @@ describe('updateDisplayName', () => {
 describe('createUser', () => {
   it('should call the user store to create a new user', () => {
     const userStore = useUserStore()
+    userStore.create.mockImplementation(() => Promise.resolve(1))
 
     wrapper.vm.activeUser.firstName = 'Bob'
     wrapper.vm.activeUser.lastName = 'Roberts'
@@ -48,7 +49,7 @@ describe('createUser', () => {
 
     wrapper.vm.createUser()
 
-    expect(userStore.create).toHaveBeenLastCalledWith({ firstName: 'Bob', lastName: 'Roberts', displayName: 'Bob Roberts', systemIdentifier: 'brob' })
+    expect(userStore.create).toHaveBeenLastCalledWith({ firstName: 'Bob', lastName: 'Roberts', displayName: 'Bob Roberts', systemIdentifier: 'brob', admin: false })
     expect(wrapper.vm.showUserAdd).toEqual(false)
   })
 })

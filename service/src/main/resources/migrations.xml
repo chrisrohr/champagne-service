@@ -270,4 +270,12 @@
             </column>
         </createTable>
     </changeSet>
+
+    <changeSet id="add_admin_flag_to_users" author="crohr">
+        <addColumn tableName="users">
+            <column name="admin" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

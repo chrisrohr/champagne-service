@@ -15,6 +15,7 @@ import org.kiwiproject.champagne.model.User;
 import org.kiwiproject.spring.data.KiwiPage;
 
 import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -58,6 +59,7 @@ public class UserResource extends AuditableResource {
     }
 
     @POST
+    @RolesAllowed("admin")
     @Timed
     @ExceptionMetered
     public Response addUser(@NotNull @Valid User user) {
@@ -70,6 +72,7 @@ public class UserResource extends AuditableResource {
 
     @DELETE
     @Path("/{id}")
+    @RolesAllowed("admin")
     @Timed
     @ExceptionMetered
     public Response deleteUser(@PathParam("id") long id) {

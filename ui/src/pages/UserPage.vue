@@ -2,6 +2,17 @@
   <q-page class="q-pa-md">
     <q-table title="System Users" :columns="userColumns" :rows="userStore.users" :loading="userStore.loading" v-model:pagination="userStore.pagination" @request="userStore.load">
 
+      <template v-slot:body-cell-name="props">
+        <q-td :props="props">
+          <q-icon name="fa-solid fa-crown" v-if="props.row.admin" class="text-yellow-14">
+            <q-tooltip class="bg-grey-5 text-black">
+                User is an Admin
+            </q-tooltip>
+          </q-icon>
+          {{ props.row.displayName }}
+        </q-td>
+      </template>
+
       <template v-slot:body-cell-createdAt="props">
         <q-td :props="props">
           <span>
@@ -26,7 +37,7 @@
 
       <template v-slot:body-cell-actions="props">
         <q-td :props="props">
-          <q-btn size="sm" icon="delete" @click="confirmDelete(props.row.displayName, props.row.id)">
+          <q-btn size="sm" icon="delete" @click="confirmDelete(props.row.displayName, props.row.id)" v-if="authStore.isAdmin">
             <q-tooltip>Delete User</q-tooltip>
           </q-btn>
         </q-td>
@@ -34,7 +45,7 @@
 
     </q-table>
 
-    <q-page-sticky position="bottom-right" :offset="[18, 18]">
+    <q-page-sticky position="bottom-right" :offset="[18, 18]" v-if="authStore.isAdmin">
       <q-btn fab icon="add" color="accent" @click="showUserAdd = true" />
     </q-page-sticky>
 
@@ -61,6 +72,9 @@
             <q-input dense style="min-width: 500px" v-model="activeUser.systemIdentifier" label="Username"
                      :rules="[val => !!val || 'Username is required']"/>
           </div>
+          <div class="row q-mb-md">
+            <q-checkbox v-model="activeUser.admin" label="Admin User?"/>
+          </div>
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat v-close-popup>Cancel</q-btn>
@@ -75,10 +89,12 @@
 import { onMounted, ref } from 'vue'
 import { formatDate, fromNow } from '../utils/time'
 import { useUserStore } from 'stores/userStore'
+import { useAuthStore } from 'stores/auth'
 import { confirmAction } from 'src/utils/alerts'
 
 // Stores
 const userStore = useUserStore()
+const authStore = useAuthStore()
 
 // Reactive data
 const showUserAdd = ref(false)
@@ -86,7 +102,8 @@ const activeUser = ref({
   firstName: '',
   lastName: '',
   displayName: '',
-  systemIdentifier: ''
+  systemIdentifier: '',
+  admin: false
 })
 
 // Constant data
@@ -94,7 +111,6 @@ const userColumns = [
   {
     name: 'name',
     label: 'Name',
-    field: 'displayName',
     align: 'left'
   },
   {
@@ -122,6 +138,15 @@ function updateDisplayName () {
 function createUser () {
   showUserAdd.value = false
   userStore.create(activeUser.value)
+    .then(() => {
+      activeUser.value = {
+        firstName: '',
+        lastName: '',
+        displayName: '',
+        systemIdentifier: '',
+        admin: false
+      }
+    })
 }
 
 function confirmDelete (name, id) {

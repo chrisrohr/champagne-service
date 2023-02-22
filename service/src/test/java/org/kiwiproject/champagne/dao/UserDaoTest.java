@@ -77,7 +77,9 @@ class UserDaoTest {
             softly.assertThat(user.getFirstName()).isEqualTo("John");
             softly.assertThat(user.getLastName()).isEqualTo("Doe");
             softly.assertThat(user.getDisplayName()).isEqualTo("John Doe");
+            softly.assertThat(user.isAdmin()).isFalse();
         }
+
     }
 
     @Nested
