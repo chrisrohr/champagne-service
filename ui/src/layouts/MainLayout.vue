@@ -21,6 +21,21 @@
           <div class="text-h4 text-grey-4">Champagne</div>
           <div class="text-caption text-grey-4">Toasting successful deployments</div>
         </q-toolbar-title>
+
+        <q-space />
+
+        <q-btn round flat v-if="authStore.isLoggedIn">
+          <q-avatar size="26px" class="bg-grey-4 text-grey-9">
+            {{ authStore.loggedInUserAvatar }}
+          </q-avatar>
+          <q-menu>
+            <q-list>
+              <q-item clickable v-close-popup @click="authStore.logout()">
+                <q-item-section>Logout</q-item-section>
+              </q-item>
+            </q-list>
+          </q-menu>
+        </q-btn>
       </q-toolbar>
     </q-header>
 
@@ -93,7 +108,7 @@
             </q-item-section>
           </q-item>
 
-          <q-item to="/audits" exact clickable v-ripple>
+          <q-item to="/audits" exact clickable v-ripple v-if="authStore.isAdmin">
             <q-item-section avatar>
               <q-icon name="assignment"/>
             </q-item-section>

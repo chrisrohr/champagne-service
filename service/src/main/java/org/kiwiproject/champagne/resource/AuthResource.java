@@ -11,6 +11,8 @@ import org.kiwiproject.jaxrs.exception.JaxrsNotAuthorizedException;
 
 import static java.util.Objects.isNull;
 
+import java.util.List;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.POST;
@@ -45,7 +47,9 @@ public class AuthResource {
             throw new JaxrsNotAuthorizedException("Invalid login");
         }
 
-        var principal = new DefaultJwtCookiePrincipal(user.getSystemIdentifier());
+        List<String> roles = user.isAdmin() ? List.of("admin") : List.of();
+
+        var principal = new DefaultJwtCookiePrincipal(user.getSystemIdentifier(), false, roles, null);
         principal.addInContext(context);
 
         return Response.ok(user).build();

@@ -7,6 +7,13 @@ export const useAuthStore = defineStore('auth', () => {
   const returnUrl = ref(null)
 
   const isLoggedIn = computed(() => user.value !== null)
+  const isAdmin = computed(() => user.value !== null && user.value.admin)
+  const loggedInUserAvatar = computed(() => {
+    if (user.value === null) {
+      return ''
+    }
+    return `${user.value.firstName.charAt(0)}${user.value.lastName.charAt(0)}`
+  })
 
   async function login (username, password) {
     const response = await api.post('/auth/login', { username })
@@ -27,5 +34,5 @@ export const useAuthStore = defineStore('auth', () => {
     this.router.push('/login')
   }
 
-  return { user, returnUrl, isLoggedIn, login, logout }
+  return { user, returnUrl, isLoggedIn, isAdmin, loggedInUserAvatar, login, logout }
 })

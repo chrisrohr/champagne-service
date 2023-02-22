@@ -3,6 +3,7 @@ package org.kiwiproject.champagne.resource;
 import static org.kiwiproject.search.KiwiSearching.zeroBasedOffset;
 
 import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -30,6 +31,7 @@ public class AuditRecordResource {
     private final AuditRecordDao auditRecordDao;
 
     @GET
+    @RolesAllowed("admin")
     @Timed
     @ExceptionMetered
     public Response getPagedAudits(@QueryParam("pageNumber") @DefaultValue("1") int pageNumber,

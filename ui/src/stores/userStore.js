@@ -17,7 +17,7 @@ export const useUserStore = defineStore('user', () => {
   }
 
   function create (userData) {
-    api.post('/users', userData)
+    return api.post('/users', userData)
       .then(() => load())
   }
 

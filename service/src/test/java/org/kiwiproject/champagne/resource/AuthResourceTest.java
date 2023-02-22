@@ -72,6 +72,26 @@ class AuthResourceTest {
             //       that the cookie is being set correctly. Currently response.getCookies() returns an empty map.
             //       Probably need to figure out how to access/use the ContainerRequestContext in the test.
         }
+
+        @Test
+        void shouldReturnJwtAsCookieWhenLoginIsSuccessfulAndUserIsAdmin() {
+            var user = User.builder()
+                    .systemIdentifier("jdoe")
+                    .admin(true)
+                    .build();
+
+            when(USER_DAO.findBySystemIdentifier("jdoe")).thenReturn(Optional.of(user));
+
+            var response = APP.client().target("/auth/login")
+                    .request()
+                    .post(json(Map.of("username", "jdoe")));
+
+            assertOkResponse(response);
+            // TODO: When the bundle is added, a cookie is setup in the response, need to figure out how to test
+            //       that the cookie is being set correctly. Currently response.getCookies() returns an empty map.
+            //       Probably need to figure out how to access/use the ContainerRequestContext in the test.
+            //       Will need to check the claims as well for the role
+        }
     }
 
     @Nested

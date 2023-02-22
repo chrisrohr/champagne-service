@@ -15,11 +15,11 @@ import org.kiwiproject.champagne.dao.mappers.UserMapper;
 @RegisterRowMapper(UserMapper.class)
 public interface UserDao {
     
-    @SqlUpdate("insert into users (first_name, last_name, display_name, system_identifier) values (:firstName, :lastName, :displayName, :systemIdentifier)")
+    @SqlUpdate("insert into users (first_name, last_name, display_name, system_identifier, admin) values (:firstName, :lastName, :displayName, :systemIdentifier, :admin)")
     @GetGeneratedKeys
     long insertUser(@BindBean User user);
 
-    @SqlUpdate("update users set first_name = :firstName, last_name = :lastName, display_name = :displayName, system_identifier = :systemIdentifier, updated_at = now() where id = :id")
+    @SqlUpdate("update users set first_name = :firstName, last_name = :lastName, display_name = :displayName, system_identifier = :systemIdentifier, admin = :admin, updated_at = now() where id = :id")
     void updateUser(@BindBean User user);
 
     @SqlQuery("select * from users where system_identifier = :systemIdentifier")
