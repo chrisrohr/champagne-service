@@ -5,9 +5,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.kiwiproject.base.KiwiStrings.f;
 import static org.kiwiproject.collect.KiwiLists.first;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertNoContentResponse;
+import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertAcceptedResponse;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertNotFoundResponse;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertOkResponse;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertResponseStatusCode;
+import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertInternalServerErrorResponse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
@@ -194,6 +196,8 @@ public class UserResourceTest {
 
         @Test
         void shouldDeleteGivenUser() {
+            when(USER_DAO.deleteUser(1L)).thenReturn(1);
+
             var response = APP.client().target("/users")
                 .path("{id}")
                 .resolveTemplate("id", 1)
@@ -207,6 +211,23 @@ public class UserResourceTest {
             verifyAuditRecorded(1L, Action.DELETED);
 
             verifyNoMoreInteractions(USER_DAO, AUDIT_RECORD_DAO);
+        }
+
+        @Test
+        void shouldNotAuditIfDeleteDoesNotChangeDB() {
+            when(USER_DAO.deleteUser(1L)).thenReturn(0);
+            
+            var response = APP.client().target("/users")
+                .path("{id}")
+                .resolveTemplate("id", 1)
+                .request()
+                .delete();
+
+            assertNoContentResponse(response);
+
+            verify(USER_DAO).deleteUser(1L);
+            verifyNoMoreInteractions(USER_DAO);
+            verifyNoInteractions(AUDIT_RECORD_DAO);
         }
     }
 
@@ -299,6 +320,76 @@ public class UserResourceTest {
 
             assertNotFoundResponse(response);
 
+        }
+    }
+
+    @Nested
+    class UpdateUser {
+
+        @Test
+        void shouldUpdateGivenUser() {
+            when(USER_DAO.updateUser(any(User.class))).thenReturn(1);
+
+            var user = User.builder()
+                .id(1L)
+                .firstName("John")
+                .lastName("Doe")
+                .displayName("John Doe")
+                .systemIdentifier("jdoe")
+                .build();
+
+            var response = APP.client().target("/users")
+                .request()
+                .put(json(user));
+
+            assertAcceptedResponse(response);
+
+            verify(USER_DAO).updateUser(any(User.class));
+            
+            verifyAuditRecorded(1L, Action.UPDATED);
+
+            verifyNoMoreInteractions(USER_DAO, AUDIT_RECORD_DAO);
+        }
+
+        @Test
+        void shouldNotAuditIfUpdateDoesNotChangeDB() {
+            when(USER_DAO.updateUser(any(User.class))).thenReturn(0);
+            
+            var user = User.builder()
+                .id(1L)
+                .firstName("John")
+                .lastName("Doe")
+                .displayName("John Doe")
+                .systemIdentifier("jdoe")
+                .build();
+
+            var response = APP.client().target("/users")
+                .request()
+                .put(json(user));
+
+            assertAcceptedResponse(response);
+
+            verify(USER_DAO).updateUser(any(User.class));
+            verifyNoMoreInteractions(USER_DAO);
+            verifyNoInteractions(AUDIT_RECORD_DAO);
+        }
+
+        @Test
+        void shouldReturn500WhenMissingId() {
+            var user = User.builder()
+                .firstName("John")
+                .lastName("Doe")
+                .displayName("John Doe")
+                .systemIdentifier("jdoe")
+                .build();
+
+            var response = APP.client().target("/users")
+                .request()
+                .put(json(user));
+
+            assertInternalServerErrorResponse(response);
+
+            verifyNoInteractions(USER_DAO, AUDIT_RECORD_DAO);
         }
     }
 }

@@ -1,6 +1,7 @@
 package org.kiwiproject.champagne.resource;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.kiwiproject.base.KiwiPreconditions.requireNotNull;
 import static org.kiwiproject.jaxrs.KiwiStandardResponses.standardGetResponse;
 import static org.kiwiproject.search.KiwiSearching.zeroBasedOffset;
 
@@ -23,6 +24,7 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -76,9 +78,11 @@ public class UserResource extends AuditableResource {
     @Timed
     @ExceptionMetered
     public Response deleteUser(@PathParam("id") long id) {
-        userDao.deleteUser(id);
+        var deletedCount = userDao.deleteUser(id);
 
-        auditAction(id, User.class, Action.DELETED);
+        if (deletedCount > 0) {
+            auditAction(id, User.class, Action.DELETED);
+        }
 
         return Response.noContent().build();
     }
@@ -93,6 +97,19 @@ public class UserResource extends AuditableResource {
         return standardGetResponse(loggedInUser, "Unable to find logged in user");
     }
 
-    // TODO: Add endpoint to update a user
-    // TODO: Add endpoint to search for users in a 3rd party system (need discussions on how to implement this)
+    @PUT
+    @RolesAllowed("admin")
+    @Timed
+    @ExceptionMetered
+    public Response updateUser(@NotNull @Valid User userToUpdate) {
+        requireNotNull(userToUpdate.getId(), "Id is required to update a user");
+
+        var updatedCount = userDao.updateUser(userToUpdate);
+
+        if (updatedCount > 0) {
+            auditAction(userToUpdate.getId(), User.class, Action.UPDATED);
+        }
+
+        return Response.accepted().build();
+    }
 }
