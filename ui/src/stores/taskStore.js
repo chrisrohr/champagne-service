@@ -21,10 +21,9 @@ export const useTaskStore = defineStore('task', () => {
     loading.value[releaseId] = false
   }
 
-  function create (taskData, callback = () => {}) {
-    api.post('/manual/deployment/tasks', taskData)
+  function create (taskData) {
+    return api.post('/manual/deployment/tasks', taskData)
       .then(() => load(taskData.releaseId))
-      .then(callback)
   }
 
   function deleteTask (id, releaseId) {
@@ -32,9 +31,8 @@ export const useTaskStore = defineStore('task', () => {
       .then(() => load(releaseId))
   }
 
-  function updateStatus (statusId, status, callback = () => {}) {
-    api.put(`/manual/deployment/tasks/${statusId}/${status}`)
-      .then(callback)
+  function updateStatus (statusId, status) {
+    return api.put(`/manual/deployment/tasks/${statusId}/${status}`)
   }
 
   return { tasksForRelease, loadingForTasks, load, create, deleteTask, updateStatus }

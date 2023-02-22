@@ -114,7 +114,7 @@ jobs:
       - name: Run ui tests
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
-        run: yarn test
+        run: yarn test:unit:ci:coverage
 
       # Run Sonar Analysis
       - name: SonarCloud Scan

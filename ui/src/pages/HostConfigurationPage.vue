@@ -28,7 +28,7 @@
             {{ props.row.source }}
           </q-td>
           <q-td key="actions" :props="props">
-            <q-btn size="sm" icon="delete" @click="deleteHost(props.row)">
+            <q-btn size="sm" icon="delete" @click="confirmDeleteHost(props.row)">
               <q-tooltip>Remove host</q-tooltip>
             </q-btn>
           </q-td>
@@ -44,7 +44,7 @@
 
               <template v-slot:body-cell-actions="props">
                 <q-td :props="props">
-                  <q-btn size="sm" icon="delete" @click="deleteComponent(props.row)">
+                  <q-btn size="sm" icon="delete" @click="confirmDeleteComponent(props.row)">
                     <q-tooltip>Remove component</q-tooltip>
                   </q-btn>
                 </q-td>
@@ -114,10 +114,8 @@ import { onMounted, ref } from 'vue'
 import { useEnvStore } from 'stores/envStore'
 import { useHostStore } from 'stores/hostStore'
 import { useComponentStore } from 'stores/componentStore'
-import { useQuasar } from 'quasar'
 import { _ } from 'lodash'
-
-const $q = useQuasar()
+import { confirmAction } from 'src/utils/alerts'
 
 // Stores
 const envStore = useEnvStore()
@@ -225,15 +223,15 @@ function tagListAsCsv (tagList) {
   return _.join(tagList, ', ')
 }
 
-function deleteHost (host) {
-  $q.dialog({
-    title: 'Hold Up!',
-    message: `Are you sure you want to delete host ${host.hostname}?`,
-    cancel: true,
-    persistent: true
-  }).onOk(() => {
-    hostStore.deleteHost(host.id)
-  })
+function confirmDeleteHost (host) {
+  confirmAction(
+    `Are you sure you want to delete host ${host.hostname}?`,
+    () => deleteHost(host.id)
+  )
+}
+
+function deleteHost (id) {
+  hostStore.deleteHost(id)
 }
 
 function handleHostExpansion (props) {
@@ -248,29 +246,29 @@ function handleHostExpansion (props) {
 }
 
 function createComponent () {
-  componentStore.create(component.value)
+  return componentStore.create(component.value)
     .then(() => {
-      showComponentAdd.value = false
+      showComponentAdd.value = true
       hostStore.load()
     })
 }
 
-function deleteComponent (component) {
-  $q.dialog({
-    title: 'Hold Up!',
-    message: `Are you sure you want to delete component ${component.componentName}?`,
-    cancel: true,
-    persistent: true
-  }).onOk(() => {
-    componentStore.deleteComponent(component.id)
-      .then(() => hostStore.load())
-  })
+function confirmDeleteComponent (component) {
+  confirmAction(
+    `Are you sure you want to delete component ${component.componentName}?`,
+    () => deleteComponent(component.id)
+  )
+}
+
+function deleteComponent (id) {
+  return componentStore.deleteComponent(id)
+    .then(() => hostStore.load())
 }
 
 onMounted(() => {
   envStore.load()
     .then(() => {
-      hostStore.environmentFilter = { label: envStore.getActiveEnvs[0].name, value: envStore.getActiveEnvs[0].id }
+      hostStore.environmentFilter = _.first(envStore.envsAsOptions)
     })
 })
 </script>

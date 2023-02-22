@@ -1,4 +1,4 @@
-import { Notify } from 'quasar'
+import { Dialog, Notify } from 'quasar'
 
 function notifyError (message, error) {
   Notify.create({
@@ -11,4 +11,13 @@ function notifyError (message, error) {
   })
 }
 
-export { notifyError }
+function confirmAction (message, okCallback) {
+  Dialog.create({
+    title: 'Hold Up!',
+    message,
+    cancel: true,
+    persistent: true
+  }).onOk(okCallback)
+}
+
+export { notifyError, confirmAction }

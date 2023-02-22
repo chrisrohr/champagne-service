@@ -33,7 +33,6 @@ export const useComponentStore = defineStore('component', () => {
   }
 
   function reloadExpandedComponentLists () {
-    console.log(expandedHosts)
     expandedHosts.value.forEach((id) => {
       load(id)
     })

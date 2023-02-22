@@ -1,6 +1,7 @@
 import { api } from 'src/boot/axios'
+import { _ } from 'lodash'
 
-async function doPagedRequest (loading, props, pagination, path, contents) {
+async function doPagedRequest (loading, props, pagination, path, contents, filters) {
   loading.value = true
 
   if (props !== undefined) {
@@ -11,6 +12,10 @@ async function doPagedRequest (loading, props, pagination, path, contents) {
   const params = {
     pageNumber: pagination.value.page,
     pageSize: pagination.value.rowsPerPage
+  }
+
+  if (filters !== undefined) {
+    _.merge(params, filters)
   }
 
   const response = await api.get(path, { params })
