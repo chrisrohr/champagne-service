@@ -37,6 +37,9 @@
 
       <template v-slot:body-cell-actions="props">
         <q-td :props="props">
+          <q-btn size="sm" icon="edit" @click="setupUserFormForEdit(props.row)" v-if="authStore.isAdmin">
+            <q-tooltip>Edit User</q-tooltip>
+          </q-btn>
           <q-btn size="sm" icon="delete" @click="confirmDelete(props.row.displayName, props.row.id)" v-if="authStore.isAdmin">
             <q-tooltip>Delete User</q-tooltip>
           </q-btn>
@@ -46,13 +49,13 @@
     </q-table>
 
     <q-page-sticky position="bottom-right" :offset="[18, 18]" v-if="authStore.isAdmin">
-      <q-btn fab icon="add" color="accent" @click="showUserAdd = true" />
+      <q-btn fab icon="add" color="accent" @click="setupUserFormForCreate" />
     </q-page-sticky>
 
-    <q-dialog v-model="showUserAdd">
+    <q-dialog v-model="showUserForm">
       <q-card>
         <q-card-section>
-          <div class="text-h5">Add new user</div>
+          <div class="text-h5">{{ userFormTitle }}</div>
         </q-card-section>
         <q-card-section>
           <div class="row q-mb-md">
@@ -78,7 +81,7 @@
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat v-close-popup>Cancel</q-btn>
-          <q-btn flat color="primary" @click="createUser">Save</q-btn>
+          <q-btn flat color="primary" @click="createOrUpdateUser">Save</q-btn>
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -97,14 +100,16 @@ const userStore = useUserStore()
 const authStore = useAuthStore()
 
 // Reactive data
-const showUserAdd = ref(false)
+const showUserForm = ref(false)
 const activeUser = ref({
+  id: null,
   firstName: '',
   lastName: '',
   displayName: '',
   systemIdentifier: '',
   admin: false
 })
+const userFormTitle = ref('')
 
 // Constant data
 const userColumns = [
@@ -135,17 +140,37 @@ function updateDisplayName () {
   activeUser.value.displayName = `${activeUser.value.firstName} ${activeUser.value.lastName}`
 }
 
+function createOrUpdateUser () {
+  if (activeUser.value.id === null) {
+    createUser()
+  } else {
+    updateUser()
+  }
+}
+
 function createUser () {
-  showUserAdd.value = false
+  showUserForm.value = false
   userStore.create(activeUser.value)
     .then(() => {
-      activeUser.value = {
-        firstName: '',
-        lastName: '',
-        displayName: '',
-        systemIdentifier: '',
-        admin: false
-      }
+      activeUser.value.id = null
+      activeUser.value.firstName = ''
+      activeUser.value.lastName = ''
+      activeUser.value.displayName = ''
+      activeUser.value.systemIdentifier = ''
+      activeUser.value.admin = false
+    })
+}
+
+function updateUser () {
+  showUserForm.value = false
+  userStore.update(activeUser.value)
+    .then(() => {
+      activeUser.value.id = null
+      activeUser.value.firstName = ''
+      activeUser.value.lastName = ''
+      activeUser.value.displayName = ''
+      activeUser.value.systemIdentifier = ''
+      activeUser.value.admin = false
     })
 }
 
@@ -158,6 +183,24 @@ function confirmDelete (name, id) {
 
 function deleteUser (id) {
   userStore.deleteUser(id)
+}
+
+function setupUserFormForCreate () {
+  userFormTitle.value = 'Add new user'
+  showUserForm.value = true
+}
+
+function setupUserFormForEdit (user) {
+  userFormTitle.value = 'Update user'
+  activeUser.value = {
+    id: user.id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    displayName: user.displayName,
+    systemIdentifier: user.systemIdentifier,
+    admin: user.admin
+  }
+  showUserForm.value = true
 }
 
 onMounted(() => {

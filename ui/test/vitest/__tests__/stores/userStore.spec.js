@@ -16,7 +16,8 @@ beforeEach(() => {
   vi.mock('src/boot/axios', () => {
     const api = {
       post: vi.fn().mockImplementation(() => Promise.resolve(true)),
-      delete: vi.fn().mockImplementation(() => Promise.resolve(true))
+      delete: vi.fn().mockImplementation(() => Promise.resolve(true)),
+      put: vi.fn().mockImplementation(() => Promise.resolve(true))
     }
 
     return { api }
@@ -41,6 +42,16 @@ describe('create', () => {
 
     expect(api.post).toHaveBeenCalled()
     expect(api.post).toHaveBeenCalledWith('/users', { firstName: 'joe' })
+  })
+})
+
+describe('update', () => {
+  it('should make call to update user', async () => {
+    const userStore = useUserStore()
+    await userStore.update({ firstName: 'joe' })
+
+    expect(api.put).toHaveBeenCalled()
+    expect(api.put).toHaveBeenCalledWith('/users', { firstName: 'joe' })
   })
 })
 
