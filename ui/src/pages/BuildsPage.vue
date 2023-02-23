@@ -23,7 +23,9 @@
 
       <template v-slot:body-cell-changeLog="props">
         <q-td :props="props">
-          <div v-for="line in props.row.changeLog.split('\n')" v-bind:key="line" v-html="formatChangeLog(line, props.row)"/>
+          <div v-for="line in props.row.changeLog.split('\n')" v-bind:key="line">
+            {{ line }}
+          </div>
         </q-td>
       </template>
 
@@ -142,11 +144,6 @@ const filterTypes = [
 ]
 
 // Methods
-function formatChangeLog (line, build) {
-  // TODO: Need to track which git provider is being used so we can create links to the commit ref
-  return line
-}
-
 function startPromotionOfBuild (build) {
   alert('Coming soon')
 }
