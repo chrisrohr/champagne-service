@@ -15,7 +15,7 @@
         <q-td :props="props">
           <q-icon :name="iconForProvider(props.row)" class="on-left" size="sm" :color="iconColorForProvider(props.row)"/>
           <span v-if="props.row.gitProvider !== 'OTHER'">
-            <a :href="urlForCommitRef(props.row)" target="_blank" >{{ _.truncate(props.row.commitRef, { length: 11 }) }}</a>
+            <a :href="sanitizeUrl(urlForCommitRef(props.row))" target="_blank" rel="noopener">{{ _.truncate(props.row.commitRef, { length: 11 }) }}</a>
           </span>
           <span v-if="props.row.gitProvider === 'OTHER'">{{ _.truncate(props.row.commitRef, { length: 11 }) }}</span>
         </q-td>
@@ -69,6 +69,7 @@ import { onMounted } from 'vue'
 import { formatDate, fromNow } from '../utils/time'
 import { useBuildStore } from 'stores/buildStore'
 import { _ } from 'lodash'
+import { sanitizeUrl } from '@braintree/sanitize-url'
 
 // Stores
 const buildStore = useBuildStore()
