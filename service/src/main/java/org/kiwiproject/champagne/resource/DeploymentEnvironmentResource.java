@@ -19,6 +19,7 @@ import org.kiwiproject.champagne.dao.AuditRecordDao;
 import org.kiwiproject.champagne.dao.DeploymentEnvironmentDao;
 import org.kiwiproject.champagne.model.DeploymentEnvironment;
 import org.kiwiproject.champagne.model.AuditRecord.Action;
+import org.kiwiproject.champagne.service.ManualTaskService;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
@@ -30,11 +31,13 @@ import com.codahale.metrics.annotation.Timed;
 public class DeploymentEnvironmentResource extends AuditableResource {
     
     private final DeploymentEnvironmentDao deploymentEnvironmentDao;
+    private final ManualTaskService manualTaskService;
 
-    public DeploymentEnvironmentResource(DeploymentEnvironmentDao deploymentEnvironmentDao, AuditRecordDao auditRecordDao) {
+    public DeploymentEnvironmentResource(DeploymentEnvironmentDao deploymentEnvironmentDao, AuditRecordDao auditRecordDao, ManualTaskService manualTaskService) {
         super(auditRecordDao);
 
         this.deploymentEnvironmentDao = deploymentEnvironmentDao;
+        this.manualTaskService = manualTaskService;
     }
 
     @GET
@@ -53,6 +56,8 @@ public class DeploymentEnvironmentResource extends AuditableResource {
         var id = deploymentEnvironmentDao.insertEnvironment(deploymentEnvironment);
 
         auditAction(id, DeploymentEnvironment.class, Action.CREATED);
+
+        manualTaskService.addManualReleaseAndTaskStatusForNewEnv(id);
 
         return Response.noContent().build();
     }

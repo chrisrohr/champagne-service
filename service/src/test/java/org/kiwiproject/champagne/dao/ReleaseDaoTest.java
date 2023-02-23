@@ -131,4 +131,22 @@ class ReleaseDaoTest {
 
     }
 
+    @Nested
+    class FindAllReleaseIds {
+
+        @Test
+        void shouldReturnListOfReleaseIds() {
+            var releaseId = insertReleaseRecord(handle, "42");
+
+            var releaseIds = dao.findAllReleaseIds();
+            assertThat(releaseIds).contains(releaseId);
+        }
+
+        @Test
+        void shouldReturnEmptyListWhenNoReleasesFound() {
+            var releaseIds = dao.findAllReleaseIds();
+            assertThat(releaseIds).isEmpty();
+        }
+    }
+
 }

@@ -193,4 +193,22 @@ class TaskDaoTest {
         }
     }
 
+    @Nested
+    class FindAllTaskIds {
+
+        @Test
+        void shouldReturnListOfTaskIds() {
+            var id = insertTaskRecord(handle, "to be found");
+
+            var taskIds = dao.findAllTaskIds();
+            assertThat(taskIds).contains(id);
+        }
+
+        @Test
+        void shouldReturnEmptyListWhenNoTasksFound() {
+            var taskIds = dao.findAllTaskIds();
+            assertThat(taskIds).isEmpty();
+        }
+    }
+
 }

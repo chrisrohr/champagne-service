@@ -34,6 +34,7 @@ import org.kiwiproject.champagne.resource.DeploymentEnvironmentResource;
 import org.kiwiproject.champagne.resource.HostConfigurationResource;
 import org.kiwiproject.champagne.resource.TaskResource;
 import org.kiwiproject.champagne.resource.UserResource;
+import org.kiwiproject.champagne.service.ManualTaskService;
 import org.kiwiproject.dropwizard.jdbi3.Jdbi3Builders;
 import org.kiwiproject.dropwizard.util.config.JacksonConfig;
 import org.kiwiproject.dropwizard.util.exception.StandardExceptionMappers;
@@ -94,10 +95,12 @@ public class App extends Application<AppConfig> {
         var jsonHelper = JsonHelper.newDropwizardJsonHelper();
         jdbi.registerRowMapper(Build.class, new BuildMapper(jsonHelper));
 
+        var manualTaskService = new ManualTaskService(releaseDao, releaseStatusDao, taskDao, taskStatusDao);
+
         environment.jersey().register(new AuthResource(userDao));
         environment.jersey().register(new AuditRecordResource(auditRecordDao));
         environment.jersey().register(new BuildResource(buildDao, jsonHelper));
-        environment.jersey().register(new DeploymentEnvironmentResource(deploymentEnvironmentDao, auditRecordDao));
+        environment.jersey().register(new DeploymentEnvironmentResource(deploymentEnvironmentDao, auditRecordDao, manualTaskService));
         environment.jersey().register(new HostConfigurationResource(hostDao, componentDao, auditRecordDao));
         environment.jersey().register(new TaskResource(releaseDao, releaseStatusDao, taskDao, taskStatusDao, deploymentEnvironmentDao, auditRecordDao));
         environment.jersey().register(new UserResource(userDao, auditRecordDao));
