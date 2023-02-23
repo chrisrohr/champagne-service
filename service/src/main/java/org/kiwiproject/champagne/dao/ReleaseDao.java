@@ -26,4 +26,7 @@ public interface ReleaseDao {
 
     @SqlUpdate("delete from manual_deployment_task_releases where id = :id")
     void deleteById(@Bind("id") long id);
+
+    @SqlQuery("select id from manual_deployment_task_releases")
+    List<Long> findAllReleaseIds();
 }
