@@ -31,6 +31,7 @@ public class Build {
     private String commitUser;
     private String sourceBranch;
     private String changeLog;
+    private GitProvider gitProvider;
 
     // Artifact info
     private String componentIdentifier;

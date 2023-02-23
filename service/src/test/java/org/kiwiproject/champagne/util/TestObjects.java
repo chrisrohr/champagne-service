@@ -9,6 +9,7 @@ import org.kiwiproject.champagne.model.AuditRecord;
 import org.kiwiproject.champagne.model.Build;
 import org.kiwiproject.champagne.model.Component;
 import org.kiwiproject.champagne.model.DeploymentEnvironment;
+import org.kiwiproject.champagne.model.GitProvider;
 import org.kiwiproject.champagne.model.Host;
 import org.kiwiproject.champagne.model.User;
 import org.kiwiproject.champagne.model.AuditRecord.Action;
@@ -150,12 +151,13 @@ public class TestObjects {
                 .componentVersion(version)
                 .distributionLocation("https://some-nexus-server.net/foo")
                 .extraDeploymentInfo(Map.of())
+                .gitProvider(GitProvider.GITHUB)
                 .build();
 
         return handle.createUpdate("insert into builds " 
-                + "(repo_namespace, repo_name, commit_ref, commit_user, source_branch, component_identifier, component_version, distribution_location, extra_deployment_info) " 
+                + "(repo_namespace, repo_name, commit_ref, commit_user, source_branch, component_identifier, component_version, distribution_location, extra_deployment_info, git_provider) " 
                 + "values " 
-                + "(:repoNamespace, :repoName, :commitRef, :commitUser, :sourceBranch, :componentIdentifier, :componentVersion, :distributionLocation, :extraData)")
+                + "(:repoNamespace, :repoName, :commitRef, :commitUser, :sourceBranch, :componentIdentifier, :componentVersion, :distributionLocation, :extraData, :gitProvider)")
             .bindBean(buildToInsert)
             .bind("extraData", "{}")
             .executeAndReturnGeneratedKeys("id")

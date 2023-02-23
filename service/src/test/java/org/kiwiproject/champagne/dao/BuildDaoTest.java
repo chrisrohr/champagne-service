@@ -20,8 +20,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.kiwiproject.champagne.dao.mappers.BuildMapper;
 import org.kiwiproject.champagne.model.Build;
+import org.kiwiproject.champagne.model.GitProvider;
 import org.kiwiproject.test.junit.jupiter.Jdbi3DaoExtension;
 import org.kiwiproject.test.junit.jupiter.PostgresLiquibaseTestExtension;
 
@@ -70,6 +73,7 @@ class BuildDaoTest {
                 .componentVersion("42.0.0")
                 .distributionLocation("https://some-nexus-server.net/foo")
                 .extraDeploymentInfo(Map.of())
+                .gitProvider(GitProvider.GITHUB)
                 .build();
 
             var id = dao.insertBuild(buildToInsert, "{}");
@@ -92,41 +96,17 @@ class BuildDaoTest {
     @Nested
     class FindPagedBuilds {
 
-        @Test
-        void shouldReturnListOfBuildsWithNoFilters() {
+        @ParameterizedTest
+        @CsvSource(nullValues = "null", value = {
+            "null, null",
+            "null, 42.0",
+            "champagne-service, null",
+            "champagne-service, 42.0"
+        })
+        void shouldReturnListOfBuilds(String componentIdentifierFilter, String componentVersionFilter) {
             insertBuildRecord(handle, "champagne-service", "42.0");
 
-            var builds = dao.findPagedBuilds(0, 10, null, null);
-            assertThat(builds)
-                .extracting("componentIdentifier", "componentVersion")
-                .contains(tuple("champagne-service", "42.0"));
-        }
-
-        @Test
-        void shouldReturnListOfBuildsWithVersionFilter() {
-            insertBuildRecord(handle, "champagne-service", "42.0");
-
-            var builds = dao.findPagedBuilds(0, 10, null, "42.0");
-            assertThat(builds)
-                .extracting("componentIdentifier", "componentVersion")
-                .contains(tuple("champagne-service", "42.0"));
-        }
-
-        @Test
-        void shouldReturnListOfBuildsWithIdentifierFilter() {
-            insertBuildRecord(handle, "champagne-service", "42.0");
-
-            var builds = dao.findPagedBuilds(0, 10, "champagne-service", null);
-            assertThat(builds)
-                .extracting("componentIdentifier", "componentVersion")
-                .contains(tuple("champagne-service", "42.0"));
-        }
-
-        @Test
-        void shouldReturnListOfBuildsWithIdentifierAndVersionFilter() {
-            insertBuildRecord(handle, "champagne-service", "42.0");
-
-            var builds = dao.findPagedBuilds(0, 10, "champagne-service", "42.0");
+            var builds = dao.findPagedBuilds(0, 10, componentIdentifierFilter, componentVersionFilter);
             assertThat(builds)
                 .extracting("componentIdentifier", "componentVersion")
                 .contains(tuple("champagne-service", "42.0"));
@@ -144,35 +124,17 @@ class BuildDaoTest {
     @Nested
     class CountReleases {
 
-        @Test
-        void shouldReturnCountOfReleasesNoFilters() {
+        @ParameterizedTest
+        @CsvSource(nullValues = "null", value = {
+            "null, null",
+            "null, 42.0",
+            "champagne-service, null",
+            "champagne-service, 42.0"
+        })
+        void shouldReturnCountOfReleases(String componentIdentifierFilter, String componentVersionFilter) {
             insertBuildRecord(handle, "champagne-service", "42.0");
 
-            var builds = dao.countBuilds(null, null);
-            assertThat(builds).isOne();
-        }
-
-        @Test
-        void shouldReturnCountOfReleasesVersionFilter() {
-            insertBuildRecord(handle, "champagne-service", "42.0");
-
-            var builds = dao.countBuilds(null, "42.0");
-            assertThat(builds).isOne();
-        }
-
-        @Test
-        void shouldReturnCountOfReleasesIdentifierFilter() {
-            insertBuildRecord(handle, "champagne-service", "42.0");
-
-            var builds = dao.countBuilds("champagne-service", null);
-            assertThat(builds).isOne();
-        }
-
-        @Test
-        void shouldReturnCountOfReleasesIdentifierAndVersionFilter() {
-            insertBuildRecord(handle, "champagne-service", "42.0");
-
-            var builds = dao.countBuilds("champagne-service", "42.0");
+            var builds = dao.countBuilds(componentIdentifierFilter, componentVersionFilter);
             assertThat(builds).isOne();
         }
 
