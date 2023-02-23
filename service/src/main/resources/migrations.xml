@@ -278,4 +278,12 @@
             </column>
         </addColumn>
     </changeSet>
+
+    <changeSet id="add_git_provider_to_build" author="crohr">
+        <addColumn tableName="builds">
+            <column name="git_provider" type="text">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

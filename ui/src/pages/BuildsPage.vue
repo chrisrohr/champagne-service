@@ -11,9 +11,19 @@
         </q-input>
       </template>
 
+      <template v-slot:body-cell-commitRef="props">
+        <q-td :props="props">
+          <q-icon :name="iconForProvider(props.row)" class="on-left" size="sm" :color="iconColorForProvider(props.row)"/>
+          <span v-if="props.row.gitProvider !== 'OTHER'">
+            <a :href="sanitizeUrl(urlForCommitRef(props.row))" target="_blank" rel="noopener">{{ _.truncate(props.row.commitRef, { length: 11 }) }}</a>
+          </span>
+          <span v-if="props.row.gitProvider === 'OTHER'">{{ _.truncate(props.row.commitRef, { length: 11 }) }}</span>
+        </q-td>
+      </template>
+
       <template v-slot:body-cell-changeLog="props">
         <q-td :props="props">
-          <div v-for="line in props.value.split('\n')" v-bind:key="line" v-html="formatChangeLog(line, props.row)"/>
+          <div v-for="line in props.row.changeLog.split('\n')" v-bind:key="line" v-html="formatChangeLog(line, props.row)"/>
         </q-td>
       </template>
 
@@ -58,6 +68,8 @@
 import { onMounted } from 'vue'
 import { formatDate, fromNow } from '../utils/time'
 import { useBuildStore } from 'stores/buildStore'
+import { _ } from 'lodash'
+import { sanitizeUrl } from '@braintree/sanitize-url'
 
 // Stores
 const buildStore = useBuildStore()
@@ -82,6 +94,12 @@ const buildColumns = [
     name: 'sourceBranch',
     label: 'Source',
     field: 'sourceBranch',
+    align: 'left'
+  },
+  {
+    name: 'commitRef',
+    label: 'Commit Ref',
+    field: 'commitRef',
     align: 'left'
   },
   {
@@ -135,6 +153,40 @@ function startPromotionOfBuild (build) {
 
 function startPreviewPromotion (build) {
   alert('Coming soon')
+}
+
+function urlForCommitRef (build) {
+  switch (build.gitProvider) {
+    case 'GITHUB':
+      return `https://github.com/${build.repoNamespace}/${build.repoName}/commit/${build.commitRef}`
+    case 'GITLAB':
+      return `https://gitlab.com/${build.repoNamespace}/${build.repoName}/-/commit/${build.commitRef}`
+    case 'BITBUCKET':
+      return `https://bitbucket.org/${build.repoNamespace}/${build.repoName}/commits/${build.commitRef}`
+  }
+
+  return ''
+}
+
+function iconForProvider (build) {
+  let providerIcon = 'fa-git-alt'
+
+  if (build.gitProvider !== 'OTHER') {
+    providerIcon = `fa-${_.toLower(build.gitProvider)}`
+  }
+
+  return `fa-brands ${providerIcon}`
+}
+
+function iconColorForProvider (build) {
+  switch (build.gitProvider) {
+    case 'GITLAB':
+      return 'orange'
+    case 'BITBUCKET':
+      return 'blue'
+  }
+
+  return 'black'
 }
 
 onMounted(() => {

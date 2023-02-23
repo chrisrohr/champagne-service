@@ -1,5 +1,7 @@
 package org.kiwiproject.champagne.dao.mappers;
 
+import static org.kiwiproject.jdbc.KiwiJdbc.enumValueOrNull;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
@@ -8,6 +10,7 @@ import java.util.Optional;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 import org.kiwiproject.champagne.model.Build;
+import org.kiwiproject.champagne.model.GitProvider;
 import org.kiwiproject.jdbc.KiwiJdbc;
 import org.kiwiproject.json.JsonHelper;
 
@@ -34,6 +37,7 @@ public class BuildMapper implements RowMapper<Build>{
             .distributionLocation(rs.getString("distribution_location"))
             .extraDeploymentInfo(jsonToMap(rs, "extra_deployment_info"))
             .changeLog(rs.getString("change_log"))
+            .gitProvider(enumValueOrNull(rs, "git_provider", GitProvider.class))
             .build();
     }
 
