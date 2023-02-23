@@ -37,8 +37,8 @@ describe('updateDisplayName', () => {
   })
 })
 
-describe('createUser', () => {
-  it('should call the user store to create a new user', () => {
+describe('createOrUpdateUser', () => {
+  it('should call the user store to create a new user when no id', () => {
     const userStore = useUserStore()
     userStore.create.mockImplementation(() => Promise.resolve(1))
 
@@ -47,10 +47,26 @@ describe('createUser', () => {
     wrapper.vm.activeUser.displayName = 'Bob Roberts'
     wrapper.vm.activeUser.systemIdentifier = 'brob'
 
-    wrapper.vm.createUser()
+    wrapper.vm.createOrUpdateUser()
 
-    expect(userStore.create).toHaveBeenLastCalledWith({ firstName: 'Bob', lastName: 'Roberts', displayName: 'Bob Roberts', systemIdentifier: 'brob', admin: false })
-    expect(wrapper.vm.showUserAdd).toEqual(false)
+    expect(userStore.create).toHaveBeenLastCalledWith({ id: null, firstName: 'Bob', lastName: 'Roberts', displayName: 'Bob Roberts', systemIdentifier: 'brob', admin: false })
+    expect(wrapper.vm.showUserForm).toEqual(false)
+  })
+
+  it('should call the user store to update a new user when id', () => {
+    const userStore = useUserStore()
+    userStore.update.mockImplementation(() => Promise.resolve(1))
+
+    wrapper.vm.activeUser.id = 1
+    wrapper.vm.activeUser.firstName = 'Bob'
+    wrapper.vm.activeUser.lastName = 'Roberts'
+    wrapper.vm.activeUser.displayName = 'Bob Roberts'
+    wrapper.vm.activeUser.systemIdentifier = 'brob'
+
+    wrapper.vm.createOrUpdateUser()
+
+    expect(userStore.create).toHaveBeenLastCalledWith({ id: 1, firstName: 'Bob', lastName: 'Roberts', displayName: 'Bob Roberts', systemIdentifier: 'brob', admin: false })
+    expect(wrapper.vm.showUserForm).toEqual(false)
   })
 })
 
@@ -71,5 +87,32 @@ describe('confirmDeleteUser', () => {
 
     expect(confirmAction).toHaveBeenCalled()
     expect(confirmAction).toHaveBeenCalledWith('Are you sure you want to deactivate user Joe?', expect.any(Function))
+  })
+})
+
+describe('setupUserFormForCreate', () => {
+  it('should open a clean form', () => {
+    wrapper.vm.setupUserFormForCreate()
+
+    expect(wrapper.vm.showUserForm).toBeTruthy()
+    expect(wrapper.vm.userFormTitle).toEqual('Add new user')
+  })
+})
+
+describe('setupUserFormForEdit', () => {
+  it('should open a form prepopulated', () => {
+    const row = {
+      id: 1,
+      firstName: 'Joe',
+      lastName: 'Doe',
+      displayName: 'Joe Doe',
+      systemIdentifier: 'jdoe',
+      admin: false
+    }
+    wrapper.vm.setupUserFormForEdit(row)
+
+    expect(wrapper.vm.showUserForm).toBeTruthy()
+    expect(wrapper.vm.userFormTitle).toEqual('Update user')
+    expect(wrapper.vm.activeUser).toEqual(row)
   })
 })

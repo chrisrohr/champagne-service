@@ -21,10 +21,15 @@ export const useUserStore = defineStore('user', () => {
       .then(() => load())
   }
 
+  function update (userData) {
+    return api.put('/users', userData)
+      .then(() => load())
+  }
+
   function deleteUser (id) {
     api.delete(`/users/${id}`)
       .then(() => load())
   }
 
-  return { users, loading, pagination, load, create, deleteUser }
+  return { users, loading, pagination, load, create, update, deleteUser }
 })
