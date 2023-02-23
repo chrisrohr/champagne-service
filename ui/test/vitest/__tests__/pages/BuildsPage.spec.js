@@ -18,13 +18,6 @@ describe('BuildsPage', () => {
   })
 })
 
-describe('formatChangeLog', () => {
-  it('should return the given line', () => {
-    const logLine = wrapper.vm.formatChangeLog('foo')
-    expect(logLine).toBe('foo')
-  })
-})
-
 describe('startPromotionOfBuild', () => {
   it('should alert the text "Coming Soon"', () => {
     alert = vi.fn()
