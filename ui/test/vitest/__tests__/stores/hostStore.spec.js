@@ -1,14 +1,14 @@
 import { setActivePinia, createPinia } from 'pinia'
 import { useHostStore } from 'src/stores/hostStore'
-import { vi } from "vitest";
-import { api } from "src/boot/axios";
+import { vi, beforeEach, describe, it, expect } from 'vitest'
+import { api } from 'src/boot/axios'
 
 beforeEach(() => {
   setActivePinia(createPinia())
 
   vi.mock('src/boot/axios', () => {
     const api = {
-      get: vi.fn().mockImplementation(() => Promise.resolve({data: { name: 'dev' }})),
+      get: vi.fn().mockImplementation(() => Promise.resolve({ data: { name: 'dev' } })),
       post: vi.fn().mockImplementation(() => Promise.resolve(true)),
       delete: vi.fn().mockImplementation(() => Promise.resolve(true)),
       put: vi.fn().mockImplementation(() => Promise.resolve(true))
@@ -19,7 +19,6 @@ beforeEach(() => {
 })
 
 describe('load', () => {
-
   it('should load hosts', async () => {
     const hostStore = useHostStore()
     hostStore.environmentFilter = { value: 1 }
@@ -29,7 +28,6 @@ describe('load', () => {
     expect(api.get).toHaveBeenCalled()
     expect(api.get).toHaveBeenCalledWith('/host/1', { componentFilter: '' })
   })
-
 })
 
 describe('create', () => {
