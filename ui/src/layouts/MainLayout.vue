@@ -8,7 +8,7 @@
           round
           icon="menu"
           aria-label="Menu"
-          @click="drawer = !drawer"
+          @click="drawer.value = !drawer.value"
           class="text-grey-4"
           v-if="authStore.isLoggedIn"
         />
@@ -44,8 +44,8 @@
       show-if-above
 
       :mini="miniState"
-      @mouseover="miniState = false"
-      @mouseout="miniState = true"
+      @mouseover="miniState.value = false"
+      @mouseout="miniState.value = true"
 
       bordered
       :width="200"
@@ -105,6 +105,15 @@
             </q-item-section>
             <q-item-section>
               Users
+            </q-item-section>
+          </q-item>
+
+          <q-item to="/errors" exact clickable v-ripple>
+            <q-item-section avatar>
+              <q-icon name="gpp_bad"/>
+            </q-item-section>
+            <q-item-section>
+              Errors
             </q-item-section>
           </q-item>
 
