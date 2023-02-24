@@ -18,6 +18,8 @@ import org.kiwiproject.champagne.dao.AuditRecordDao;
 import org.kiwiproject.champagne.model.AuditRecord;
 import org.kiwiproject.champagne.model.User;
 import org.kiwiproject.champagne.util.AuthHelper;
+import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
+import org.kiwiproject.dropwizard.error.test.junit.jupiter.ApplicationErrorExtension;
 import org.kiwiproject.jaxrs.exception.JaxrsExceptionMapper;
 
 import javax.ws.rs.GET;
@@ -25,12 +27,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
 @DisplayName("AuditableResource")
-@ExtendWith(DropwizardExtensionsSupport.class)
+@ExtendWith({DropwizardExtensionsSupport.class, ApplicationErrorExtension.class})
 class AuditableResourceTest {
 
     private static final AuditRecordDao AUDIT_RECORD_DAO = mock(AuditRecordDao.class);
+    private static final ApplicationErrorDao APPLICATION_ERROR_DAO = mock(ApplicationErrorDao.class);
 
-    private static final TestResource TEST_RESOURCE = new TestResource(AUDIT_RECORD_DAO);
+    private static final TestResource TEST_RESOURCE = new TestResource(AUDIT_RECORD_DAO, APPLICATION_ERROR_DAO);
 
     private static final ResourceExtension APP = ResourceExtension.builder()
             .bootstrapLogging(false)
@@ -78,8 +81,8 @@ class AuditableResourceTest {
 
         public boolean setupAuth;
 
-        public TestResource(AuditRecordDao auditRecordDao) {
-            super(auditRecordDao);
+        public TestResource(AuditRecordDao auditRecordDao, ApplicationErrorDao errorDao) {
+            super(auditRecordDao, errorDao);
         }
 
         @GET

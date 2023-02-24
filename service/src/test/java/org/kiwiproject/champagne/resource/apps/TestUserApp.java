@@ -9,11 +9,13 @@ import org.kiwiproject.champagne.dao.AuditRecordDao;
 import org.kiwiproject.champagne.dao.UserDao;
 import org.kiwiproject.champagne.resource.AuthResource;
 import org.kiwiproject.champagne.resource.UserResource;
+import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
 
 public class TestUserApp extends Application<AppConfig> {
 
     public static UserDao userDao;
     public static AuditRecordDao auditRecordDao;
+    public static ApplicationErrorDao errorDao;
 
     @Override
     public void initialize(Bootstrap<AppConfig> bootstrap) {
@@ -23,7 +25,7 @@ public class TestUserApp extends Application<AppConfig> {
 
     @Override
     public void run(AppConfig appConfig, Environment environment) {
-        environment.jersey().register(new UserResource(userDao, auditRecordDao));
+        environment.jersey().register(new UserResource(userDao, auditRecordDao, errorDao));
         environment.jersey().register(new AuthResource(userDao));
     }
 }

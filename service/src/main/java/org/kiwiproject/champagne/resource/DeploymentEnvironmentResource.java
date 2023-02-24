@@ -23,6 +23,7 @@ import org.kiwiproject.champagne.service.ManualTaskService;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
+import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
 
 @Path("/environments")
 @Produces(APPLICATION_JSON)
@@ -33,8 +34,8 @@ public class DeploymentEnvironmentResource extends AuditableResource {
     private final DeploymentEnvironmentDao deploymentEnvironmentDao;
     private final ManualTaskService manualTaskService;
 
-    public DeploymentEnvironmentResource(DeploymentEnvironmentDao deploymentEnvironmentDao, AuditRecordDao auditRecordDao, ManualTaskService manualTaskService) {
-        super(auditRecordDao);
+    public DeploymentEnvironmentResource(DeploymentEnvironmentDao deploymentEnvironmentDao, AuditRecordDao auditRecordDao, ApplicationErrorDao errorDao, ManualTaskService manualTaskService) {
+        super(auditRecordDao, errorDao);
 
         this.deploymentEnvironmentDao = deploymentEnvironmentDao;
         this.manualTaskService = manualTaskService;

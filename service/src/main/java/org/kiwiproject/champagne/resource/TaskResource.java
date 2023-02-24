@@ -24,6 +24,7 @@ import org.kiwiproject.champagne.dao.ReleaseDao;
 import org.kiwiproject.champagne.dao.ReleaseStatusDao;
 import org.kiwiproject.champagne.dao.TaskDao;
 import org.kiwiproject.champagne.dao.TaskStatusDao;
+import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
 import org.kiwiproject.jaxrs.exception.JaxrsNotFoundException;
 import org.kiwiproject.spring.data.KiwiPage;
 
@@ -58,14 +59,15 @@ public class TaskResource extends AuditableResource {
     private final TaskStatusDao taskStatusDao;
     private final DeploymentEnvironmentDao deploymentEnvironmentDao;
 
-    public TaskResource (ReleaseDao releaseDao, 
-                         ReleaseStatusDao releaseStatusDao, 
-                         TaskDao taskDao, 
-                         TaskStatusDao taskStatusDao, 
-                         DeploymentEnvironmentDao deploymentEnvironmentDao, 
-                         AuditRecordDao auditRecordDao) {
+    public TaskResource (ReleaseDao releaseDao,
+                         ReleaseStatusDao releaseStatusDao,
+                         TaskDao taskDao,
+                         TaskStatusDao taskStatusDao,
+                         DeploymentEnvironmentDao deploymentEnvironmentDao,
+                         AuditRecordDao auditRecordDao,
+                         ApplicationErrorDao errorDao) {
 
-        super(auditRecordDao);
+        super(auditRecordDao, errorDao);
 
         this.releaseDao = releaseDao;
         this.releaseStatusDao = releaseStatusDao;
