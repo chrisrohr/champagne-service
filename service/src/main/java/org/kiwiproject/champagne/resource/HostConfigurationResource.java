@@ -23,6 +23,7 @@ import org.kiwiproject.champagne.dao.HostDao;
 import org.kiwiproject.champagne.model.Component;
 import org.kiwiproject.champagne.model.Host;
 import org.kiwiproject.champagne.model.AuditRecord.Action;
+import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
 import org.kiwiproject.jaxrs.exception.JaxrsNotFoundException;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
@@ -37,8 +38,8 @@ public class HostConfigurationResource extends AuditableResource {
     private final HostDao hostDao;
     private final ComponentDao componentDao;
 
-    public HostConfigurationResource(HostDao hostDao, ComponentDao componentDao, AuditRecordDao auditRecordDao) {
-        super(auditRecordDao);
+    public HostConfigurationResource(HostDao hostDao, ComponentDao componentDao, AuditRecordDao auditRecordDao, ApplicationErrorDao errorDao) {
+        super(auditRecordDao, errorDao);
 
         this.hostDao = hostDao;
         this.componentDao = componentDao;

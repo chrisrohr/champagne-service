@@ -31,6 +31,8 @@ import org.kiwiproject.champagne.model.AuditRecord;
 import org.kiwiproject.champagne.model.AuditRecord.Action;
 import org.kiwiproject.champagne.service.ManualTaskService;
 import org.kiwiproject.champagne.model.DeploymentEnvironment;
+import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
+import org.kiwiproject.dropwizard.error.test.junit.jupiter.ApplicationErrorExtension;
 import org.kiwiproject.jaxrs.exception.JaxrsExceptionMapper;
 import org.mockito.ArgumentCaptor;
 
@@ -38,12 +40,13 @@ import java.util.List;
 import javax.ws.rs.core.GenericType;
 
 @DisplayName("DeploymentEnvironmentResource")
-@ExtendWith( DropwizardExtensionsSupport.class)
+@ExtendWith( {DropwizardExtensionsSupport.class, ApplicationErrorExtension.class})
 class DeploymentEnvironmentResourceTest {
     private static final DeploymentEnvironmentDao DEPLOYMENT_ENVIRONMENT_DAO = mock(DeploymentEnvironmentDao.class);
     private static final AuditRecordDao AUDIT_RECORD_DAO = mock(AuditRecordDao.class);
     private static final ManualTaskService MANUAL_TASK_SERVICE = mock(ManualTaskService.class);
-    private static final DeploymentEnvironmentResource DEPLOYMENT_ENVIRONMENT_RESOURCE = new DeploymentEnvironmentResource(DEPLOYMENT_ENVIRONMENT_DAO, AUDIT_RECORD_DAO, MANUAL_TASK_SERVICE);
+    private static final ApplicationErrorDao APPLICATION_ERROR_DAO = mock(ApplicationErrorDao.class);
+    private static final DeploymentEnvironmentResource DEPLOYMENT_ENVIRONMENT_RESOURCE = new DeploymentEnvironmentResource(DEPLOYMENT_ENVIRONMENT_DAO, AUDIT_RECORD_DAO, APPLICATION_ERROR_DAO, MANUAL_TASK_SERVICE);
 
     private static final ResourceExtension APP = ResourceExtension.builder()
             .bootstrapLogging(false)

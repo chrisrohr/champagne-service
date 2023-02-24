@@ -286,4 +286,36 @@
             </column>
         </addColumn>
     </changeSet>
+
+    <!-- Copied from dropwizard-application-errors -->
+    <changeSet id="add-application-errors-table" author="dropwizard-application-errors">
+        <createTable tableName="application_errors" remarks="Stores application errors">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamp without time zone" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp without time zone" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="num_times_occurred" type="integer" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="exception_type" type="text"/>
+            <column name="exception_message" type="text"/>
+            <column name="exception_cause_type" type="text"/>
+            <column name="exception_cause_message" type="text"/>
+            <column name="stack_trace" type="text"/>
+            <column name="resolved" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="host_name" type="text"/>
+            <column name="ip_address" type="text"/>
+            <column name="port" type="integer"/>
+        </createTable>
+    </changeSet>
 </databaseChangeLog>

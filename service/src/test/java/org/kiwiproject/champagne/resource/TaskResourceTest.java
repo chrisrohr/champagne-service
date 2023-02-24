@@ -41,6 +41,8 @@ import org.kiwiproject.champagne.model.manualdeployment.ReleaseStage;
 import org.kiwiproject.champagne.model.manualdeployment.ReleaseStatus;
 import org.kiwiproject.champagne.model.manualdeployment.Task;
 import org.kiwiproject.champagne.model.manualdeployment.TaskStatus;
+import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
+import org.kiwiproject.dropwizard.error.test.junit.jupiter.ApplicationErrorExtension;
 import org.kiwiproject.dropwizard.util.exception.JerseyViolationExceptionMapper;
 import org.kiwiproject.jaxrs.exception.JaxrsExceptionMapper;
 import org.kiwiproject.spring.data.KiwiPage;
@@ -50,7 +52,7 @@ import java.util.Optional;
 import javax.ws.rs.core.GenericType;
 
 @DisplayName("TaskResource")
-@ExtendWith(DropwizardExtensionsSupport.class)
+@ExtendWith({DropwizardExtensionsSupport.class, ApplicationErrorExtension.class})
 class TaskResourceTest {
 
     private static final ReleaseDao RELEASE_DAO = mock(ReleaseDao.class);
@@ -59,8 +61,9 @@ class TaskResourceTest {
     private static final TaskStatusDao TASK_STATUS_DAO = mock(TaskStatusDao.class);
     private static final DeploymentEnvironmentDao DEPLOYMENT_ENVIRONMENT_DAO = mock(DeploymentEnvironmentDao.class);
     private static final AuditRecordDao AUDIT_RECORD_DAO = mock(AuditRecordDao.class);
+    private static final ApplicationErrorDao APPLICATION_ERROR_DAO = mock(ApplicationErrorDao.class);
 
-    private static final TaskResource RESOURCE = new TaskResource(RELEASE_DAO, RELEASE_STATUS_DAO, TASK_DAO, TASK_STATUS_DAO, DEPLOYMENT_ENVIRONMENT_DAO, AUDIT_RECORD_DAO);
+    private static final TaskResource RESOURCE = new TaskResource(RELEASE_DAO, RELEASE_STATUS_DAO, TASK_DAO, TASK_STATUS_DAO, DEPLOYMENT_ENVIRONMENT_DAO, AUDIT_RECORD_DAO, APPLICATION_ERROR_DAO);
 
     private static final ResourceExtension RESOURCES = ResourceExtension.builder()
         .bootstrapLogging(false)
@@ -722,11 +725,9 @@ class TaskResourceTest {
     
 
     private void verifyAuditRecorded(long id, Class<?> taskClass, Action action) {
-        verify(AUDIT_RECORD_DAO).insertAuditRecord(argThat(audit -> {
-            return audit.getRecordId() == id 
-                && audit.getRecordType().equalsIgnoreCase(taskClass.getSimpleName()) 
-                && audit.getAction() == action;
-        }));
+        verify(AUDIT_RECORD_DAO).insertAuditRecord(argThat(audit -> audit.getRecordId() == id
+            && audit.getRecordType().equalsIgnoreCase(taskClass.getSimpleName())
+            && audit.getAction() == action));
     }
 
     private void verifyMultipleStatusRecordsAuditRecorded(int times, Class<?> statusClass, Action action) {

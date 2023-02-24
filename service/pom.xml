@@ -24,6 +24,7 @@
 
     <properties>
         <!-- Versions for required dependencies -->
+        <dropwizard-application-errors.version>1.1.9</dropwizard-application-errors.version>
         <dropwizard-jwt-cookie-auth.version>4.5.0</dropwizard-jwt-cookie-auth.version>
         <dropwizard-service-utilities.version>2.2.0</dropwizard-service-utilities.version>
         <kiwi.version>2.4.0</kiwi.version>
@@ -88,6 +89,12 @@
         <dependency>
             <groupId>org.jdbi</groupId>
             <artifactId>jdbi3-postgres</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.kiwiproject</groupId>
+            <artifactId>dropwizard-application-errors</artifactId>
+            <version>${dropwizard-application-errors.version}</version>
         </dependency>
 
         <dependency>

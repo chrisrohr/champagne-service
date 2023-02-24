@@ -12,6 +12,7 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.dhatim.dropwizard.jwt.cookie.authentication.JwtCookieAuthBundle;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
+import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.postgres.PostgresPlugin;
 import org.kiwiproject.champagne.config.AppConfig;
 import org.kiwiproject.champagne.dao.AuditRecordDao;
@@ -35,11 +36,17 @@ import org.kiwiproject.champagne.resource.HostConfigurationResource;
 import org.kiwiproject.champagne.resource.TaskResource;
 import org.kiwiproject.champagne.resource.UserResource;
 import org.kiwiproject.champagne.service.ManualTaskService;
+import org.kiwiproject.dropwizard.error.ErrorContextBuilder;
+import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
+import org.kiwiproject.dropwizard.error.model.ServiceDetails;
+import org.kiwiproject.dropwizard.error.resource.ApplicationErrorResource;
 import org.kiwiproject.dropwizard.jdbi3.Jdbi3Builders;
 import org.kiwiproject.dropwizard.util.config.JacksonConfig;
 import org.kiwiproject.dropwizard.util.exception.StandardExceptionMappers;
 import org.kiwiproject.dropwizard.util.jackson.StandardJacksonConfigurations;
+import org.kiwiproject.dropwizard.util.server.DropwizardConnectors;
 import org.kiwiproject.json.JsonHelper;
+import org.kiwiproject.net.KiwiInternetAddresses;
 
 import java.util.EnumSet;
 import javax.servlet.DispatcherType;
@@ -91,6 +98,7 @@ public class App extends Application<AppConfig> {
         var buildDao = jdbi.onDemand(BuildDao.class);
         var hostDao = jdbi.onDemand(HostDao.class);
         var componentDao = jdbi.onDemand(ComponentDao.class);
+        var errorDao = setupApplicationErrors(jdbi, configuration, environment);
 
         var jsonHelper = JsonHelper.newDropwizardJsonHelper();
         jdbi.registerRowMapper(Build.class, new BuildMapper(jsonHelper));
@@ -100,10 +108,11 @@ public class App extends Application<AppConfig> {
         environment.jersey().register(new AuthResource(userDao));
         environment.jersey().register(new AuditRecordResource(auditRecordDao));
         environment.jersey().register(new BuildResource(buildDao, jsonHelper));
-        environment.jersey().register(new DeploymentEnvironmentResource(deploymentEnvironmentDao, auditRecordDao, manualTaskService));
-        environment.jersey().register(new HostConfigurationResource(hostDao, componentDao, auditRecordDao));
-        environment.jersey().register(new TaskResource(releaseDao, releaseStatusDao, taskDao, taskStatusDao, deploymentEnvironmentDao, auditRecordDao));
-        environment.jersey().register(new UserResource(userDao, auditRecordDao));
+        environment.jersey().register(new DeploymentEnvironmentResource(deploymentEnvironmentDao, auditRecordDao, errorDao, manualTaskService));
+        environment.jersey().register(new HostConfigurationResource(hostDao, componentDao, auditRecordDao, errorDao));
+        environment.jersey().register(new TaskResource(releaseDao, releaseStatusDao, taskDao, taskStatusDao, deploymentEnvironmentDao, auditRecordDao, errorDao));
+        environment.jersey().register(new UserResource(userDao, auditRecordDao, errorDao));
+        environment.jersey().register(new ApplicationErrorResource(errorDao));
 
         configureCors(environment);
 
@@ -134,6 +143,18 @@ public class App extends Application<AppConfig> {
 
         // Add URL mapping
         cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
+    }
+
+    private ApplicationErrorDao setupApplicationErrors(Jdbi jdbi, AppConfig configuration, Environment environment) {
+        var hostPort = KiwiInternetAddresses.getLocalHostInfo().orElseThrow();
+        var serverFactory = DropwizardConnectors.requireDefaultServerFactory(configuration.getServerFactory());
+        var port = DropwizardConnectors.getApplicationPort(serverFactory, DropwizardConnectors.ConnectorType.HTTP).orElseThrow();
+        var serviceDetails = ServiceDetails.from(hostPort.getHostName(), hostPort.getIpAddr(), port);
+        return ErrorContextBuilder.newInstance()
+                .environment(environment)
+                .serviceDetails(serviceDetails)
+                .buildWithJdbi3(jdbi)
+                .errorDao();
     }
 
 }

@@ -13,6 +13,7 @@ import org.kiwiproject.champagne.dao.AuditRecordDao;
 import org.kiwiproject.champagne.dao.UserDao;
 import org.kiwiproject.champagne.model.AuditRecord.Action;
 import org.kiwiproject.champagne.model.User;
+import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
 import org.kiwiproject.spring.data.KiwiPage;
 
 import javax.annotation.security.PermitAll;
@@ -39,8 +40,8 @@ public class UserResource extends AuditableResource {
 
     private final UserDao userDao;
 
-    public UserResource(UserDao userDao, AuditRecordDao auditRecordDao) {
-        super(auditRecordDao);
+    public UserResource(UserDao userDao, AuditRecordDao auditRecordDao, ApplicationErrorDao errorDao) {
+        super(auditRecordDao, errorDao);
 
         this.userDao = userDao;
     }

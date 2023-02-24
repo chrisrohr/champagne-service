@@ -31,6 +31,8 @@ import org.kiwiproject.champagne.model.AuditRecord;
 import org.kiwiproject.champagne.model.Component;
 import org.kiwiproject.champagne.model.AuditRecord.Action;
 import org.kiwiproject.champagne.model.Host;
+import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
+import org.kiwiproject.dropwizard.error.test.junit.jupiter.ApplicationErrorExtension;
 import org.kiwiproject.jaxrs.exception.JaxrsExceptionMapper;
 import org.mockito.ArgumentCaptor;
 
@@ -40,12 +42,13 @@ import java.util.Optional;
 import javax.ws.rs.core.GenericType;
 
 @DisplayName("HostConfigurationResource")
-@ExtendWith( DropwizardExtensionsSupport.class)
+@ExtendWith( {DropwizardExtensionsSupport.class, ApplicationErrorExtension.class})
 class HostConfigurationResourceTest {
     private static final HostDao HOST_DAO = mock(HostDao.class);
     private static final ComponentDao COMPONENT_DAO = mock(ComponentDao.class);
     private static final AuditRecordDao AUDIT_RECORD_DAO = mock(AuditRecordDao.class);
-    private static final HostConfigurationResource HOST_CONFIGURATION_RESOURCE = new HostConfigurationResource(HOST_DAO, COMPONENT_DAO, AUDIT_RECORD_DAO);
+    private static final ApplicationErrorDao APPLICATION_ERROR_DAO = mock(ApplicationErrorDao.class);
+    private static final HostConfigurationResource HOST_CONFIGURATION_RESOURCE = new HostConfigurationResource(HOST_DAO, COMPONENT_DAO, AUDIT_RECORD_DAO, APPLICATION_ERROR_DAO);
 
     private static final ResourceExtension APP = ResourceExtension.builder()
             .bootstrapLogging(false)
