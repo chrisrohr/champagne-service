@@ -7,11 +7,6 @@ import static org.kiwiproject.collect.KiwiLists.first;
 import static org.kiwiproject.test.constants.KiwiTestConstants.JSON_HELPER;
 import static org.kiwiproject.test.util.DateTimeTestHelper.assertTimeDifferenceWithinTolerance;
 
-import java.sql.SQLException;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.util.Map;
-
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.spi.JdbiPlugin;
@@ -28,6 +23,10 @@ import org.kiwiproject.champagne.model.GitProvider;
 import org.kiwiproject.test.junit.jupiter.Jdbi3DaoExtension;
 import org.kiwiproject.test.junit.jupiter.PostgresLiquibaseTestExtension;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.Map;
+
 @DisplayName("BuildDao")
 class BuildDaoTest {
     
@@ -41,7 +40,7 @@ class BuildDaoTest {
             .plugin(new JdbiPlugin() {
                 
                 @Override
-                public void customizeJdbi(Jdbi jdbi) throws SQLException {
+                public void customizeJdbi(Jdbi jdbi) {
                     jdbi.registerRowMapper(Build.class, new BuildMapper(JSON_HELPER));
                 }
             })
@@ -60,7 +59,7 @@ class BuildDaoTest {
     class InsertBuild {
 
         @Test
-        void shouldInsertUserSuccessfully() {
+        void shouldInsertBuildSuccessfully() {
             var beforeInsert = ZonedDateTime.now();
 
             var buildToInsert = Build.builder()
@@ -113,7 +112,7 @@ class BuildDaoTest {
         }
 
         @Test
-        void shouldReturnEmptyListWhenNoReleasesFound() {
+        void shouldReturnEmptyListWhenNoBuildsFound() {
             insertBuildRecord(handle, "champagne-service", "42.0");
 
             var builds = dao.findPagedBuilds(10, 10, null, null);
@@ -122,7 +121,7 @@ class BuildDaoTest {
     }
 
     @Nested
-    class CountReleases {
+    class CountBuilds {
 
         @ParameterizedTest
         @CsvSource(nullValues = "null", value = {
@@ -131,7 +130,7 @@ class BuildDaoTest {
             "champagne-service, null",
             "champagne-service, 42.0"
         })
-        void shouldReturnCountOfReleases(String componentIdentifierFilter, String componentVersionFilter) {
+        void shouldReturnCountOfBuilds(String componentIdentifierFilter, String componentVersionFilter) {
             insertBuildRecord(handle, "champagne-service", "42.0");
 
             var builds = dao.countBuilds(componentIdentifierFilter, componentVersionFilter);
@@ -139,7 +138,7 @@ class BuildDaoTest {
         }
 
         @Test
-        void shouldReturnEmptyListWhenNoReleasesFound() {
+        void shouldReturnEmptyListWhenNoBuildsFound() {
             var builds = dao.countBuilds(null, null);
             assertThat(builds).isZero();
         }
