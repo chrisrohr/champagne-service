@@ -8,6 +8,7 @@ import org.jdbi.v3.core.Handle;
 import org.kiwiproject.champagne.model.AuditRecord;
 import org.kiwiproject.champagne.model.Build;
 import org.kiwiproject.champagne.model.Component;
+import org.kiwiproject.champagne.model.DeployableSystem;
 import org.kiwiproject.champagne.model.DeploymentEnvironment;
 import org.kiwiproject.champagne.model.GitProvider;
 import org.kiwiproject.champagne.model.Host;
@@ -198,6 +199,29 @@ public class TestObjects {
             .executeAndReturnGeneratedKeys("id")
             .mapTo(Long.class)
             .first();
+    }
+
+    public static long insertDeployableSystem(Handle handle, String name) {
+        var deployableSystemToInsert = DeployableSystem.builder()
+                .name(name)
+                .build();
+
+        return handle.createUpdate("insert into deployable_systems "
+                        + "(name) "
+                        + "values "
+                        + "(:name)")
+                .bindBean(deployableSystemToInsert)
+                .executeAndReturnGeneratedKeys("id")
+                .mapTo(Long.class)
+                .first();
+    }
+
+    public static void insertUserToDeployableSystemLink(Handle handle, long userId, long deployableSystemId, boolean admin) {
+        handle.createUpdate("insert into users_deployable_systems (user_id, deployable_system_id, system_admin) values (:userId, :deployableSystemId, :admin)")
+                .bind("userId", userId)
+                .bind("deployableSystemId", deployableSystemId)
+                .bind("admin", admin)
+                .execute();
     }
     
 }

@@ -318,4 +318,40 @@
             <column name="port" type="integer"/>
         </createTable>
     </changeSet>
+
+    <changeSet id="add system table" author="crohr">
+        <createTable tableName="deployable_systems">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="created_at" type="timestamp without time zone" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp without time zone" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="dev_environment_id" type="bigint">
+                <constraints nullable="true" foreignKeyName="fk_system_deployment_environment" references="deployment_environments(id)" deleteCascade="true"/>
+            </column>
+            <column name="environment_promotion_order" type="text"/>
+        </createTable>
+
+        <createTable tableName="users_deployable_systems">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_user_system_user" references="users(id)" deleteCascade="true"/>
+            </column>
+            <column name="deployable_system_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_user_system_deployable_system" references="deployable_systems(id)" deleteCascade="true"/>
+            </column>
+            <column name="system_admin" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
 </databaseChangeLog>
