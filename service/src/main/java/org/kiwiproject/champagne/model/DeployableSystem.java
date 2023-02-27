@@ -5,6 +5,7 @@ import lombok.Value;
 import lombok.With;
 
 import java.time.Instant;
+import javax.validation.constraints.NotBlank;
 
 @Builder
 @Value
@@ -14,6 +15,7 @@ public class DeployableSystem {
     Instant createdAt;
     Instant updatedAt;
 
+    @NotBlank
     String name;
 
     Long devEnvironmentId;

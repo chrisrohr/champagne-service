@@ -37,4 +37,7 @@ public interface DeployableSystemDao {
 
     @SqlUpdate("delete from deployable_systems where id = :id")
     int deleteById(@Bind("id") long id);
+
+    @SqlQuery("select system_admin from users_deployable_systems where user_id = :userId and deployable_system_id = :systemId")
+    boolean isUserAdminOfSystem(@Bind("userId") long userId, @Bind("systemId") long systemId);
 }
