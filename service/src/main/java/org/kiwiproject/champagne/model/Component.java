@@ -26,4 +26,9 @@ public class Component {
      */
     String tag;
 
+    /**
+     * The Deployable System that this component is tied to
+     */
+    Long deployableSystemId;
+
 }

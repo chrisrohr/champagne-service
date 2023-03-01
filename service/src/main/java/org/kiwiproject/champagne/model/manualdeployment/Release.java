@@ -24,4 +24,9 @@ public class Release {
 
     @NotBlank
     String releaseNumber;
+
+    /**
+     * The Deployable System that this release is tied to
+     */
+    Long deployableSystemId;
 }

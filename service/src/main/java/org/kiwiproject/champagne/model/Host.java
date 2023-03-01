@@ -41,4 +41,9 @@ public class Host {
      * The source of truth for the definition of this host, whether it is stored in Champagne or pulled dynamically from a cloud.
      */
     Source source;
+
+    /**
+     * The Deployable System that this host is tied to
+     */
+    Long deployableSystemId;
 }

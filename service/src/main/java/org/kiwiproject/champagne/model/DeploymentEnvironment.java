@@ -29,4 +29,9 @@ public class DeploymentEnvironment {
 
     boolean deleted;
 
+    /**
+     * The Deployable System that this env is tied to
+     */
+    Long deployableSystemId;
+
 }

@@ -38,4 +38,9 @@ public class Build {
     private String componentVersion;
     private String distributionLocation;
     private Map<String, Object> extraDeploymentInfo;
+
+    /**
+     * The Deployable System that this build is tied to
+     */
+    Long deployableSystemId;
 }
