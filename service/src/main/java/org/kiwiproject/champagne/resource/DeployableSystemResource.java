@@ -2,6 +2,7 @@ package org.kiwiproject.champagne.resource;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.kiwiproject.champagne.model.AuditRecord.Action.CREATED;
+import static org.kiwiproject.champagne.model.AuditRecord.Action.DELETED;
 import static org.kiwiproject.champagne.model.AuditRecord.Action.UPDATED;
 import static org.kiwiproject.search.KiwiSearching.zeroBasedOffset;
 
@@ -23,6 +24,7 @@ import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -65,7 +67,7 @@ public class DeployableSystemResource extends AuditableResource {
     @Path("/admin")
     @Timed
     @ExceptionMetered
-    @RolesAllowed({ "admin " })
+    @RolesAllowed({ "admin" })
     public Response listAllSystems(@QueryParam("pageNumber") @DefaultValue("1") int pageNumber,
                                    @QueryParam("pageSize") @DefaultValue("25") int pageSize) {
 
@@ -81,6 +83,7 @@ public class DeployableSystemResource extends AuditableResource {
     @POST
     @Timed
     @ExceptionMetered
+    @RolesAllowed({ "admin" })
     public Response createSystem(@Valid DeployableSystem system) {
         var id = deployableSystemDao.insertDeployableSystem(system);
 
@@ -116,7 +119,7 @@ public class DeployableSystemResource extends AuditableResource {
     @Path("/{id}/order")
     @Timed
     @ExceptionMetered
-    public Response setDevEnvironmentOnSystem(@PathParam("id") Long id, List<Long> envOrder, @Auth DefaultJwtCookiePrincipal user) {
+    public Response setEnvPromotionOrderOnSystem(@PathParam("id") Long id, List<Long> envOrder, @Auth DefaultJwtCookiePrincipal user) {
         var loggedInUser = userDao.findBySystemIdentifier(user.getName())
                 .orElseThrow(() -> new JaxrsNotAuthorizedException("Must be logged in to update systems"));
 
@@ -133,5 +136,20 @@ public class DeployableSystemResource extends AuditableResource {
         }
 
         return Response.accepted().build();
+    }
+
+    @DELETE
+    @Path("/{id}")
+    @Timed
+    @ExceptionMetered
+    @RolesAllowed({ "admin" })
+    public Response deleteSystem(@PathParam("id") Long id) {
+        var count = deployableSystemDao.deleteById(id);
+
+        if (count > 0) {
+            auditAction(id, DeployableSystem.class, DELETED);
+        }
+
+        return Response.noContent().build();
     }
 }

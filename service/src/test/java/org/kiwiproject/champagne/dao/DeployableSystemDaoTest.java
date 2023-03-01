@@ -192,5 +192,31 @@ class DeployableSystemDaoTest {
         }
 
     }
+
+    @Nested
+    class IsUserAdminOfSystem {
+
+        @Test
+        void shouldReturnTrueWhenUserIsAnAdminForSystem() {
+            var userId = insertUserRecord(handle, "jdoe");
+            var deployableSystemId = insertDeployableSystem(handle, "system1");
+            insertUserToDeployableSystemLink(handle, userId, deployableSystemId, true);
+
+            var result = dao.isUserAdminOfSystem(userId, deployableSystemId);
+
+            assertThat(result).isTrue();
+        }
+
+        @Test
+        void shouldReturnFalseWhenUserIsNotAnAdminForSystem() {
+            var userId = insertUserRecord(handle, "jdoe");
+            var deployableSystemId = insertDeployableSystem(handle, "system1");
+            insertUserToDeployableSystemLink(handle, userId, deployableSystemId, false);
+
+            var result = dao.isUserAdminOfSystem(userId, deployableSystemId);
+
+            assertThat(result).isFalse();
+        }
+    }
    
 }
