@@ -40,4 +40,7 @@ public interface DeployableSystemDao {
 
     @SqlQuery("select system_admin from users_deployable_systems where user_id = :userId and deployable_system_id = :systemId")
     boolean isUserAdminOfSystem(@Bind("userId") long userId, @Bind("systemId") long systemId);
+
+    @SqlQuery("select true from users_deployable_systems uds join users u on u.id = uds.user_id join deployable_systems ds on ds.id = uds.deployable_system_id where u.system_identifier = :userName and ds.id = :systemId")
+    boolean isUserBySystemIdentifierInSystem(@Bind("userName") String systemIdentifier, @Bind("systemId") long systemId);
 }

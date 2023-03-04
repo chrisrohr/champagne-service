@@ -1,32 +1,29 @@
 package org.kiwiproject.champagne.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.kiwiproject.champagne.util.TestObjects.insertDeployableSystem;
 import static org.kiwiproject.champagne.util.TestObjects.insertDeploymentEnvironmentRecord;
 import static org.kiwiproject.champagne.util.TestObjects.insertTaskRecord;
 import static org.kiwiproject.champagne.util.TestObjects.insertTaskStatusRecord;
 import static org.kiwiproject.collect.KiwiLists.first;
 import static org.kiwiproject.test.util.DateTimeTestHelper.assertTimeDifferenceWithinTolerance;
 
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-
-import org.assertj.core.api.SoftAssertions;
-import org.assertj.core.api.junit.jupiter.SoftAssertionsExtension;
 import org.jdbi.v3.core.Handle;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.kiwiproject.champagne.dao.mappers.TaskStatusMapper;
 import org.kiwiproject.champagne.model.manualdeployment.DeploymentTaskStatus;
 import org.kiwiproject.champagne.model.manualdeployment.TaskStatus;
-import org.kiwiproject.champagne.dao.mappers.TaskStatusMapper;
 import org.kiwiproject.test.junit.jupiter.Jdbi3DaoExtension;
 import org.kiwiproject.test.junit.jupiter.PostgresLiquibaseTestExtension;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+
 @DisplayName("TaskStatusDao")
-@ExtendWith(SoftAssertionsExtension.class)
 class TaskStatusDaoTest {
     
     @RegisterExtension
@@ -51,11 +48,12 @@ class TaskStatusDaoTest {
     class InsertTaskStatus {
 
         @Test
-        void shouldInsertTaskStatusSuccessfully(SoftAssertions softly) {
+        void shouldInsertTaskStatusSuccessfully() {
             var beforeInsert = ZonedDateTime.now();
 
+            var systemId = insertDeployableSystem(handle, "kiwi");
             var taskId = insertTaskRecord(handle, "Some task");
-            var envId = insertDeploymentEnvironmentRecord(handle, "TEST");
+            var envId = insertDeploymentEnvironmentRecord(handle, "TEST", systemId);
 
             var taskStatusToInsert = TaskStatus.builder()
                 .environmentId(envId)
@@ -72,14 +70,14 @@ class TaskStatusDaoTest {
             assertThat(taskStatuses).hasSize(1);
 
             var status = first(taskStatuses);
-            softly.assertThat(status.getId()).isEqualTo(id);
+            assertThat(status.getId()).isEqualTo(id);
 
-            assertTimeDifferenceWithinTolerance(softly, "createdAt", beforeInsert, status.getCreatedAt().atZone(ZoneOffset.UTC), 1000L);
-            assertTimeDifferenceWithinTolerance(softly, "updatedAt", beforeInsert, status.getUpdatedAt().atZone(ZoneOffset.UTC), 1000L);
+            assertTimeDifferenceWithinTolerance("createdAt", beforeInsert, status.getCreatedAt().atZone(ZoneOffset.UTC), 1000L);
+            assertTimeDifferenceWithinTolerance("updatedAt", beforeInsert, status.getUpdatedAt().atZone(ZoneOffset.UTC), 1000L);
 
-            softly.assertThat(status.getEnvironmentId()).isEqualTo(envId);
-            softly.assertThat(status.getTaskId()).isEqualTo(taskId);
-            softly.assertThat(status.getStatus()).isEqualTo(DeploymentTaskStatus.PENDING);
+            assertThat(status.getEnvironmentId()).isEqualTo(envId);
+            assertThat(status.getTaskId()).isEqualTo(taskId);
+            assertThat(status.getStatus()).isEqualTo(DeploymentTaskStatus.PENDING);
         }
     }
 
@@ -88,8 +86,9 @@ class TaskStatusDaoTest {
 
         @Test
         void shouldReturnListOfTaskStatuses() {
+            var systemId = insertDeployableSystem(handle, "kiwi");
             var taskId = insertTaskRecord(handle, "do it");
-            insertTaskStatusRecord(handle, DeploymentTaskStatus.PENDING, taskId);
+            insertTaskStatusRecord(handle, DeploymentTaskStatus.PENDING, taskId, systemId);
 
             var statuses = dao.findByTaskId(taskId);
             assertThat(statuses)
@@ -110,8 +109,9 @@ class TaskStatusDaoTest {
 
         @Test
         void shouldUpdateTheStatusOfAGivenRecord() {
+            var systemId = insertDeployableSystem(handle, "kiwi");
             var taskId = insertTaskRecord(handle, "Some Task");
-            var statusId = insertTaskStatusRecord(handle, DeploymentTaskStatus.PENDING, taskId);
+            var statusId = insertTaskStatusRecord(handle, DeploymentTaskStatus.PENDING, taskId, systemId);
 
             dao.updateStatus(statusId, DeploymentTaskStatus.COMPLETE);
 

@@ -1,32 +1,29 @@
 package org.kiwiproject.champagne.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.kiwiproject.champagne.util.TestObjects.insertDeployableSystem;
 import static org.kiwiproject.champagne.util.TestObjects.insertDeploymentEnvironmentRecord;
 import static org.kiwiproject.champagne.util.TestObjects.insertReleaseRecord;
 import static org.kiwiproject.champagne.util.TestObjects.insertReleaseStatusRecord;
 import static org.kiwiproject.collect.KiwiLists.first;
 import static org.kiwiproject.test.util.DateTimeTestHelper.assertTimeDifferenceWithinTolerance;
 
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-
-import org.assertj.core.api.SoftAssertions;
-import org.assertj.core.api.junit.jupiter.SoftAssertionsExtension;
 import org.jdbi.v3.core.Handle;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.kiwiproject.champagne.dao.mappers.ReleaseStatusMapper;
 import org.kiwiproject.champagne.model.manualdeployment.DeploymentTaskStatus;
 import org.kiwiproject.champagne.model.manualdeployment.ReleaseStatus;
-import org.kiwiproject.champagne.dao.mappers.ReleaseStatusMapper;
 import org.kiwiproject.test.junit.jupiter.Jdbi3DaoExtension;
 import org.kiwiproject.test.junit.jupiter.PostgresLiquibaseTestExtension;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+
 @DisplayName("ReleaseStatusDao")
-@ExtendWith(SoftAssertionsExtension.class)
 class ReleaseStatusDaoTest {
     
     @RegisterExtension
@@ -51,11 +48,12 @@ class ReleaseStatusDaoTest {
     class InsertReleaseStatus {
 
         @Test
-        void shouldInsertReleaseStatusSuccessfully(SoftAssertions softly) {
+        void shouldInsertReleaseStatusSuccessfully() {
             var beforeInsert = ZonedDateTime.now();
 
-            var releaseId = insertReleaseRecord(handle, "42");
-            var envId = insertDeploymentEnvironmentRecord(handle, "TEST");
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            var releaseId = insertReleaseRecord(handle, "42", systemId);
+            var envId = insertDeploymentEnvironmentRecord(handle, "TEST", systemId);
 
             var releaseStatusToInsert = ReleaseStatus.builder()
                 .environmentId(envId)
@@ -72,14 +70,14 @@ class ReleaseStatusDaoTest {
             assertThat(releaseStatuses).hasSize(1);
 
             var status = first(releaseStatuses);
-            softly.assertThat(status.getId()).isEqualTo(id);
+            assertThat(status.getId()).isEqualTo(id);
 
-            assertTimeDifferenceWithinTolerance(softly, "createdAt", beforeInsert, status.getCreatedAt().atZone(ZoneOffset.UTC), 1000L);
-            assertTimeDifferenceWithinTolerance(softly, "updatedAt", beforeInsert, status.getUpdatedAt().atZone(ZoneOffset.UTC), 1000L);
+            assertTimeDifferenceWithinTolerance("createdAt", beforeInsert, status.getCreatedAt().atZone(ZoneOffset.UTC), 1000L);
+            assertTimeDifferenceWithinTolerance("updatedAt", beforeInsert, status.getUpdatedAt().atZone(ZoneOffset.UTC), 1000L);
 
-            softly.assertThat(status.getEnvironmentId()).isEqualTo(envId);
-            softly.assertThat(status.getReleaseId()).isEqualTo(releaseId);
-            softly.assertThat(status.getStatus()).isEqualTo(DeploymentTaskStatus.PENDING);
+            assertThat(status.getEnvironmentId()).isEqualTo(envId);
+            assertThat(status.getReleaseId()).isEqualTo(releaseId);
+            assertThat(status.getStatus()).isEqualTo(DeploymentTaskStatus.PENDING);
         }
     }
 
@@ -88,8 +86,9 @@ class ReleaseStatusDaoTest {
 
         @Test
         void shouldReturnListOfReleaseStatuses() {
-            var releaseId = insertReleaseRecord(handle, "42");
-            insertReleaseStatusRecord(handle, DeploymentTaskStatus.PENDING, releaseId);
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            var releaseId = insertReleaseRecord(handle, "42", systemId);
+            insertReleaseStatusRecord(handle, DeploymentTaskStatus.PENDING, releaseId, systemId);
 
             var statuses = dao.findByReleaseId(releaseId);
             assertThat(statuses)

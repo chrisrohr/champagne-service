@@ -1,33 +1,30 @@
 package org.kiwiproject.champagne.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.kiwiproject.champagne.util.TestObjects.insertDeployableSystem;
 import static org.kiwiproject.champagne.util.TestObjects.insertReleaseRecord;
 import static org.kiwiproject.champagne.util.TestObjects.insertTaskRecord;
 import static org.kiwiproject.champagne.util.TestObjects.insertTaskStatusRecord;
 import static org.kiwiproject.collect.KiwiLists.first;
 import static org.kiwiproject.test.util.DateTimeTestHelper.assertTimeDifferenceWithinTolerance;
 
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-
-import org.assertj.core.api.SoftAssertions;
-import org.assertj.core.api.junit.jupiter.SoftAssertionsExtension;
 import org.jdbi.v3.core.Handle;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.kiwiproject.champagne.dao.mappers.TaskMapper;
 import org.kiwiproject.champagne.model.manualdeployment.DeploymentTaskStatus;
 import org.kiwiproject.champagne.model.manualdeployment.ReleaseStage;
 import org.kiwiproject.champagne.model.manualdeployment.Task;
-import org.kiwiproject.champagne.dao.mappers.TaskMapper;
 import org.kiwiproject.test.junit.jupiter.Jdbi3DaoExtension;
 import org.kiwiproject.test.junit.jupiter.PostgresLiquibaseTestExtension;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+
 @DisplayName("TaskDao")
-@ExtendWith(SoftAssertionsExtension.class)
 class TaskDaoTest {
     
     @RegisterExtension
@@ -52,10 +49,11 @@ class TaskDaoTest {
     class InsertTask {
 
         @Test
-        void shouldInsertTaskSuccessfully(SoftAssertions softly) {
+        void shouldInsertTaskSuccessfully() {
             var beforeInsert = ZonedDateTime.now();
 
-            var releaseId = insertReleaseRecord(handle, "42");
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            var releaseId = insertReleaseRecord(handle, "42", systemId);
 
             var taskToInsert = Task.builder()
                 .releaseId(releaseId)
@@ -74,16 +72,16 @@ class TaskDaoTest {
             assertThat(tasks).hasSize(1);
 
             var task = first(tasks);
-            softly.assertThat(task.getId()).isEqualTo(id);
+            assertThat(task.getId()).isEqualTo(id);
 
-            assertTimeDifferenceWithinTolerance(softly, "createdAt", beforeInsert, task.getCreatedAt().atZone(ZoneOffset.UTC), 1000L);
-            assertTimeDifferenceWithinTolerance(softly, "updatedAt", beforeInsert, task.getUpdatedAt().atZone(ZoneOffset.UTC), 1000L);
+            assertTimeDifferenceWithinTolerance("createdAt", beforeInsert, task.getCreatedAt().atZone(ZoneOffset.UTC), 1000L);
+            assertTimeDifferenceWithinTolerance("updatedAt", beforeInsert, task.getUpdatedAt().atZone(ZoneOffset.UTC), 1000L);
 
-            softly.assertThat(task.getReleaseId()).isEqualTo(releaseId);
-            softly.assertThat(task.getStage()).isEqualTo(ReleaseStage.PRE);
-            softly.assertThat(task.getSummary()).isEqualTo("Do the things");
-            softly.assertThat(task.getDescription()).isEqualTo("No really do all of it");
-            softly.assertThat(task.getComponent()).isEqualTo("The best component");
+            assertThat(task.getReleaseId()).isEqualTo(releaseId);
+            assertThat(task.getStage()).isEqualTo(ReleaseStage.PRE);
+            assertThat(task.getSummary()).isEqualTo("Do the things");
+            assertThat(task.getDescription()).isEqualTo("No really do all of it");
+            assertThat(task.getComponent()).isEqualTo("The best component");
 
         }
     }
@@ -93,7 +91,8 @@ class TaskDaoTest {
 
         @Test
         void shouldReturnListOfTasks() {
-            var releaseId = insertReleaseRecord(handle, "42");
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            var releaseId = insertReleaseRecord(handle, "42", systemId);
             insertTaskRecord(handle, "Sample", releaseId);
 
             var tasks = dao.findByReleaseId(releaseId);
@@ -178,8 +177,9 @@ class TaskDaoTest {
 
         @Test
         void shouldFindTaskSuccessfully() {
+            var systemId = insertDeployableSystem(handle, "kiwi");
             var id = insertTaskRecord(handle, "to be found");
-            var statusId = insertTaskStatusRecord(handle, DeploymentTaskStatus.PENDING, id);
+            var statusId = insertTaskStatusRecord(handle, DeploymentTaskStatus.PENDING, id, systemId);
 
             var task = dao.findByTaskStatusId(statusId).orElseThrow();
             assertThat(task.getId()).isEqualTo(id);

@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.With;
 
 /**
  * Model used to represent the build of a particular deployment artifact.
@@ -42,5 +43,6 @@ public class Build {
     /**
      * The Deployable System that this build is tied to
      */
+    @With
     Long deployableSystemId;
 }

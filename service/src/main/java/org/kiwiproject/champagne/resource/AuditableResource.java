@@ -8,12 +8,13 @@ import org.kiwiproject.champagne.model.AuditRecord;
 import org.kiwiproject.champagne.model.AuditRecord.Action;
 
 import lombok.extern.slf4j.Slf4j;
+import org.kiwiproject.champagne.model.DeployableSystemThreadLocal;
 import org.kiwiproject.dropwizard.error.ApplicationErrorThrower;
 import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
 
 @Slf4j
 public abstract class AuditableResource {
-    
+
     private final AuditRecordDao auditRecordDao;
     private final ApplicationErrorThrower applicationErrorThrower;
 
@@ -34,11 +35,12 @@ public abstract class AuditableResource {
         }
 
         var auditRecord = AuditRecord.builder()
-            .recordId(recordId)
-            .recordType(recordClass.getSimpleName())
-            .action(action)
-            .userSystemIdentifier(principal.getName())
-            .build();
+                .recordId(recordId)
+                .recordType(recordClass.getSimpleName())
+                .action(action)
+                .userSystemIdentifier(principal.getName())
+                .deployableSystemId(DeployableSystemThreadLocal.getCurrentDeployableSystem().orElse(null))
+                .build();
 
         auditRecordDao.insertAuditRecord(auditRecord);
     }

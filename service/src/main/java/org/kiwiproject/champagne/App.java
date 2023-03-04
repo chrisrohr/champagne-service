@@ -18,6 +18,7 @@ import org.kiwiproject.champagne.config.AppConfig;
 import org.kiwiproject.champagne.dao.AuditRecordDao;
 import org.kiwiproject.champagne.dao.BuildDao;
 import org.kiwiproject.champagne.dao.ComponentDao;
+import org.kiwiproject.champagne.dao.DeployableSystemDao;
 import org.kiwiproject.champagne.dao.DeploymentEnvironmentDao;
 import org.kiwiproject.champagne.dao.HostDao;
 import org.kiwiproject.champagne.dao.ReleaseDao;
@@ -35,6 +36,7 @@ import org.kiwiproject.champagne.resource.DeploymentEnvironmentResource;
 import org.kiwiproject.champagne.resource.HostConfigurationResource;
 import org.kiwiproject.champagne.resource.TaskResource;
 import org.kiwiproject.champagne.resource.UserResource;
+import org.kiwiproject.champagne.resource.filter.DeployableSystemRequestFilter;
 import org.kiwiproject.champagne.service.ManualTaskService;
 import org.kiwiproject.dropwizard.error.ErrorContextBuilder;
 import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
@@ -99,6 +101,7 @@ public class App extends Application<AppConfig> {
         var hostDao = jdbi.onDemand(HostDao.class);
         var componentDao = jdbi.onDemand(ComponentDao.class);
         var errorDao = setupApplicationErrors(jdbi, configuration, environment);
+        var deployableSystemDao = jdbi.onDemand(DeployableSystemDao.class);
 
         var jsonHelper = JsonHelper.newDropwizardJsonHelper();
         jdbi.registerRowMapper(Build.class, new BuildMapper(jsonHelper));
@@ -119,6 +122,8 @@ public class App extends Application<AppConfig> {
         // Setup jobs
         var cleanOutAuditsJob = new CleanOutAuditsJob(auditRecordDao, configuration.getAuditRecordsMaxRetain().toMilliseconds());
         registerJob(environment, "Clean Out Audits", configuration.getAuditCleanup(), cleanOutAuditsJob);
+
+        environment.jersey().register(new DeployableSystemRequestFilter(deployableSystemDao));
     }
 
     private static void setupJsonProcessing(Environment environment) {

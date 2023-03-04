@@ -1,5 +1,6 @@
 package org.kiwiproject.champagne.resource;
 
+import static java.util.Objects.isNull;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.kiwiproject.base.KiwiPreconditions.requireNotNull;
 
@@ -17,6 +18,7 @@ import javax.ws.rs.core.Response;
 
 import org.kiwiproject.champagne.dao.AuditRecordDao;
 import org.kiwiproject.champagne.dao.DeploymentEnvironmentDao;
+import org.kiwiproject.champagne.model.DeployableSystemThreadLocal;
 import org.kiwiproject.champagne.model.DeploymentEnvironment;
 import org.kiwiproject.champagne.model.AuditRecord.Action;
 import org.kiwiproject.champagne.service.ManualTaskService;
@@ -24,6 +26,7 @@ import org.kiwiproject.champagne.service.ManualTaskService;
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
+import org.kiwiproject.jaxrs.exception.JaxrsBadRequestException;
 
 @Path("/environments")
 @Produces(APPLICATION_JSON)
@@ -45,7 +48,10 @@ public class DeploymentEnvironmentResource extends AuditableResource {
     @Timed
     @ExceptionMetered
     public Response listEnvironments() {
-        var envs = deploymentEnvironmentDao.findAllEnvironments();
+        var systemId = DeployableSystemThreadLocal.getCurrentDeployableSystem()
+                .orElseThrow(() -> new JaxrsBadRequestException("Missing deployable system"));
+
+        var envs = deploymentEnvironmentDao.findAllEnvironments(systemId);
 
         return Response.ok(envs).build();
     }
@@ -54,6 +60,12 @@ public class DeploymentEnvironmentResource extends AuditableResource {
     @Timed
     @ExceptionMetered
     public Response createEnvironment(@Valid DeploymentEnvironment deploymentEnvironment) {
+        if (isNull(deploymentEnvironment.getDeployableSystemId())) {
+            var systemId = DeployableSystemThreadLocal.getCurrentDeployableSystem()
+                    .orElseThrow(() -> new JaxrsBadRequestException("Missing deployable system"));
+            deploymentEnvironment = deploymentEnvironment.withDeployableSystemId(systemId);
+        }
+
         var id = deploymentEnvironmentDao.insertEnvironment(deploymentEnvironment);
 
         auditAction(id, DeploymentEnvironment.class, Action.CREATED);

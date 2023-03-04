@@ -1,5 +1,6 @@
 package org.kiwiproject.champagne.resource;
 
+import static java.util.Objects.isNull;
 import static org.kiwiproject.search.KiwiSearching.zeroBasedOffset;
 
 import javax.annotation.security.PermitAll;
@@ -14,6 +15,8 @@ import javax.ws.rs.core.Response;
 
 import org.kiwiproject.champagne.dao.BuildDao;
 import org.kiwiproject.champagne.model.Build;
+import org.kiwiproject.champagne.model.DeployableSystemThreadLocal;
+import org.kiwiproject.jaxrs.exception.JaxrsBadRequestException;
 import org.kiwiproject.json.JsonHelper;
 import org.kiwiproject.spring.data.KiwiPage;
 
@@ -40,11 +43,14 @@ public class BuildResource {
                               @QueryParam("pageSize") @DefaultValue("50") int pageSize,
                               @QueryParam("componentIdentifierFilter") String componentIdentifierFilter,
                               @QueryParam("componentVersionFilter") String componentVersionFilter) {
+
+        var systemId = DeployableSystemThreadLocal.getCurrentDeployableSystem()
+                .orElseThrow(() -> new JaxrsBadRequestException("Missing deployable system"));
     
         var offset = zeroBasedOffset(pageNumber, pageSize);
 
-        var builds = buildDao.findPagedBuilds(offset, pageSize, componentIdentifierFilter, componentVersionFilter);
-        var total = buildDao.countBuilds(componentIdentifierFilter, componentVersionFilter);
+        var builds = buildDao.findPagedBuilds(offset, pageSize, systemId, componentIdentifierFilter, componentVersionFilter);
+        var total = buildDao.countBuilds(systemId, componentIdentifierFilter, componentVersionFilter);
 
         return Response.ok(KiwiPage.of(pageNumber, pageSize, total, builds)).build();
     }
@@ -53,6 +59,13 @@ public class BuildResource {
     @Timed
     @ExceptionMetered
     public Response recordNewBuild(Build build) {
+
+        if (isNull(build.getDeployableSystemId())) {
+            var systemId = DeployableSystemThreadLocal.getCurrentDeployableSystem()
+                    .orElseThrow(() -> new JaxrsBadRequestException("Missing deployable system"));
+            build = build.withDeployableSystemId(systemId);
+        }
+
         buildDao.insertBuild(build, jsonHelper.toJson(build.getExtraDeploymentInfo()));
         return Response.accepted().build();
     }

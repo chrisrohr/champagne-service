@@ -17,8 +17,8 @@ public class DeployableSystemThreadLocal {
         THREAD_LOCAL.set(id);
     }
 
-    public static void clearCurrentDeployableSystem() {
+    public static void clearDeployableSystem() {
         THREAD_LOCAL.remove();
     }
-    
+
 }

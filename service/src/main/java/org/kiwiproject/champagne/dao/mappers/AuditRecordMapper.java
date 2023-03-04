@@ -20,6 +20,7 @@ public class AuditRecordMapper implements RowMapper<AuditRecord> {
                 .action(enumValueOrNull(rs, "action", AuditRecord.Action.class))
                 .recordType(rs.getString("record_type"))
                 .recordId(rs.getLong("record_id"))
+                .deployableSystemId(rs.getLong("deployable_system_id"))
                 .build();
     }
 }

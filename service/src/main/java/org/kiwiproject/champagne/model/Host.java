@@ -5,6 +5,7 @@ import java.util.List;
 
 import lombok.Builder;
 import lombok.Value;
+import lombok.With;
 
 /**
  * Representation of a host used to deploy components. A Host could be created and stored in the database or 
@@ -45,5 +46,6 @@ public class Host {
     /**
      * The Deployable System that this host is tied to
      */
+    @With
     Long deployableSystemId;
 }

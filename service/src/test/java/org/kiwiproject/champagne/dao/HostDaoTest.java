@@ -2,6 +2,7 @@ package org.kiwiproject.champagne.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.kiwiproject.champagne.util.TestObjects.insertDeployableSystem;
 import static org.kiwiproject.champagne.util.TestObjects.insertDeploymentEnvironmentRecord;
 import static org.kiwiproject.champagne.util.TestObjects.insertHostRecord;
 import static org.kiwiproject.collect.KiwiLists.first;
@@ -49,7 +50,8 @@ class HostDaoTest {
 
         @Test
         void shouldInsertHostSuccessfully() {
-            var envId = insertDeploymentEnvironmentRecord(handle, "dev");
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            var envId = insertDeploymentEnvironmentRecord(handle, "dev", systemId);
             var beforeInsert = ZonedDateTime.now();
 
             var hostToInsert = Host.builder()
@@ -85,10 +87,11 @@ class HostDaoTest {
 
         @Test
         void shouldReturnListOfHosts() {
-            var envId = insertDeploymentEnvironmentRecord(handle, "dev");
-            var hostId = insertHostRecord(handle, "localhost", envId);
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            var envId = insertDeploymentEnvironmentRecord(handle, "dev", systemId);
+            var hostId = insertHostRecord(handle, "localhost", envId, systemId);
 
-            var hosts = dao.findHostsByEnvId(envId);
+            var hosts = dao.findHostsByEnvId(envId, systemId);
             assertThat(hosts)
                 .extracting("id", "hostname", "environmentId")
                 .contains(tuple(hostId, "localhost", envId));
@@ -96,11 +99,12 @@ class HostDaoTest {
 
         @Test
         void shouldReturnEmptyListWhenNoHostsFound() {
-            var envId = insertDeploymentEnvironmentRecord(handle, "dev");
-            var envId2 = insertDeploymentEnvironmentRecord(handle, "test");
-            insertHostRecord(handle, "localhost", envId);
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            var envId = insertDeploymentEnvironmentRecord(handle, "dev", systemId);
+            var envId2 = insertDeploymentEnvironmentRecord(handle, "test", systemId);
+            insertHostRecord(handle, "localhost", envId, systemId);
 
-            var hosts = dao.findHostsByEnvId(envId2);
+            var hosts = dao.findHostsByEnvId(envId2, systemId);
             assertThat(hosts).isEmpty();
         }
     }
@@ -110,8 +114,9 @@ class HostDaoTest {
 
         @Test
         void shouldDeleteHostSuccessfully() {
-            var envId = insertDeploymentEnvironmentRecord(handle, "dev");
-            var hostId = insertHostRecord(handle, "localhost", envId);
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            var envId = insertDeploymentEnvironmentRecord(handle, "dev", systemId);
+            var hostId = insertHostRecord(handle, "localhost", envId, systemId);
 
             dao.deleteHost(hostId);
 
@@ -126,8 +131,9 @@ class HostDaoTest {
 
         @Test
         void shouldReturnHostWhenFound() {
-            var envId = insertDeploymentEnvironmentRecord(handle, "dev");
-            var hostId = insertHostRecord(handle, "localhost", envId);
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            var envId = insertDeploymentEnvironmentRecord(handle, "dev", systemId);
+            var hostId = insertHostRecord(handle, "localhost", envId, systemId);
 
             var host = dao.findById(hostId).orElseThrow();
 
@@ -138,8 +144,9 @@ class HostDaoTest {
 
         @Test
         void shouldReturnEmptyWhenNoHostFound() {
-            var envId = insertDeploymentEnvironmentRecord(handle, "dev");
-            insertHostRecord(handle, "localhost", envId);
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            var envId = insertDeploymentEnvironmentRecord(handle, "dev", systemId);
+            insertHostRecord(handle, "localhost", envId, systemId);
 
             var hosts = dao.findById(0L);
             assertThat(hosts).isEmpty();

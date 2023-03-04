@@ -17,6 +17,7 @@ import static org.mockito.Mockito.when;
 
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -30,6 +31,7 @@ import org.kiwiproject.champagne.junit.jupiter.JwtExtension;
 import org.kiwiproject.champagne.model.AuditRecord;
 import org.kiwiproject.champagne.model.Component;
 import org.kiwiproject.champagne.model.AuditRecord.Action;
+import org.kiwiproject.champagne.model.DeployableSystemThreadLocal;
 import org.kiwiproject.champagne.model.Host;
 import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
 import org.kiwiproject.dropwizard.error.test.junit.jupiter.ApplicationErrorExtension;
@@ -42,7 +44,7 @@ import java.util.Optional;
 import javax.ws.rs.core.GenericType;
 
 @DisplayName("HostConfigurationResource")
-@ExtendWith( {DropwizardExtensionsSupport.class, ApplicationErrorExtension.class})
+@ExtendWith({DropwizardExtensionsSupport.class, ApplicationErrorExtension.class})
 class HostConfigurationResourceTest {
     private static final HostDao HOST_DAO = mock(HostDao.class);
     private static final ComponentDao COMPONENT_DAO = mock(ComponentDao.class);
@@ -58,10 +60,16 @@ class HostConfigurationResourceTest {
 
     @RegisterExtension
     private final JwtExtension jwtExtension = new JwtExtension("bob");
-    
+
     @BeforeEach
     void setUp() {
+        DeployableSystemThreadLocal.setCurrentDeployableSystem(1L);
+    }
+
+    @AfterEach
+    void tearDown() {
         reset(HOST_DAO, COMPONENT_DAO, AUDIT_RECORD_DAO);
+        DeployableSystemThreadLocal.clearDeployableSystem();
     }
 
     @Nested
@@ -70,28 +78,30 @@ class HostConfigurationResourceTest {
         @Test
         void shouldReturnListOfHostsForEnv() {
             var host = Host.builder()
-                .id(1L)
-                .hostname("localhost")
-                .build();
+                    .id(1L)
+                    .hostname("localhost")
+                    .deployableSystemId(1L)
+                    .build();
 
-            when(HOST_DAO.findHostsByEnvId(1L)).thenReturn(List.of(host));
+            when(HOST_DAO.findHostsByEnvId(1L, 1L)).thenReturn(List.of(host));
 
             var response = APP.client().target("/host/{envId}")
-                .resolveTemplate("envId", 1L)
-                .request()
-                .get();
+                    .resolveTemplate("envId", 1L)
+                    .request()
+                    .get();
 
             assertOkResponse(response);
 
-            var hosts = response.readEntity(new GenericType<List<Host>>(){});
+            var hosts = response.readEntity(new GenericType<List<Host>>() {
+            });
 
             var foundHost = first(hosts);
             assertThat(foundHost)
-                .usingRecursiveComparison()
-                .ignoringFields("createdAt", "updatedAt")
-                .isEqualTo(host);
+                    .usingRecursiveComparison()
+                    .ignoringFields("createdAt", "updatedAt")
+                    .isEqualTo(host);
 
-            verify(HOST_DAO).findHostsByEnvId(1L);
+            verify(HOST_DAO).findHostsByEnvId(1L, 1L);
             verifyNoMoreInteractions(HOST_DAO);
             verifyNoInteractions(AUDIT_RECORD_DAO);
         }
@@ -105,19 +115,19 @@ class HostConfigurationResourceTest {
             when(HOST_DAO.insertHost(any(Host.class), anyString())).thenReturn(1L);
 
             var host = Host.builder()
-                .hostname("localhost")
-                .tags(List.of("foo"))
-                .build();
+                    .hostname("localhost")
+                    .tags(List.of("foo"))
+                    .build();
 
             var response = APP.client().target("/host")
-                .request()
-                .post(json(host));
+                    .request()
+                    .post(json(host));
 
             assertAcceptedResponse(response);
 
             verify(HOST_DAO).insertHost(any(Host.class), anyString());
 
-            verifyAuditRecorded(1L, Host.class, Action.CREATED);
+            verifyAuditRecorded(Host.class, Action.CREATED);
 
             verifyNoMoreInteractions(HOST_DAO, AUDIT_RECORD_DAO);
         }
@@ -131,16 +141,16 @@ class HostConfigurationResourceTest {
             when(HOST_DAO.deleteHost(1L)).thenReturn(1);
 
             var response = APP.client().target("/host")
-                .path("{id}")
-                .resolveTemplate("id", 1)
-                .request()
-                .delete();
+                    .path("{id}")
+                    .resolveTemplate("id", 1)
+                    .request()
+                    .delete();
 
             assertAcceptedResponse(response);
 
             verify(HOST_DAO).deleteHost(1L);
-            
-            verifyAuditRecorded(1L, Host.class, Action.DELETED);
+
+            verifyAuditRecorded(Host.class, Action.DELETED);
 
             verifyNoMoreInteractions(HOST_DAO, AUDIT_RECORD_DAO);
         }
@@ -150,10 +160,10 @@ class HostConfigurationResourceTest {
             when(HOST_DAO.deleteHost(1L)).thenReturn(0);
 
             var response = APP.client().target("/host")
-                .path("{id}")
-                .resolveTemplate("id", 1)
-                .request()
-                .delete();
+                    .path("{id}")
+                    .resolveTemplate("id", 1)
+                    .request()
+                    .delete();
 
             assertAcceptedResponse(response);
 
@@ -163,52 +173,53 @@ class HostConfigurationResourceTest {
         }
     }
 
-    private void verifyAuditRecorded(long id, Class<?> auditRecordClass, Action action) {
+    private void verifyAuditRecorded(Class<?> auditRecordClass, Action action) {
         var argCapture = ArgumentCaptor.forClass(AuditRecord.class);
         verify(AUDIT_RECORD_DAO).insertAuditRecord(argCapture.capture());
 
         var audit = argCapture.getValue();
 
-        assertThat(audit.getRecordId()).isEqualTo(id);
+        assertThat(audit.getRecordId()).isEqualTo(1);
         assertThat(audit.getRecordType()).isEqualTo(auditRecordClass.getSimpleName());
         assertThat(audit.getAction()).isEqualTo(action);
     }
-    
+
     @Nested
     class ListComponentsForHost {
 
         @Test
         void shouldReturnListOfComponentsForHost() {
             var host = Host.builder()
-                .id(1L)
-                .hostname("localhost")
-                .tags(List.of("core"))
-                .build();
+                    .id(1L)
+                    .hostname("localhost")
+                    .tags(List.of("core"))
+                    .build();
 
             when(HOST_DAO.findById(1L)).thenReturn(Optional.of(host));
 
             var component = Component.builder()
-                .id(2L)
-                .componentName("foo-service")
-                .tag("core")
-                .build();
+                    .id(2L)
+                    .componentName("foo-service")
+                    .tag("core")
+                    .build();
 
             when(COMPONENT_DAO.findComponentsByHostTags(List.of("core"))).thenReturn(List.of(component));
 
             var response = APP.client().target("/host/{hostId}/components")
-                .resolveTemplate("hostId", 1L)
-                .request()
-                .get();
+                    .resolveTemplate("hostId", 1L)
+                    .request()
+                    .get();
 
             assertOkResponse(response);
 
-            var components = response.readEntity(new GenericType<List<Component>>(){});
+            var components = response.readEntity(new GenericType<List<Component>>() {
+            });
 
             var foundComponent = first(components);
             assertThat(foundComponent)
-                .usingRecursiveComparison()
-                .ignoringFields("createdAt", "updatedAt")
-                .isEqualTo(component);
+                    .usingRecursiveComparison()
+                    .ignoringFields("createdAt", "updatedAt")
+                    .isEqualTo(component);
 
             verify(HOST_DAO).findById(1L);
             verify(COMPONENT_DAO).findComponentsByHostTags(List.of("core"));
@@ -221,9 +232,9 @@ class HostConfigurationResourceTest {
             when(HOST_DAO.findById(1L)).thenReturn(Optional.empty());
 
             var response = APP.client().target("/host/{hostId}/components")
-                .resolveTemplate("hostId", 1L)
-                .request()
-                .get();
+                    .resolveTemplate("hostId", 1L)
+                    .request()
+                    .get();
 
             assertNotFoundResponse(response);
         }
@@ -237,19 +248,19 @@ class HostConfigurationResourceTest {
             when(COMPONENT_DAO.insertComponent(any(Component.class))).thenReturn(1L);
 
             var component = Component.builder()
-                .componentName("foo-service")
-                .tag("core")
-                .build();
+                    .componentName("foo-service")
+                    .tag("core")
+                    .build();
 
             var response = APP.client().target("/host/component")
-                .request()
-                .post(json(component));
+                    .request()
+                    .post(json(component));
 
             assertAcceptedResponse(response);
 
             verify(COMPONENT_DAO).insertComponent(any(Component.class));
 
-            verifyAuditRecorded(1L, Component.class, Action.CREATED);
+            verifyAuditRecorded(Component.class, Action.CREATED);
 
             verifyNoMoreInteractions(COMPONENT_DAO, AUDIT_RECORD_DAO);
         }
@@ -263,16 +274,16 @@ class HostConfigurationResourceTest {
             when(COMPONENT_DAO.deleteComponent(1L)).thenReturn(1);
 
             var response = APP.client().target("/host/component")
-                .path("{id}")
-                .resolveTemplate("id", 1)
-                .request()
-                .delete();
+                    .path("{id}")
+                    .resolveTemplate("id", 1)
+                    .request()
+                    .delete();
 
             assertAcceptedResponse(response);
 
             verify(COMPONENT_DAO).deleteComponent(1L);
-            
-            verifyAuditRecorded(1L, Component.class, Action.DELETED);
+
+            verifyAuditRecorded(Component.class, Action.DELETED);
 
             verifyNoMoreInteractions(COMPONENT_DAO, AUDIT_RECORD_DAO);
         }
@@ -282,10 +293,10 @@ class HostConfigurationResourceTest {
             when(COMPONENT_DAO.deleteComponent(1L)).thenReturn(0);
 
             var response = APP.client().target("/host/component")
-                .path("{id}")
-                .resolveTemplate("id", 1)
-                .request()
-                .delete();
+                    .path("{id}")
+                    .resolveTemplate("id", 1)
+                    .request()
+                    .delete();
 
             assertAcceptedResponse(response);
 

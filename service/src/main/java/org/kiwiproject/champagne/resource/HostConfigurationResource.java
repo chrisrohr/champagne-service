@@ -1,5 +1,6 @@
 package org.kiwiproject.champagne.resource;
 
+import static java.util.Objects.isNull;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 import java.util.List;
@@ -21,9 +22,11 @@ import org.kiwiproject.champagne.dao.AuditRecordDao;
 import org.kiwiproject.champagne.dao.ComponentDao;
 import org.kiwiproject.champagne.dao.HostDao;
 import org.kiwiproject.champagne.model.Component;
+import org.kiwiproject.champagne.model.DeployableSystemThreadLocal;
 import org.kiwiproject.champagne.model.Host;
 import org.kiwiproject.champagne.model.AuditRecord.Action;
 import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
+import org.kiwiproject.jaxrs.exception.JaxrsBadRequestException;
 import org.kiwiproject.jaxrs.exception.JaxrsNotFoundException;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
@@ -50,7 +53,8 @@ public class HostConfigurationResource extends AuditableResource {
     @Timed
     @ExceptionMetered
     public Response listHostsForEnvironment(@PathParam("environment") Long envId, @QueryParam("componentFilter") String componentFilter) {
-        var hosts = isBlank(componentFilter) ? hostDao.findHostsByEnvId(envId) : List.of();
+        var systemId = getSystemId();
+        var hosts = isBlank(componentFilter) ? hostDao.findHostsByEnvId(envId, systemId) : List.of();
 
         return Response.ok(hosts).build();
     }
@@ -59,6 +63,11 @@ public class HostConfigurationResource extends AuditableResource {
     @Timed
     @ExceptionMetered
     public Response createHost(Host host) {
+        if (isNull(host.getDeployableSystemId())) {
+            var systemId = getSystemId();
+            host = host.withDeployableSystemId(systemId);
+        }
+
         var hostId = hostDao.insertHost(host, StringUtils.join(host.getTags(), ","));
 
         auditAction(hostId, Host.class, Action.CREATED);
@@ -96,6 +105,11 @@ public class HostConfigurationResource extends AuditableResource {
     @Timed
     @ExceptionMetered
     public Response createComponent(Component component) {
+        if (isNull(component.getDeployableSystemId())) {
+            var systemId = getSystemId();
+            component = component.withDeployableSystemId(systemId);
+        }
+
         var componentId = componentDao.insertComponent(component);
 
         auditAction(componentId, Component.class, Action.CREATED);
@@ -115,5 +129,10 @@ public class HostConfigurationResource extends AuditableResource {
         }
 
         return Response.accepted().build();
+    }
+
+    private long getSystemId() {
+        return DeployableSystemThreadLocal.getCurrentDeployableSystem()
+                .orElseThrow(() -> new JaxrsBadRequestException("Missing deployable system"));
     }
 }

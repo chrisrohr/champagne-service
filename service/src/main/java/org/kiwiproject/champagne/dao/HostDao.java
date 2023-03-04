@@ -15,10 +15,10 @@ import org.kiwiproject.champagne.model.Host;
 @RegisterRowMapper(HostMapper.class)
 public interface HostDao {
 
-    @SqlQuery("select * from hosts where environment_id = :envId")
-    List<Host> findHostsByEnvId(@Bind("envId") Long envId);
+    @SqlQuery("select * from hosts where environment_id = :envId and deployable_system_id = :systemId")
+    List<Host> findHostsByEnvId(@Bind("envId") Long envId, @Bind("systemId") Long systemId);
 
-    @SqlUpdate("insert into hosts (environment_id, hostname, tags, source) values (:environmentId, :hostname, :tagCsv, :source)")
+    @SqlUpdate("insert into hosts (environment_id, hostname, tags, source, deployable_system_id) values (:environmentId, :hostname, :tagCsv, :source, :deployableSystemId)")
     @GetGeneratedKeys
     long insertHost(@BindBean Host host, @Bind("tagCsv") String tagCsv);
 
