@@ -109,6 +109,29 @@ class HostConfigurationResourceTest {
             var host = Host.builder()
                     .hostname("localhost")
                     .tags(List.of("foo"))
+                    .deployableSystemId(1L)
+                    .build();
+
+            var response = APP.client().target("/host")
+                    .request()
+                    .post(json(host));
+
+            assertAcceptedResponse(response);
+
+            verify(HOST_DAO).insertHost(any(Host.class), anyString());
+
+            verifyAuditRecorded(Host.class, Action.CREATED);
+
+            verifyNoMoreInteractions(HOST_DAO, AUDIT_RECORD_DAO);
+        }
+
+        @Test
+        void shouldAddTheGivenHostWithTheCurrentSystemWhenNotProvided() {
+            when(HOST_DAO.insertHost(any(Host.class), anyString())).thenReturn(1L);
+
+            var host = Host.builder()
+                    .hostname("localhost")
+                    .tags(List.of("foo"))
                     .build();
 
             var response = APP.client().target("/host")
@@ -237,6 +260,29 @@ class HostConfigurationResourceTest {
 
         @Test
         void shouldAddTheGivenComponent() {
+            when(COMPONENT_DAO.insertComponent(any(Component.class))).thenReturn(1L);
+
+            var component = Component.builder()
+                    .componentName("foo-service")
+                    .tag("core")
+                    .deployableSystemId(1L)
+                    .build();
+
+            var response = APP.client().target("/host/component")
+                    .request()
+                    .post(json(component));
+
+            assertAcceptedResponse(response);
+
+            verify(COMPONENT_DAO).insertComponent(any(Component.class));
+
+            verifyAuditRecorded(Component.class, Action.CREATED);
+
+            verifyNoMoreInteractions(COMPONENT_DAO, AUDIT_RECORD_DAO);
+        }
+
+        @Test
+        void shouldAddTheGivenComponentWithTheCurrentSystemWhenNotProvided() {
             when(COMPONENT_DAO.insertComponent(any(Component.class))).thenReturn(1L);
 
             var component = Component.builder()

@@ -152,6 +152,35 @@ class BuildResourceTest {
                     .componentVersion("42.0.0")
                     .distributionLocation("https://some-nexus-server.net/foo")
                     .extraDeploymentInfo(Map.of())
+                    .deployableSystemId(1L)
+                    .build();
+
+            when(BUILD_DAO.insertBuild(any(Build.class), anyString())).thenReturn(1L);
+
+            var response = RESOURCES.client()
+                    .target("/build")
+                    .request()
+                    .post(json(build));
+
+            assertAcceptedResponse(response);
+
+            verify(BUILD_DAO).insertBuild(any(Build.class), anyString());
+
+            verifyNoMoreInteractions(BUILD_DAO);
+        }
+
+        @Test
+        void shouldSaveNewBuildWithCurrentSystemWhenNotProvided() {
+            var build = Build.builder()
+                    .repoNamespace("kiwiproject")
+                    .repoName("champagne-service")
+                    .commitRef("abc1234")
+                    .commitUser("jdoe")
+                    .sourceBranch("main")
+                    .componentIdentifier("champagne_service")
+                    .componentVersion("42.0.0")
+                    .distributionLocation("https://some-nexus-server.net/foo")
+                    .extraDeploymentInfo(Map.of())
                     .build();
 
             when(BUILD_DAO.insertBuild(any(Build.class), anyString())).thenReturn(1L);
