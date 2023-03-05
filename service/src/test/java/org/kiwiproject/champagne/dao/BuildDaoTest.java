@@ -3,6 +3,7 @@ package org.kiwiproject.champagne.dao;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.kiwiproject.champagne.util.TestObjects.insertBuildRecord;
+import static org.kiwiproject.champagne.util.TestObjects.insertDeployableSystem;
 import static org.kiwiproject.collect.KiwiLists.first;
 import static org.kiwiproject.test.constants.KiwiTestConstants.JSON_HELPER;
 import static org.kiwiproject.test.util.DateTimeTestHelper.assertTimeDifferenceWithinTolerance;
@@ -103,9 +104,10 @@ class BuildDaoTest {
             "champagne-service, 42.0"
         })
         void shouldReturnListOfBuilds(String componentIdentifierFilter, String componentVersionFilter) {
-            insertBuildRecord(handle, "champagne-service", "42.0");
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            insertBuildRecord(handle, "champagne-service", "42.0", systemId);
 
-            var builds = dao.findPagedBuilds(0, 10, componentIdentifierFilter, componentVersionFilter);
+            var builds = dao.findPagedBuilds(0, 10, systemId, componentIdentifierFilter, componentVersionFilter);
             assertThat(builds)
                 .extracting("componentIdentifier", "componentVersion")
                 .contains(tuple("champagne-service", "42.0"));
@@ -113,9 +115,10 @@ class BuildDaoTest {
 
         @Test
         void shouldReturnEmptyListWhenNoBuildsFound() {
-            insertBuildRecord(handle, "champagne-service", "42.0");
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            insertBuildRecord(handle, "champagne-service", "42.0", systemId);
 
-            var builds = dao.findPagedBuilds(10, 10, null, null);
+            var builds = dao.findPagedBuilds(10, 10, systemId, null, null);
             assertThat(builds).isEmpty();
         }
     }
@@ -131,15 +134,16 @@ class BuildDaoTest {
             "champagne-service, 42.0"
         })
         void shouldReturnCountOfBuilds(String componentIdentifierFilter, String componentVersionFilter) {
-            insertBuildRecord(handle, "champagne-service", "42.0");
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            insertBuildRecord(handle, "champagne-service", "42.0", systemId);
 
-            var builds = dao.countBuilds(componentIdentifierFilter, componentVersionFilter);
+            var builds = dao.countBuilds(systemId, componentIdentifierFilter, componentVersionFilter);
             assertThat(builds).isOne();
         }
 
         @Test
         void shouldReturnEmptyListWhenNoBuildsFound() {
-            var builds = dao.countBuilds(null, null);
+            var builds = dao.countBuilds(1L, null, null);
             assertThat(builds).isZero();
         }
     }

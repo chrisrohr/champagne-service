@@ -4,6 +4,7 @@ import static javax.ws.rs.client.Entity.json;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.kiwiproject.collect.KiwiLists.first;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertAcceptedResponse;
+import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertBadRequest;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertNoContentResponse;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertOkResponse;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertResponseStatusCode;
@@ -18,7 +19,7 @@ import static org.mockito.Mockito.when;
 
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -26,11 +27,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.kiwiproject.champagne.dao.AuditRecordDao;
 import org.kiwiproject.champagne.dao.DeploymentEnvironmentDao;
+import org.kiwiproject.champagne.junit.jupiter.DeployableSystemExtension;
 import org.kiwiproject.champagne.junit.jupiter.JwtExtension;
 import org.kiwiproject.champagne.model.AuditRecord;
 import org.kiwiproject.champagne.model.AuditRecord.Action;
-import org.kiwiproject.champagne.service.ManualTaskService;
+import org.kiwiproject.champagne.model.DeployableSystemThreadLocal;
 import org.kiwiproject.champagne.model.DeploymentEnvironment;
+import org.kiwiproject.champagne.service.ManualTaskService;
 import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
 import org.kiwiproject.dropwizard.error.test.junit.jupiter.ApplicationErrorExtension;
 import org.kiwiproject.jaxrs.exception.JaxrsExceptionMapper;
@@ -40,7 +43,7 @@ import java.util.List;
 import javax.ws.rs.core.GenericType;
 
 @DisplayName("DeploymentEnvironmentResource")
-@ExtendWith( {DropwizardExtensionsSupport.class, ApplicationErrorExtension.class})
+@ExtendWith({DropwizardExtensionsSupport.class, ApplicationErrorExtension.class, DeployableSystemExtension.class})
 class DeploymentEnvironmentResourceTest {
     private static final DeploymentEnvironmentDao DEPLOYMENT_ENVIRONMENT_DAO = mock(DeploymentEnvironmentDao.class);
     private static final AuditRecordDao AUDIT_RECORD_DAO = mock(AuditRecordDao.class);
@@ -56,9 +59,9 @@ class DeploymentEnvironmentResourceTest {
 
     @RegisterExtension
     private final JwtExtension jwtExtension = new JwtExtension("bob");
-    
-    @BeforeEach
-    void setUp() {
+
+    @AfterEach
+    void tearDown() {
         reset(DEPLOYMENT_ENVIRONMENT_DAO, AUDIT_RECORD_DAO, MANUAL_TASK_SERVICE);
     }
 
@@ -68,26 +71,28 @@ class DeploymentEnvironmentResourceTest {
         @Test
         void shouldReturnListOfEnvironments() {
             var env = DeploymentEnvironment.builder()
-                .name("DEV")
-                .build();
+                    .name("DEV")
+                    .deployableSystemId(1L)
+                    .build();
 
-            when(DEPLOYMENT_ENVIRONMENT_DAO.findAllEnvironments()).thenReturn(List.of(env));
+            when(DEPLOYMENT_ENVIRONMENT_DAO.findAllEnvironments(1L)).thenReturn(List.of(env));
 
             var response = APP.client().target("/environments")
-                .request()
-                .get();
+                    .request()
+                    .get();
 
             assertOkResponse(response);
 
-            var envs = response.readEntity(new GenericType<List<DeploymentEnvironment>>(){});
+            var envs = response.readEntity(new GenericType<List<DeploymentEnvironment>>() {
+            });
 
             var foundEnv = first(envs);
             assertThat(foundEnv)
-                .usingRecursiveComparison()
-                .ignoringFields("createdAt", "updatedAt")
-                .isEqualTo(env);
+                    .usingRecursiveComparison()
+                    .ignoringFields("createdAt", "updatedAt")
+                    .isEqualTo(env);
 
-            verify(DEPLOYMENT_ENVIRONMENT_DAO).findAllEnvironments();
+            verify(DEPLOYMENT_ENVIRONMENT_DAO).findAllEnvironments(1L);
             verifyNoMoreInteractions(DEPLOYMENT_ENVIRONMENT_DAO);
             verifyNoInteractions(AUDIT_RECORD_DAO);
         }
@@ -101,18 +106,19 @@ class DeploymentEnvironmentResourceTest {
             when(DEPLOYMENT_ENVIRONMENT_DAO.insertEnvironment(any(DeploymentEnvironment.class))).thenReturn(1L);
 
             var env = DeploymentEnvironment.builder()
-                .name("DEV")
-                .build();
+                    .name("DEV")
+                    .deployableSystemId(1L)
+                    .build();
 
             var response = APP.client().target("/environments")
-                .request()
-                .post(json(env));
+                    .request()
+                    .post(json(env));
 
             assertNoContentResponse(response);
 
             verify(DEPLOYMENT_ENVIRONMENT_DAO).insertEnvironment(isA(DeploymentEnvironment.class));
 
-            verifyAuditRecorded(1L, Action.CREATED);
+            verifyAuditRecorded(Action.CREATED);
 
             verifyNoMoreInteractions(DEPLOYMENT_ENVIRONMENT_DAO, AUDIT_RECORD_DAO);
         }
@@ -122,10 +128,48 @@ class DeploymentEnvironmentResourceTest {
             var env = DeploymentEnvironment.builder().build();
 
             var response = APP.client().target("/environments")
-                .request()
-                .post(json(env));
+                    .request()
+                    .post(json(env));
 
             assertResponseStatusCode(response, 422);
+
+            verifyNoInteractions(DEPLOYMENT_ENVIRONMENT_DAO, AUDIT_RECORD_DAO);
+        }
+
+        @Test
+        void shouldSetTheSystemFromHeaderWhenNotPosted() {
+            when(DEPLOYMENT_ENVIRONMENT_DAO.insertEnvironment(any(DeploymentEnvironment.class))).thenReturn(1L);
+
+            var env = DeploymentEnvironment.builder()
+                    .name("DEV")
+                    .build();
+
+            var response = APP.client().target("/environments")
+                    .request()
+                    .post(json(env));
+
+            assertNoContentResponse(response);
+
+            verify(DEPLOYMENT_ENVIRONMENT_DAO).insertEnvironment(isA(DeploymentEnvironment.class));
+
+            verifyAuditRecorded(Action.CREATED);
+
+            verifyNoMoreInteractions(DEPLOYMENT_ENVIRONMENT_DAO, AUDIT_RECORD_DAO);
+        }
+
+        @Test
+        void shouldReturnBadRequestWhenSystemNotProvided() {
+            DeployableSystemThreadLocal.clearDeployableSystem();
+
+            var env = DeploymentEnvironment.builder()
+                    .name("DEV")
+                    .build();
+
+            var response = APP.client().target("/environments")
+                    .request()
+                    .post(json(env));
+
+            assertBadRequest(response);
 
             verifyNoInteractions(DEPLOYMENT_ENVIRONMENT_DAO, AUDIT_RECORD_DAO);
         }
@@ -139,19 +183,19 @@ class DeploymentEnvironmentResourceTest {
             when(DEPLOYMENT_ENVIRONMENT_DAO.updateEnvironment(any(DeploymentEnvironment.class))).thenReturn(1);
 
             var env = DeploymentEnvironment.builder()
-                .id(1L)
-                .name("DEV")
-                .build();
+                    .id(1L)
+                    .name("DEV")
+                    .build();
 
             var response = APP.client().target("/environments")
-                .request()
-                .put(json(env));
+                    .request()
+                    .put(json(env));
 
             assertAcceptedResponse(response);
 
             verify(DEPLOYMENT_ENVIRONMENT_DAO).updateEnvironment(isA(DeploymentEnvironment.class));
 
-            verifyAuditRecorded(1L, Action.UPDATED);
+            verifyAuditRecorded(Action.UPDATED);
 
             verifyNoMoreInteractions(DEPLOYMENT_ENVIRONMENT_DAO, AUDIT_RECORD_DAO);
         }
@@ -161,8 +205,8 @@ class DeploymentEnvironmentResourceTest {
             var env = DeploymentEnvironment.builder().build();
 
             var response = APP.client().target("/environments")
-                .request()
-                .put(json(env));
+                    .request()
+                    .put(json(env));
 
             assertResponseStatusCode(response, 422);
 
@@ -174,13 +218,13 @@ class DeploymentEnvironmentResourceTest {
             when(DEPLOYMENT_ENVIRONMENT_DAO.updateEnvironment(any(DeploymentEnvironment.class))).thenReturn(0);
 
             var env = DeploymentEnvironment.builder()
-                .id(1L)
-                .name("DEV")
-                .build();
+                    .id(1L)
+                    .name("DEV")
+                    .build();
 
             var response = APP.client().target("/environments")
-                .request()
-                .put(json(env));
+                    .request()
+                    .put(json(env));
 
             assertAcceptedResponse(response);
 
@@ -198,16 +242,16 @@ class DeploymentEnvironmentResourceTest {
             when(DEPLOYMENT_ENVIRONMENT_DAO.hardDeleteById(1L)).thenReturn(1);
 
             var response = APP.client().target("/environments")
-                .path("{id}/delete")
-                .resolveTemplate("id", 1)
-                .request()
-                .delete();
+                    .path("{id}/delete")
+                    .resolveTemplate("id", 1)
+                    .request()
+                    .delete();
 
             assertAcceptedResponse(response);
 
             verify(DEPLOYMENT_ENVIRONMENT_DAO).hardDeleteById(1L);
-            
-            verifyAuditRecorded(1L, Action.DELETED);
+
+            verifyAuditRecorded(Action.DELETED);
 
             verifyNoMoreInteractions(DEPLOYMENT_ENVIRONMENT_DAO, AUDIT_RECORD_DAO);
         }
@@ -217,10 +261,10 @@ class DeploymentEnvironmentResourceTest {
             when(DEPLOYMENT_ENVIRONMENT_DAO.hardDeleteById(1L)).thenReturn(0);
 
             var response = APP.client().target("/environments")
-                .path("{id}/delete")
-                .resolveTemplate("id", 1)
-                .request()
-                .delete();
+                    .path("{id}/delete")
+                    .resolveTemplate("id", 1)
+                    .request()
+                    .delete();
 
             assertAcceptedResponse(response);
 
@@ -238,16 +282,16 @@ class DeploymentEnvironmentResourceTest {
             when(DEPLOYMENT_ENVIRONMENT_DAO.softDeleteById(1L)).thenReturn(1);
 
             var response = APP.client().target("/environments")
-                .path("{id}/deactivate")
-                .resolveTemplate("id", 1)
-                .request()
-                .delete();
+                    .path("{id}/deactivate")
+                    .resolveTemplate("id", 1)
+                    .request()
+                    .delete();
 
             assertAcceptedResponse(response);
 
             verify(DEPLOYMENT_ENVIRONMENT_DAO).softDeleteById(1L);
-            
-            verifyAuditRecorded(1L, Action.UPDATED);
+
+            verifyAuditRecorded(Action.UPDATED);
 
             verifyNoMoreInteractions(DEPLOYMENT_ENVIRONMENT_DAO, AUDIT_RECORD_DAO);
         }
@@ -257,10 +301,10 @@ class DeploymentEnvironmentResourceTest {
             when(DEPLOYMENT_ENVIRONMENT_DAO.softDeleteById(1L)).thenReturn(0);
 
             var response = APP.client().target("/environments")
-                .path("{id}/deactivate")
-                .resolveTemplate("id", 1)
-                .request()
-                .delete();
+                    .path("{id}/deactivate")
+                    .resolveTemplate("id", 1)
+                    .request()
+                    .delete();
 
             assertAcceptedResponse(response);
 
@@ -278,16 +322,16 @@ class DeploymentEnvironmentResourceTest {
             when(DEPLOYMENT_ENVIRONMENT_DAO.unSoftDeleteById(1L)).thenReturn(1);
 
             var response = APP.client().target("/environments")
-                .path("{id}/activate")
-                .resolveTemplate("id", 1)
-                .request()
-                .put(json(""));
+                    .path("{id}/activate")
+                    .resolveTemplate("id", 1)
+                    .request()
+                    .put(json(""));
 
             assertAcceptedResponse(response);
 
             verify(DEPLOYMENT_ENVIRONMENT_DAO).unSoftDeleteById(1L);
-            
-            verifyAuditRecorded(1L, Action.UPDATED);
+
+            verifyAuditRecorded(Action.UPDATED);
 
             verifyNoMoreInteractions(DEPLOYMENT_ENVIRONMENT_DAO, AUDIT_RECORD_DAO);
         }
@@ -297,10 +341,10 @@ class DeploymentEnvironmentResourceTest {
             when(DEPLOYMENT_ENVIRONMENT_DAO.softDeleteById(1L)).thenReturn(0);
 
             var response = APP.client().target("/environments")
-                .path("{id}/activate")
-                .resolveTemplate("id", 1)
-                .request()
-                .put(json(""));
+                    .path("{id}/activate")
+                    .resolveTemplate("id", 1)
+                    .request()
+                    .put(json(""));
 
             assertAcceptedResponse(response);
 
@@ -310,13 +354,13 @@ class DeploymentEnvironmentResourceTest {
         }
     }
 
-    private void verifyAuditRecorded(long id, Action action) {
+    private void verifyAuditRecorded(Action action) {
         var argCapture = ArgumentCaptor.forClass(AuditRecord.class);
         verify(AUDIT_RECORD_DAO).insertAuditRecord(argCapture.capture());
 
         var audit = argCapture.getValue();
 
-        assertThat(audit.getRecordId()).isEqualTo(id);
+        assertThat(audit.getRecordId()).isEqualTo(1);
         assertThat(audit.getRecordType()).isEqualTo(DeploymentEnvironment.class.getSimpleName());
         assertThat(audit.getAction()).isEqualTo(action);
     }

@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.kiwiproject.champagne.dao.AuditRecordDao;
+import org.kiwiproject.champagne.junit.jupiter.DeployableSystemExtension;
 import org.kiwiproject.champagne.junit.jupiter.JwtExtension;
 import org.kiwiproject.champagne.model.AuditRecord;
 import org.kiwiproject.champagne.model.AuditRecord.Action;
@@ -30,18 +31,18 @@ import java.util.List;
 import javax.ws.rs.core.GenericType;
 
 @DisplayName("AuditRecordResource")
-@ExtendWith(DropwizardExtensionsSupport.class)
+@ExtendWith({DropwizardExtensionsSupport.class, DeployableSystemExtension.class})
 class AuditRecordResourceTest {
-    
+
     private static final AuditRecordDao AUDIT_RECORD_DAO = mock(AuditRecordDao.class);
     private static final AuditRecordResource RESOURCE = new AuditRecordResource(AUDIT_RECORD_DAO);
 
     private static final ResourceExtension RESOURCES = ResourceExtension.builder()
-        .bootstrapLogging(false)
-        .addResource(RESOURCE)
-        .addProvider(JerseyViolationExceptionMapper.class)
-        .addProvider(JaxrsExceptionMapper.class)
-        .build();
+            .bootstrapLogging(false)
+            .addResource(RESOURCE)
+            .addProvider(JerseyViolationExceptionMapper.class)
+            .addProvider(JaxrsExceptionMapper.class)
+            .build();
 
     @RegisterExtension
     private final JwtExtension jwtExtension = new JwtExtension("bob");
@@ -57,37 +58,39 @@ class AuditRecordResourceTest {
         @Test
         void shouldReturnPagedListOfAuditRecords() {
             var auditRecord = AuditRecord.builder()
-                .id(1L)
-                .recordId(42L)
-                .recordType(User.class.getSimpleName())
-                .action(Action.CREATED)
-                .build();
+                    .id(1L)
+                    .recordId(42L)
+                    .recordType(User.class.getSimpleName())
+                    .action(Action.CREATED)
+                    .deployableSystemId(1L)
+                    .build();
 
-            when(AUDIT_RECORD_DAO.findPagedAuditRecords(0, 10)).thenReturn(List.of(auditRecord));
-            when(AUDIT_RECORD_DAO.countAuditRecords()).thenReturn(1L);
+            when(AUDIT_RECORD_DAO.findPagedAuditRecords(0, 10, 1L)).thenReturn(List.of(auditRecord));
+            when(AUDIT_RECORD_DAO.countAuditRecords(1L)).thenReturn(1L);
 
             var response = RESOURCES.client()
-                .target("/audit")
-                .queryParam("pageNumber", 1)
-                .queryParam("pageSize", 10)
-                .request()
-                .get();
+                    .target("/audit")
+                    .queryParam("pageNumber", 1)
+                    .queryParam("pageSize", 10)
+                    .request()
+                    .get();
 
             assertOkResponse(response);
 
-            var result = response.readEntity(new GenericType<KiwiPage<AuditRecord>>(){});
+            var result = response.readEntity(new GenericType<KiwiPage<AuditRecord>>() {
+            });
 
             assertThat(result.getNumber()).isOne();
             assertThat(result.getTotalElements()).isOne();
 
             var audit = first(result.getContent());
             assertThat(audit)
-                .usingRecursiveComparison()
-                .ignoringFields("timestamp")
-                .isEqualTo(auditRecord);
+                    .usingRecursiveComparison()
+                    .ignoringFields("timestamp")
+                    .isEqualTo(auditRecord);
 
-            verify(AUDIT_RECORD_DAO).findPagedAuditRecords(0, 10);
-            verify(AUDIT_RECORD_DAO).countAuditRecords();
+            verify(AUDIT_RECORD_DAO).findPagedAuditRecords(0, 10, 1L);
+            verify(AUDIT_RECORD_DAO).countAuditRecords(1L);
 
             verifyNoMoreInteractions(AUDIT_RECORD_DAO);
         }
@@ -95,38 +98,40 @@ class AuditRecordResourceTest {
         @Test
         void shouldReturnPagedListOfAuditRecordsWithDefaultPaging() {
             var auditRecord = AuditRecord.builder()
-                .id(1L)
-                .recordId(42L)
-                .recordType(User.class.getSimpleName())
-                .action(Action.CREATED)
-                .build();
+                    .id(1L)
+                    .recordId(42L)
+                    .recordType(User.class.getSimpleName())
+                    .action(Action.CREATED)
+                    .deployableSystemId(1L)
+                    .build();
 
-            when(AUDIT_RECORD_DAO.findPagedAuditRecords(0, 50)).thenReturn(List.of(auditRecord));
-            when(AUDIT_RECORD_DAO.countAuditRecords()).thenReturn(1L);
+            when(AUDIT_RECORD_DAO.findPagedAuditRecords(0, 50, 1L)).thenReturn(List.of(auditRecord));
+            when(AUDIT_RECORD_DAO.countAuditRecords(1L)).thenReturn(1L);
 
             var response = RESOURCES.client()
-                .target("/audit")
-                .request()
-                .get();
+                    .target("/audit")
+                    .request()
+                    .get();
 
             assertOkResponse(response);
 
-            var result = response.readEntity(new GenericType<KiwiPage<AuditRecord>>(){});
+            var result = response.readEntity(new GenericType<KiwiPage<AuditRecord>>() {
+            });
 
             assertThat(result.getNumber()).isOne();
             assertThat(result.getTotalElements()).isOne();
 
             var audit = first(result.getContent());
             assertThat(audit)
-                .usingRecursiveComparison()
-                .ignoringFields("timestamp")
-                .isEqualTo(auditRecord);
+                    .usingRecursiveComparison()
+                    .ignoringFields("timestamp")
+                    .isEqualTo(auditRecord);
 
-            verify(AUDIT_RECORD_DAO).findPagedAuditRecords(0, 50);
-            verify(AUDIT_RECORD_DAO).countAuditRecords();
+            verify(AUDIT_RECORD_DAO).findPagedAuditRecords(0, 50, 1L);
+            verify(AUDIT_RECORD_DAO).countAuditRecords(1L);
 
             verifyNoMoreInteractions(AUDIT_RECORD_DAO);
         }
     }
-    
+
 }

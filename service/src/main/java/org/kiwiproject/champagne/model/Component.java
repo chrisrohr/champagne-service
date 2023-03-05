@@ -4,6 +4,7 @@ import java.time.Instant;
 
 import lombok.Builder;
 import lombok.Value;
+import lombok.With;
 
 /**
  * Representation of a deployable component in the system.
@@ -25,5 +26,11 @@ public class Component {
      * A tag for the component used to link up with {@link Host} instances for deployments
      */
     String tag;
+
+    /**
+     * The Deployable System that this component is tied to
+     */
+    @With
+    Long deployableSystemId;
 
 }

@@ -1,16 +1,23 @@
 package org.kiwiproject.champagne.resource;
 
+import static java.util.Objects.isNull;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
+import static org.kiwiproject.champagne.util.DeployableSystems.getSystemIdOrThrowBadRequest;
 import static org.kiwiproject.jaxrs.KiwiStandardResponses.standardNotFoundResponse;
 import static org.kiwiproject.search.KiwiSearching.zeroBasedOffset;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
-
+import org.kiwiproject.champagne.dao.AuditRecordDao;
+import org.kiwiproject.champagne.dao.DeploymentEnvironmentDao;
+import org.kiwiproject.champagne.dao.ReleaseDao;
+import org.kiwiproject.champagne.dao.ReleaseStatusDao;
+import org.kiwiproject.champagne.dao.TaskDao;
+import org.kiwiproject.champagne.dao.TaskStatusDao;
 import org.kiwiproject.champagne.model.AuditRecord.Action;
 import org.kiwiproject.champagne.model.manualdeployment.DeploymentTaskStatus;
 import org.kiwiproject.champagne.model.manualdeployment.Release;
@@ -18,19 +25,12 @@ import org.kiwiproject.champagne.model.manualdeployment.ReleaseStage;
 import org.kiwiproject.champagne.model.manualdeployment.ReleaseStatus;
 import org.kiwiproject.champagne.model.manualdeployment.Task;
 import org.kiwiproject.champagne.model.manualdeployment.TaskStatus;
-import org.kiwiproject.champagne.dao.AuditRecordDao;
-import org.kiwiproject.champagne.dao.DeploymentEnvironmentDao;
-import org.kiwiproject.champagne.dao.ReleaseDao;
-import org.kiwiproject.champagne.dao.ReleaseStatusDao;
-import org.kiwiproject.champagne.dao.TaskDao;
-import org.kiwiproject.champagne.dao.TaskStatusDao;
 import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
 import org.kiwiproject.jaxrs.exception.JaxrsNotFoundException;
 import org.kiwiproject.spring.data.KiwiPage;
 
 import java.util.List;
 import java.util.Set;
-
 import javax.annotation.security.PermitAll;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -83,12 +83,13 @@ public class TaskResource extends AuditableResource {
     public Response getPagedReleases(@QueryParam("pageNumber") @DefaultValue("1") int pageNumber,
                                      @QueryParam("pageSize") @DefaultValue("50") int pageSize) {
 
-        var releases = releaseDao.findPagedReleases(zeroBasedOffset(pageNumber, pageSize), pageSize);
+        var systemId = getSystemIdOrThrowBadRequest();
+        var releases = releaseDao.findPagedReleases(zeroBasedOffset(pageNumber, pageSize), pageSize, systemId);
         var releasesWithStatus = releases.stream()
                 .map(this::buildReleaseWithStatusFrom)
                 .toList();
         
-        var totalCount = releaseDao.countReleases();
+        var totalCount = releaseDao.countReleases(systemId);
         return Response.ok(KiwiPage.of(pageNumber, pageSize, totalCount, releasesWithStatus).usingOneAsFirstPage()).build();
     }
 
@@ -131,10 +132,17 @@ public class TaskResource extends AuditableResource {
     @Timed
     @ExceptionMetered
     public Response addNewRelease(@Valid @NotNull Release release) {
+        var systemId = release.getDeployableSystemId();
+
+        if (isNull(release.getDeployableSystemId())) {
+            systemId = getSystemIdOrThrowBadRequest();
+            release = release.withDeployableSystemId(systemId);
+        }
+
         var releaseId = releaseDao.insertRelease(release);
         auditAction(releaseId, Release.class, Action.CREATED);
 
-        deploymentEnvironmentDao.findAllEnvironments().forEach(env -> {
+        deploymentEnvironmentDao.findAllEnvironments(systemId).forEach(env -> {
             var status = ReleaseStatus.builder()
                 .releaseId(releaseId)
                 .environmentId(env.getId())
@@ -152,10 +160,11 @@ public class TaskResource extends AuditableResource {
     @Timed
     @ExceptionMetered
     public Response addNewTask(@Valid @NotNull Task task) {
+        var systemId = getSystemIdOrThrowBadRequest();
         var taskId = taskDao.insertTask(task);
         auditAction(taskId, Task.class, Action.CREATED);
 
-        deploymentEnvironmentDao.findAllEnvironments().forEach(env -> {
+        deploymentEnvironmentDao.findAllEnvironments(systemId).forEach(env -> {
             var status = TaskStatus.builder()
                 .taskId(taskId)
                 .environmentId(env.getId())

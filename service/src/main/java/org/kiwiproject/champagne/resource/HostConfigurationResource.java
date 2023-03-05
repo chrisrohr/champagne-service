@@ -1,9 +1,22 @@
 package org.kiwiproject.champagne.resource;
 
+import static java.util.Objects.isNull;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.kiwiproject.champagne.util.DeployableSystems.getSystemIdOrThrowBadRequest;
+
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
+import org.apache.commons.lang3.StringUtils;
+import org.kiwiproject.champagne.dao.AuditRecordDao;
+import org.kiwiproject.champagne.dao.ComponentDao;
+import org.kiwiproject.champagne.dao.HostDao;
+import org.kiwiproject.champagne.model.AuditRecord.Action;
+import org.kiwiproject.champagne.model.Component;
+import org.kiwiproject.champagne.model.Host;
+import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
+import org.kiwiproject.jaxrs.exception.JaxrsNotFoundException;
 
 import java.util.List;
-
 import javax.annotation.security.PermitAll;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -15,19 +28,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-
-import org.apache.commons.lang3.StringUtils;
-import org.kiwiproject.champagne.dao.AuditRecordDao;
-import org.kiwiproject.champagne.dao.ComponentDao;
-import org.kiwiproject.champagne.dao.HostDao;
-import org.kiwiproject.champagne.model.Component;
-import org.kiwiproject.champagne.model.Host;
-import org.kiwiproject.champagne.model.AuditRecord.Action;
-import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
-import org.kiwiproject.jaxrs.exception.JaxrsNotFoundException;
-
-import com.codahale.metrics.annotation.ExceptionMetered;
-import com.codahale.metrics.annotation.Timed;
 
 @Path("/host")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -50,7 +50,8 @@ public class HostConfigurationResource extends AuditableResource {
     @Timed
     @ExceptionMetered
     public Response listHostsForEnvironment(@PathParam("environment") Long envId, @QueryParam("componentFilter") String componentFilter) {
-        var hosts = isBlank(componentFilter) ? hostDao.findHostsByEnvId(envId) : List.of();
+        var systemId = getSystemIdOrThrowBadRequest();
+        var hosts = isBlank(componentFilter) ? hostDao.findHostsByEnvId(envId, systemId) : List.of();
 
         return Response.ok(hosts).build();
     }
@@ -59,6 +60,11 @@ public class HostConfigurationResource extends AuditableResource {
     @Timed
     @ExceptionMetered
     public Response createHost(Host host) {
+        if (isNull(host.getDeployableSystemId())) {
+            var systemId = getSystemIdOrThrowBadRequest();
+            host = host.withDeployableSystemId(systemId);
+        }
+
         var hostId = hostDao.insertHost(host, StringUtils.join(host.getTags(), ","));
 
         auditAction(hostId, Host.class, Action.CREATED);
@@ -96,6 +102,11 @@ public class HostConfigurationResource extends AuditableResource {
     @Timed
     @ExceptionMetered
     public Response createComponent(Component component) {
+        if (isNull(component.getDeployableSystemId())) {
+            var systemId = getSystemIdOrThrowBadRequest();
+            component = component.withDeployableSystemId(systemId);
+        }
+
         var componentId = componentDao.insertComponent(component);
 
         auditAction(componentId, Component.class, Action.CREATED);

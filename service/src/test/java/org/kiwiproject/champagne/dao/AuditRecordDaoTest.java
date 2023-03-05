@@ -2,6 +2,7 @@ package org.kiwiproject.champagne.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.kiwiproject.champagne.util.TestObjects.insertAuditRecord;
+import static org.kiwiproject.champagne.util.TestObjects.insertDeployableSystem;
 
 import org.jdbi.v3.core.Handle;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,11 +43,14 @@ class AuditRecordDaoTest {
 
         @Test
         void shouldInsertAuditRecordSuccessfully() {
+            insertDeployableSystem(handle, "kiwi");
+
             var auditRecordToInsert = AuditRecord.builder()
                     .action(AuditRecord.Action.CREATED)
                     .userSystemIdentifier("jdoe")
                     .recordType("User")
                     .recordId(1L)
+                    .deployableSystemId(1L)
                     .build();
 
             var id = dao.insertAuditRecord(auditRecordToInsert);
@@ -71,17 +75,19 @@ class AuditRecordDaoTest {
 
         @Test
         void shouldReturnListOfAuditRecords() {
-            insertAuditRecord(handle);
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            insertAuditRecord(handle, systemId);
 
-            var audits = dao.findPagedAuditRecords(0, 10);
+            var audits = dao.findPagedAuditRecords(0, 10, systemId);
             assertThat(audits).hasSize(1);
         }
 
         @Test
         void shouldReturnEmptyListWhenNoAuditRecordsFound() {
-            insertAuditRecord(handle);
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            insertAuditRecord(handle, systemId);
 
-            var audits = dao.findPagedAuditRecords(10, 10);
+            var audits = dao.findPagedAuditRecords(10, 10, systemId);
             assertThat(audits).isEmpty();
         }
     }
@@ -91,15 +97,16 @@ class AuditRecordDaoTest {
 
         @Test
         void shouldReturnCountOfAuditRecords() {
-            insertAuditRecord(handle);
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            insertAuditRecord(handle, systemId);
 
-            var count = dao.countAuditRecords();
+            var count = dao.countAuditRecords(systemId);
             assertThat(count).isOne();
         }
 
         @Test
         void shouldReturnZeroWhenNoAuditRecordsFound() {
-            var count = dao.countAuditRecords();
+            var count = dao.countAuditRecords(1L);
             assertThat(count).isZero();
         }
     }
@@ -109,7 +116,8 @@ class AuditRecordDaoTest {
 
         @Test
         void shouldDeleteFoundRecords() {
-            insertAuditRecord(handle);
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            insertAuditRecord(handle, systemId);
 
             var deleteDate = Instant.now().plusSeconds(60);
 

@@ -6,6 +6,7 @@ import javax.validation.constraints.NotBlank;
 
 import lombok.Builder;
 import lombok.Value;
+import lombok.With;
 
 /**
  * The core model used to track environments in the system (e.g. dev, test, production).
@@ -28,5 +29,11 @@ public class DeploymentEnvironment {
     Instant updatedAt;
 
     boolean deleted;
+
+    /**
+     * The Deployable System that this env is tied to
+     */
+    @With
+    Long deployableSystemId;
 
 }

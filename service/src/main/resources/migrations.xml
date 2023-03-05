@@ -354,4 +354,45 @@
             </column>
         </createTable>
     </changeSet>
+
+    <changeSet id="hook_up_systems" author="crohr">
+        <dropForeignKeyConstraint baseTableName="deployable_systems" constraintName="fk_system_deployment_environment" />
+        <addForeignKeyConstraint baseTableName="deployable_systems" baseColumnNames="dev_environment_id" constraintName="fk_system_deployment_environment" referencedTableName="deployment_environments" referencedColumnNames="id" />
+
+        <addColumn tableName="hosts">
+            <column name="deployable_system_id" type="bigint">
+                <constraints foreignKeyName="fk_host_deployable_system" references="deployable_systems(id)" deleteCascade="true"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="deployment_environments">
+            <column name="deployable_system_id" type="bigint">
+                <constraints foreignKeyName="fk_deployment_environment_deployable_system" references="deployable_systems(id)" deleteCascade="true"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="components">
+            <column name="deployable_system_id" type="bigint">
+                <constraints foreignKeyName="fk_component_deployable_system" references="deployable_systems(id)" deleteCascade="true"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="builds">
+            <column name="deployable_system_id" type="bigint">
+                <constraints foreignKeyName="fk_build_deployable_system" references="deployable_systems(id)" deleteCascade="true"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="audit_records">
+            <column name="deployable_system_id" type="bigint">
+                <constraints foreignKeyName="fk_audit_record_deployable_system" references="deployable_systems(id)" deleteCascade="true"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="manual_deployment_task_releases">
+            <column name="deployable_system_id" type="bigint">
+                <constraints foreignKeyName="fk_task_deployable_system" references="deployable_systems(id)" deleteCascade="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

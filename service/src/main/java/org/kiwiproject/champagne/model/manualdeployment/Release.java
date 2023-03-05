@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import lombok.Builder;
 import lombok.Value;
+import lombok.With;
 
 /**
  * The top-level container for all manual deployment tasks for a specific release.
@@ -24,4 +25,10 @@ public class Release {
 
     @NotBlank
     String releaseNumber;
+
+    /**
+     * The Deployable System that this release is tied to
+     */
+    @With
+    Long deployableSystemId;
 }

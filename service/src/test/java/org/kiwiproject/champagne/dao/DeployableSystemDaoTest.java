@@ -139,7 +139,8 @@ class DeployableSystemDaoTest {
 
         @Test
         void shouldUpdateTheDevEnvOfAGivenRecord() {
-            var envId = insertDeploymentEnvironmentRecord(handle, "dev");
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            var envId = insertDeploymentEnvironmentRecord(handle, "dev", systemId);
             var deployableSystemId = insertDeployableSystem(handle, "kiwi");
 
             dao.updateDevEnvironment(deployableSystemId, envId);

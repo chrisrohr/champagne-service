@@ -1,21 +1,19 @@
 package org.kiwiproject.champagne.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.kiwiproject.champagne.util.TestObjects.insertDeployableSystem;
 import static org.kiwiproject.champagne.util.TestObjects.insertDeploymentEnvironmentRecord;
 import static org.kiwiproject.collect.KiwiLists.first;
 import static org.kiwiproject.test.util.DateTimeTestHelper.assertTimeDifferenceWithinTolerance;
 
-import org.assertj.core.api.SoftAssertions;
-import org.assertj.core.api.junit.jupiter.SoftAssertionsExtension;
 import org.jdbi.v3.core.Handle;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.kiwiproject.champagne.model.DeploymentEnvironment;
 import org.kiwiproject.champagne.dao.mappers.DeploymentEnvironmentMapper;
+import org.kiwiproject.champagne.model.DeploymentEnvironment;
 import org.kiwiproject.test.junit.jupiter.Jdbi3DaoExtension;
 import org.kiwiproject.test.junit.jupiter.PostgresLiquibaseTestExtension;
 
@@ -23,7 +21,6 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
 @DisplayName("DeploymentEnvironmentDao")
-@ExtendWith(SoftAssertionsExtension.class)
 class DeploymentEnvironmentDaoTest {
     
     @RegisterExtension
@@ -78,7 +75,8 @@ class DeploymentEnvironmentDaoTest {
 
         @Test
         void shouldUpdateDeploymentEnvironmentSuccessfully() {
-            long envId = insertDeploymentEnvironmentRecord(handle, "TEST");
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            long envId = insertDeploymentEnvironmentRecord(handle, "TEST", systemId);
 
             var envToUpdate = DeploymentEnvironment.builder()
                     .id(envId)
@@ -103,9 +101,10 @@ class DeploymentEnvironmentDaoTest {
 
         @Test
         void shouldReturnListOfDeploymentEnvironments() {
-            insertDeploymentEnvironmentRecord(handle, "DEV");
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            insertDeploymentEnvironmentRecord(handle, "DEV", systemId);
 
-            var environments = dao.findAllEnvironments();
+            var environments = dao.findAllEnvironments(systemId);
             assertThat(environments)
                 .extracting("name")
                 .contains("DEV");
@@ -113,7 +112,7 @@ class DeploymentEnvironmentDaoTest {
 
         @Test
         void shouldReturnEmptyListWhenNoDeploymentEnvironmentsFound() {
-            var environments = dao.findAllEnvironments();
+            var environments = dao.findAllEnvironments(1L);
             assertThat(environments).isEmpty();
         }
     }
@@ -123,7 +122,8 @@ class DeploymentEnvironmentDaoTest {
 
         @Test
         void shouldDeleteDeploymentEnvironmentSuccessfully() {
-            long envId = insertDeploymentEnvironmentRecord(handle, "TRAINING");
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            long envId = insertDeploymentEnvironmentRecord(handle, "TRAINING", systemId);
 
             dao.hardDeleteById(envId);
 
@@ -137,8 +137,9 @@ class DeploymentEnvironmentDaoTest {
     class SoftDeleteById {
 
         @Test
-        void shouldSoftDeleteDeploymentEnvironmentSuccessfully(SoftAssertions softly) {
-            var id = insertDeploymentEnvironmentRecord(handle, "TEST");
+        void shouldSoftDeleteDeploymentEnvironmentSuccessfully() {
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            var id = insertDeploymentEnvironmentRecord(handle, "TEST", systemId);
 
             dao.softDeleteById(id);
 
@@ -149,8 +150,8 @@ class DeploymentEnvironmentDaoTest {
             assertThat(envs).hasSize(1);
 
             var user = first(envs);
-            softly.assertThat(user.getId()).isEqualTo(id);
-            softly.assertThat(user.isDeleted()).isEqualTo(true);
+            assertThat(user.getId()).isEqualTo(id);
+            assertThat(user.isDeleted()).isTrue();
         }
 
     }
@@ -159,8 +160,9 @@ class DeploymentEnvironmentDaoTest {
     class UnDeleteById {
 
         @Test
-        void shouldUnDeleteDeploymentEnvironmentSuccessfully(SoftAssertions softly) {
-            var id = insertDeploymentEnvironmentRecord(handle, "TEST");
+        void shouldUnDeleteDeploymentEnvironmentSuccessfully() {
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            var id = insertDeploymentEnvironmentRecord(handle, "TEST", systemId);
             handle.execute("update deployment_environments set deleted=true where id = ?", id);
 
             dao.unSoftDeleteById(id);
@@ -172,8 +174,8 @@ class DeploymentEnvironmentDaoTest {
             assertThat(envs).hasSize(1);
 
             var user = first(envs);
-            softly.assertThat(user.getId()).isEqualTo(id);
-            softly.assertThat(user.isDeleted()).isEqualTo(false);
+            assertThat(user.getId()).isEqualTo(id);
+            assertThat(user.isDeleted()).isFalse();
         }
 
     }

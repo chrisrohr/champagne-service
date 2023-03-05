@@ -1,29 +1,26 @@
 package org.kiwiproject.champagne.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.kiwiproject.champagne.util.TestObjects.insertDeployableSystem;
 import static org.kiwiproject.champagne.util.TestObjects.insertReleaseRecord;
 import static org.kiwiproject.collect.KiwiLists.first;
 import static org.kiwiproject.test.util.DateTimeTestHelper.assertTimeDifferenceWithinTolerance;
 
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-
-import org.assertj.core.api.SoftAssertions;
-import org.assertj.core.api.junit.jupiter.SoftAssertionsExtension;
 import org.jdbi.v3.core.Handle;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.kiwiproject.champagne.model.manualdeployment.Release;
 import org.kiwiproject.champagne.dao.mappers.ReleaseMapper;
+import org.kiwiproject.champagne.model.manualdeployment.Release;
 import org.kiwiproject.test.junit.jupiter.Jdbi3DaoExtension;
 import org.kiwiproject.test.junit.jupiter.PostgresLiquibaseTestExtension;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+
 @DisplayName("ReleaseDao")
-@ExtendWith(SoftAssertionsExtension.class)
 class ReleaseDaoTest {
     
     @RegisterExtension
@@ -48,7 +45,7 @@ class ReleaseDaoTest {
     class InsertRelease {
 
         @Test
-        void shouldInsertReleaseSuccessfully(SoftAssertions softly) {
+        void shouldInsertReleaseSuccessfully() {
             var beforeInsert = ZonedDateTime.now();
 
             var releaseToInsert = Release.builder()
@@ -64,12 +61,12 @@ class ReleaseDaoTest {
             assertThat(releases).hasSize(1);
 
             var release = first(releases);
-            softly.assertThat(release.getId()).isEqualTo(id);
+            assertThat(release.getId()).isEqualTo(id);
 
-            assertTimeDifferenceWithinTolerance(softly, "createdAt", beforeInsert, release.getCreatedAt().atZone(ZoneOffset.UTC), 1000L);
-            assertTimeDifferenceWithinTolerance(softly, "updatedAt", beforeInsert, release.getUpdatedAt().atZone(ZoneOffset.UTC), 1000L);
+            assertTimeDifferenceWithinTolerance("createdAt", beforeInsert, release.getCreatedAt().atZone(ZoneOffset.UTC), 1000L);
+            assertTimeDifferenceWithinTolerance("updatedAt", beforeInsert, release.getUpdatedAt().atZone(ZoneOffset.UTC), 1000L);
 
-            softly.assertThat(release.getReleaseNumber()).isEqualTo("2023.42.0");
+            assertThat(release.getReleaseNumber()).isEqualTo("2023.42.0");
         }
     }
 
@@ -78,9 +75,10 @@ class ReleaseDaoTest {
 
         @Test
         void shouldReturnListOfReleases() {
-            insertReleaseRecord(handle, "42");
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            insertReleaseRecord(handle, "42", systemId);
 
-            var releases = dao.findPagedReleases(0, 10);
+            var releases = dao.findPagedReleases(0, 10, systemId);
             assertThat(releases)
                 .extracting("releaseNumber")
                 .contains("42");
@@ -88,9 +86,10 @@ class ReleaseDaoTest {
 
         @Test
         void shouldReturnEmptyListWhenNoReleasesFound() {
-            insertReleaseRecord(handle, "42");
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            insertReleaseRecord(handle, "42", systemId);
 
-            var releases = dao.findPagedReleases(10, 10);
+            var releases = dao.findPagedReleases(10, 10, systemId);
             assertThat(releases).isEmpty();
         }
     }
@@ -100,15 +99,16 @@ class ReleaseDaoTest {
 
         @Test
         void shouldReturnCountOfReleases() {
-            insertReleaseRecord(handle, "42");
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            insertReleaseRecord(handle, "42", systemId);
 
-            var releases = dao.countReleases();
+            var releases = dao.countReleases(systemId);
             assertThat(releases).isOne();
         }
 
         @Test
         void shouldReturnEmptyListWhenNoReleasesFound() {
-            var releases = dao.countReleases();
+            var releases = dao.countReleases(1L);
             assertThat(releases).isZero();
         }
     }
@@ -118,7 +118,8 @@ class ReleaseDaoTest {
 
         @Test
         void shouldDeleteReleaseSuccessfully() {
-            var id = insertReleaseRecord(handle, "42");
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            var id = insertReleaseRecord(handle, "42", systemId);
 
             dao.deleteById(id);
 
@@ -136,7 +137,8 @@ class ReleaseDaoTest {
 
         @Test
         void shouldReturnListOfReleaseIds() {
-            var releaseId = insertReleaseRecord(handle, "42");
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            var releaseId = insertReleaseRecord(handle, "42", systemId);
 
             var releaseIds = dao.findAllReleaseIds();
             assertThat(releaseIds).contains(releaseId);

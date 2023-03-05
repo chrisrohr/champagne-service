@@ -47,4 +47,9 @@ public class AuditRecord {
      *           longs for the id field.
      */
     private final Long recordId;
+
+    /**
+     * The Deployable System that this audit record is tied to
+     */
+    Long deployableSystemId;
 }

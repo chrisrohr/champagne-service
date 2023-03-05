@@ -6,13 +6,13 @@ import static org.assertj.core.api.Assertions.entry;
 import static org.kiwiproject.collect.KiwiLists.first;
 import static org.kiwiproject.test.constants.KiwiTestConstants.JSON_HELPER;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertAcceptedResponse;
+import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertBadRequest;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertNotFoundResponse;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertOkResponse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -32,8 +32,10 @@ import org.kiwiproject.champagne.dao.ReleaseDao;
 import org.kiwiproject.champagne.dao.ReleaseStatusDao;
 import org.kiwiproject.champagne.dao.TaskDao;
 import org.kiwiproject.champagne.dao.TaskStatusDao;
+import org.kiwiproject.champagne.junit.jupiter.DeployableSystemExtension;
 import org.kiwiproject.champagne.junit.jupiter.JwtExtension;
 import org.kiwiproject.champagne.model.AuditRecord.Action;
+import org.kiwiproject.champagne.model.DeployableSystemThreadLocal;
 import org.kiwiproject.champagne.model.DeploymentEnvironment;
 import org.kiwiproject.champagne.model.manualdeployment.DeploymentTaskStatus;
 import org.kiwiproject.champagne.model.manualdeployment.Release;
@@ -52,7 +54,7 @@ import java.util.Optional;
 import javax.ws.rs.core.GenericType;
 
 @DisplayName("TaskResource")
-@ExtendWith({DropwizardExtensionsSupport.class, ApplicationErrorExtension.class})
+@ExtendWith({DropwizardExtensionsSupport.class, ApplicationErrorExtension.class, DeployableSystemExtension.class})
 class TaskResourceTest {
 
     private static final ReleaseDao RELEASE_DAO = mock(ReleaseDao.class);
@@ -66,11 +68,11 @@ class TaskResourceTest {
     private static final TaskResource RESOURCE = new TaskResource(RELEASE_DAO, RELEASE_STATUS_DAO, TASK_DAO, TASK_STATUS_DAO, DEPLOYMENT_ENVIRONMENT_DAO, AUDIT_RECORD_DAO, APPLICATION_ERROR_DAO);
 
     private static final ResourceExtension RESOURCES = ResourceExtension.builder()
-        .bootstrapLogging(false)
-        .addResource(RESOURCE)
-        .addProvider(JerseyViolationExceptionMapper.class)
-        .addProvider(JaxrsExceptionMapper.class)
-        .build();
+            .bootstrapLogging(false)
+            .addResource(RESOURCE)
+            .addProvider(JerseyViolationExceptionMapper.class)
+            .addProvider(JaxrsExceptionMapper.class)
+            .build();
 
     @RegisterExtension
     private final JwtExtension jwtExtension = new JwtExtension("bob");
@@ -86,31 +88,33 @@ class TaskResourceTest {
         @Test
         void shouldReturnPagedListOfReleases() {
             var release = Release.builder()
-                .id(1L)
-                .releaseNumber("2023.42")
-                .build();
+                    .id(1L)
+                    .releaseNumber("2023.42")
+                    .deployableSystemId(1L)
+                    .build();
 
-            when(RELEASE_DAO.findPagedReleases(0, 10)).thenReturn(List.of(release));
-            when(RELEASE_DAO.countReleases()).thenReturn(1L);
+            when(RELEASE_DAO.findPagedReleases(0, 10, 1L)).thenReturn(List.of(release));
+            when(RELEASE_DAO.countReleases(1L)).thenReturn(1L);
 
             var releaseStatus = ReleaseStatus.builder()
-                .releaseId(1L)
-                .status(DeploymentTaskStatus.PENDING)
-                .environmentId(1L)
-                .build();
+                    .releaseId(1L)
+                    .status(DeploymentTaskStatus.PENDING)
+                    .environmentId(1L)
+                    .build();
 
             when(RELEASE_STATUS_DAO.findByReleaseId(1L)).thenReturn(List.of(releaseStatus));
 
             var response = RESOURCES.client()
-                .target("/manual/deployment/tasks/releases")
-                .queryParam("pageNumber", 1)
-                .queryParam("pageSize", 10)
-                .request()
-                .get();
+                    .target("/manual/deployment/tasks/releases")
+                    .queryParam("pageNumber", 1)
+                    .queryParam("pageSize", 10)
+                    .request()
+                    .get();
 
             assertOkResponse(response);
 
-            var result = response.readEntity(new GenericType<KiwiPage<ReleaseWithStatus>>(){});
+            var result = response.readEntity(new GenericType<KiwiPage<ReleaseWithStatus>>() {
+            });
 
             assertThat(result.getNumber()).isOne();
             assertThat(result.getTotalElements()).isOne();
@@ -120,8 +124,8 @@ class TaskResourceTest {
             assertThat(releaseWithStatus.getReleaseNumber()).isEqualTo("2023.42");
             assertThat(releaseWithStatus.getEnvironmentStatus()).contains(entry(1L, releaseStatus));
 
-            verify(RELEASE_DAO).findPagedReleases(0, 10);
-            verify(RELEASE_DAO).countReleases();
+            verify(RELEASE_DAO).findPagedReleases(0, 10, 1L);
+            verify(RELEASE_DAO).countReleases(1L);
             verify(RELEASE_STATUS_DAO).findByReleaseId(1L);
 
             verifyNoMoreInteractions(RELEASE_DAO, RELEASE_STATUS_DAO);
@@ -131,29 +135,31 @@ class TaskResourceTest {
         @Test
         void shouldReturnPagedListOfReleasesWithDefaultPaging() {
             var release = Release.builder()
-                .id(1L)
-                .releaseNumber("2023.42")
-                .build();
+                    .id(1L)
+                    .releaseNumber("2023.42")
+                    .deployableSystemId(1L)
+                    .build();
 
-            when(RELEASE_DAO.findPagedReleases(0, 50)).thenReturn(List.of(release));
-            when(RELEASE_DAO.countReleases()).thenReturn(1L);
+            when(RELEASE_DAO.findPagedReleases(0, 50, 1L)).thenReturn(List.of(release));
+            when(RELEASE_DAO.countReleases(1L)).thenReturn(1L);
 
             var releaseStatus = ReleaseStatus.builder()
-                .releaseId(1L)
-                .status(DeploymentTaskStatus.PENDING)
-                .environmentId(1L)
-                .build();
+                    .releaseId(1L)
+                    .status(DeploymentTaskStatus.PENDING)
+                    .environmentId(1L)
+                    .build();
 
             when(RELEASE_STATUS_DAO.findByReleaseId(1L)).thenReturn(List.of(releaseStatus));
 
             var response = RESOURCES.client()
-                .target("/manual/deployment/tasks/releases")
-                .request()
-                .get();
+                    .target("/manual/deployment/tasks/releases")
+                    .request()
+                    .get();
 
             assertOkResponse(response);
 
-            var result = response.readEntity(new GenericType<KiwiPage<ReleaseWithStatus>>(){});
+            var result = response.readEntity(new GenericType<KiwiPage<ReleaseWithStatus>>() {
+            });
 
             assertThat(result.getNumber()).isOne();
             assertThat(result.getSize()).isEqualTo(50);
@@ -164,48 +170,49 @@ class TaskResourceTest {
             assertThat(releaseWithStatus.getReleaseNumber()).isEqualTo("2023.42");
             assertThat(releaseWithStatus.getEnvironmentStatus()).contains(entry(1L, releaseStatus));
 
-            verify(RELEASE_DAO).findPagedReleases(0, 50);
-            verify(RELEASE_DAO).countReleases();
+            verify(RELEASE_DAO).findPagedReleases(0, 50, 1L);
+            verify(RELEASE_DAO).countReleases(1L);
             verify(RELEASE_STATUS_DAO).findByReleaseId(1L);
 
             verifyNoMoreInteractions(RELEASE_DAO, RELEASE_STATUS_DAO);
             verifyNoInteractions(TASK_DAO, TASK_STATUS_DAO, DEPLOYMENT_ENVIRONMENT_DAO, AUDIT_RECORD_DAO);
         }
     }
-    
+
     @Nested
     class GetTasksForRelease {
 
         @Test
         void shouldReturnTasks() {
             var task = Task.builder()
-                .id(1L)
-                .releaseId(1L)
-                .component("ZK")
-                .summary("Upgrade")
-                .description("All the steps")
-                .stage(ReleaseStage.PRE)
-                .build();
+                    .id(1L)
+                    .releaseId(1L)
+                    .component("ZK")
+                    .summary("Upgrade")
+                    .description("All the steps")
+                    .stage(ReleaseStage.PRE)
+                    .build();
 
             when(TASK_DAO.findByReleaseId(1L)).thenReturn(List.of(task));
 
             var taskStatus = TaskStatus.builder()
-                .taskId(1L)
-                .status(DeploymentTaskStatus.PENDING)
-                .environmentId(1L)
-                .build();
+                    .taskId(1L)
+                    .status(DeploymentTaskStatus.PENDING)
+                    .environmentId(1L)
+                    .build();
 
             when(TASK_STATUS_DAO.findByTaskId(1L)).thenReturn(List.of(taskStatus));
 
             var response = RESOURCES.client()
-                .target("/manual/deployment/tasks/releases/{releaseId}")
-                .resolveTemplate("releaseId", 1L)
-                .request()
-                .get();
+                    .target("/manual/deployment/tasks/releases/{releaseId}")
+                    .resolveTemplate("releaseId", 1L)
+                    .request()
+                    .get();
 
             assertOkResponse(response);
 
-            var result = response.readEntity(new GenericType<List<TaskWithStatus>>() {});
+            var result = response.readEntity(new GenericType<List<TaskWithStatus>>() {
+            });
 
             var taskWithStatus = first(result);
 
@@ -230,91 +237,145 @@ class TaskResourceTest {
         @Test
         void shouldSaveNewRelease() {
             var release = Release.builder()
-                .releaseNumber("2023.01")
-                .build();
+                    .releaseNumber("2023.01")
+                    .deployableSystemId(1L)
+                    .build();
 
             when(RELEASE_DAO.insertRelease(any(Release.class))).thenReturn(1L);
 
             var env = DeploymentEnvironment.builder()
-                .id(1L)
-                .name("DEVELOPMENT")
-                .build();
+                    .id(1L)
+                    .name("DEVELOPMENT")
+                    .build();
 
-            when(DEPLOYMENT_ENVIRONMENT_DAO.findAllEnvironments()).thenReturn(List.of(env));
+            when(DEPLOYMENT_ENVIRONMENT_DAO.findAllEnvironments(1L)).thenReturn(List.of(env));
 
             when(RELEASE_STATUS_DAO.insertReleaseStatus(any(ReleaseStatus.class))).thenReturn(2L);
 
             var response = RESOURCES.client()
-                .target("/manual/deployment/tasks/releases")
-                .request()
-                .post(json(release));
+                    .target("/manual/deployment/tasks/releases")
+                    .request()
+                    .post(json(release));
 
             assertAcceptedResponse(response);
 
             verify(RELEASE_DAO).insertRelease(argThat(r -> "2023.01".equalsIgnoreCase(r.getReleaseNumber())));
             verify(RELEASE_STATUS_DAO).insertReleaseStatus(any(ReleaseStatus.class));
-            verify(DEPLOYMENT_ENVIRONMENT_DAO).findAllEnvironments();
+            verify(DEPLOYMENT_ENVIRONMENT_DAO).findAllEnvironments(1L);
 
             verifyAuditRecorded(1L, Release.class, Action.CREATED);
-            verifyMultipleStatusRecordsAuditRecorded(1, ReleaseStatus.class, Action.CREATED);
+            verifyMultipleStatusRecordsAuditRecorded(ReleaseStatus.class, Action.CREATED);
 
             verifyNoMoreInteractions(RELEASE_DAO, RELEASE_STATUS_DAO, DEPLOYMENT_ENVIRONMENT_DAO, AUDIT_RECORD_DAO);
             verifyNoInteractions(TASK_DAO, TASK_STATUS_DAO);
         }
+
+        @Test
+        void shouldSetTheSystemFromHeaderWhenNotPosted() {
+            var release = Release.builder()
+                    .releaseNumber("2023.01")
+                    .build();
+
+            when(RELEASE_DAO.insertRelease(any(Release.class))).thenReturn(1L);
+
+            var env = DeploymentEnvironment.builder()
+                    .id(1L)
+                    .name("DEVELOPMENT")
+                    .build();
+
+            when(DEPLOYMENT_ENVIRONMENT_DAO.findAllEnvironments(1L)).thenReturn(List.of(env));
+
+            when(RELEASE_STATUS_DAO.insertReleaseStatus(any(ReleaseStatus.class))).thenReturn(2L);
+
+            var response = RESOURCES.client()
+                    .target("/manual/deployment/tasks/releases")
+                    .request()
+                    .post(json(release));
+
+            assertAcceptedResponse(response);
+
+            verify(RELEASE_DAO).insertRelease(argThat(r -> "2023.01".equalsIgnoreCase(r.getReleaseNumber())));
+            verify(RELEASE_STATUS_DAO).insertReleaseStatus(any(ReleaseStatus.class));
+            verify(DEPLOYMENT_ENVIRONMENT_DAO).findAllEnvironments(1L);
+
+            verifyAuditRecorded(1L, Release.class, Action.CREATED);
+            verifyMultipleStatusRecordsAuditRecorded(ReleaseStatus.class, Action.CREATED);
+
+            verifyNoMoreInteractions(RELEASE_DAO, RELEASE_STATUS_DAO, DEPLOYMENT_ENVIRONMENT_DAO, AUDIT_RECORD_DAO);
+            verifyNoInteractions(TASK_DAO, TASK_STATUS_DAO);
+        }
+
+        @Test
+        void shouldReturnBadRequestWhenSystemNotProvided() {
+            DeployableSystemThreadLocal.clearDeployableSystem();
+
+            var release = Release.builder()
+                    .releaseNumber("2023.01")
+                    .build();
+
+            var response = RESOURCES.client()
+                    .target("/manual/deployment/tasks/releases")
+                    .request()
+                    .post(json(release));
+
+            assertBadRequest(response);
+
+            verifyNoInteractions(RELEASE_DAO, RELEASE_STATUS_DAO, TASK_DAO, TASK_STATUS_DAO, AUDIT_RECORD_DAO);
+        }
     }
-    
+
     @Nested
     class AddNewTask {
 
         @Test
         void shouldSaveNewTask() {
             var task = Task.builder()
-                .releaseId(1L)
-                .stage(ReleaseStage.PRE)
-                .description("some things")
-                .summary("Do it")
-                .component("super-service")
-                .build();
+                    .releaseId(1L)
+                    .stage(ReleaseStage.PRE)
+                    .description("some things")
+                    .summary("Do it")
+                    .component("super-service")
+                    .build();
 
             when(TASK_DAO.insertTask(any(Task.class))).thenReturn(2L);
 
             var env = DeploymentEnvironment.builder()
-                .id(1L)
-                .name("DEVELOPMENT")
-                .build();
+                    .id(1L)
+                    .name("DEVELOPMENT")
+                    .build();
 
-            when(DEPLOYMENT_ENVIRONMENT_DAO.findAllEnvironments()).thenReturn(List.of(env));
+            when(DEPLOYMENT_ENVIRONMENT_DAO.findAllEnvironments(1L)).thenReturn(List.of(env));
 
             var taskStatus = TaskStatus.builder()
-                .status(DeploymentTaskStatus.COMPLETE)
-                .environmentId(1L)
-                .build();
+                    .status(DeploymentTaskStatus.COMPLETE)
+                    .environmentId(1L)
+                    .build();
 
             when(TASK_STATUS_DAO.findByTaskId(2L)).thenReturn(List.of(taskStatus));
 
             var savedTask = Task.builder()
-                .id(2L)
-                .releaseId(1L)
-                .stage(ReleaseStage.PRE)
-                .description("some things")
-                .summary("Do it")
-                .component("super-service")
-                .build();
+                    .id(2L)
+                    .releaseId(1L)
+                    .stage(ReleaseStage.PRE)
+                    .description("some things")
+                    .summary("Do it")
+                    .component("super-service")
+                    .build();
 
             when(TASK_DAO.findByReleaseId(1L)).thenReturn(List.of(savedTask));
 
             var status = ReleaseStatus.builder()
-                .id(5L)
-                .environmentId(1L)
-                .status(DeploymentTaskStatus.PENDING)
-                .build();
+                    .id(5L)
+                    .environmentId(1L)
+                    .status(DeploymentTaskStatus.PENDING)
+                    .build();
 
             when(RELEASE_STATUS_DAO.findByReleaseId(1L)).thenReturn(List.of(status));
 
             var response = RESOURCES.client()
-                .target("/manual/deployment/tasks")
-                .request()
-                .post(json(task));
+                    .target("/manual/deployment/tasks")
+                    .request()
+                    .post(json(task));
 
             assertAcceptedResponse(response);
 
@@ -324,11 +385,11 @@ class TaskResourceTest {
             verify(TASK_STATUS_DAO).findByTaskId(2L);
             verify(RELEASE_STATUS_DAO).findByReleaseId(1L);
             verify(RELEASE_STATUS_DAO).updateStatus(5L, DeploymentTaskStatus.COMPLETE);
-            verify(DEPLOYMENT_ENVIRONMENT_DAO).findAllEnvironments();
+            verify(DEPLOYMENT_ENVIRONMENT_DAO).findAllEnvironments(1L);
 
             verifyAuditRecorded(2L, Task.class, Action.CREATED);
-            verifyMultipleStatusRecordsAuditRecorded(1, TaskStatus.class, Action.CREATED);
-            verifyMultipleStatusRecordsAuditRecorded(1, ReleaseStatus.class, Action.UPDATED);
+            verifyMultipleStatusRecordsAuditRecorded(TaskStatus.class, Action.CREATED);
+            verifyMultipleStatusRecordsAuditRecorded(ReleaseStatus.class, Action.UPDATED);
 
             verifyNoMoreInteractions(TASK_DAO, TASK_STATUS_DAO, RELEASE_STATUS_DAO, DEPLOYMENT_ENVIRONMENT_DAO, AUDIT_RECORD_DAO);
             verifyNoInteractions(RELEASE_DAO);
@@ -344,11 +405,11 @@ class TaskResourceTest {
             when(RELEASE_STATUS_DAO.updateStatus(1L, DeploymentTaskStatus.COMPLETE)).thenReturn(1);
 
             var response = RESOURCES.client()
-                .target("/manual/deployment/tasks/releases/{statusId}/{status}")
-                .resolveTemplate("statusId", 1L)
-                .resolveTemplate("status", DeploymentTaskStatus.COMPLETE)
-                .request()
-                .put(json(""));
+                    .target("/manual/deployment/tasks/releases/{statusId}/{status}")
+                    .resolveTemplate("statusId", 1L)
+                    .resolveTemplate("status", DeploymentTaskStatus.COMPLETE)
+                    .request()
+                    .put(json(""));
 
             assertAcceptedResponse(response);
 
@@ -362,11 +423,11 @@ class TaskResourceTest {
             when(RELEASE_STATUS_DAO.updateStatus(1L, DeploymentTaskStatus.COMPLETE)).thenReturn(0);
 
             var response = RESOURCES.client()
-                .target("/manual/deployment/tasks/releases/{statusId}/{status}")
-                .resolveTemplate("statusId", 1L)
-                .resolveTemplate("status", DeploymentTaskStatus.COMPLETE)
-                .request()
-                .put(json(""));
+                    .target("/manual/deployment/tasks/releases/{statusId}/{status}")
+                    .resolveTemplate("statusId", 1L)
+                    .resolveTemplate("status", DeploymentTaskStatus.COMPLETE)
+                    .request()
+                    .put(json(""));
 
             assertNotFoundResponse(response);
         }
@@ -380,11 +441,11 @@ class TaskResourceTest {
             when(TASK_STATUS_DAO.updateStatus(1L, DeploymentTaskStatus.COMPLETE)).thenReturn(1);
 
             var response = RESOURCES.client()
-                .target("/manual/deployment/tasks/{statusId}/{status}")
-                .resolveTemplate("statusId", 1L)
-                .resolveTemplate("status", DeploymentTaskStatus.COMPLETE)
-                .request()
-                .put(json(""));
+                    .target("/manual/deployment/tasks/{statusId}/{status}")
+                    .resolveTemplate("statusId", 1L)
+                    .resolveTemplate("status", DeploymentTaskStatus.COMPLETE)
+                    .request()
+                    .put(json(""));
 
             assertAcceptedResponse(response);
 
@@ -398,11 +459,11 @@ class TaskResourceTest {
             when(TASK_STATUS_DAO.updateStatus(1L, DeploymentTaskStatus.COMPLETE)).thenReturn(0);
 
             var response = RESOURCES.client()
-                .target("/manual/deployment/tasks/{statusId}/{status}")
-                .resolveTemplate("statusId", 1L)
-                .resolveTemplate("status", DeploymentTaskStatus.COMPLETE)
-                .request()
-                .put(json(""));
+                    .target("/manual/deployment/tasks/{statusId}/{status}")
+                    .resolveTemplate("statusId", 1L)
+                    .resolveTemplate("status", DeploymentTaskStatus.COMPLETE)
+                    .request()
+                    .put(json(""));
 
             assertNotFoundResponse(response);
         }
@@ -414,10 +475,10 @@ class TaskResourceTest {
         @Test
         void shouldDeleteRelease() {
             var response = RESOURCES.client()
-                .target("/manual/deployment/tasks/releases/{releaseId}")
-                .resolveTemplate("releaseId", 1L)
-                .request()
-                .delete();
+                    .target("/manual/deployment/tasks/releases/{releaseId}")
+                    .resolveTemplate("releaseId", 1L)
+                    .request()
+                    .delete();
 
             assertAcceptedResponse(response);
             verify(RELEASE_DAO).deleteById(1L);
@@ -432,17 +493,17 @@ class TaskResourceTest {
         @Test
         void shouldDeleteTask() {
             var task = Task.builder()
-                .id(1L)
-                .releaseId(1L)
-                .build();
-            
+                    .id(1L)
+                    .releaseId(1L)
+                    .build();
+
             when(TASK_DAO.findById(1L)).thenReturn(Optional.of(task));
 
             var response = RESOURCES.client()
-                .target("/manual/deployment/tasks/{taskId}")
-                .resolveTemplate("taskId", 1L)
-                .request()
-                .delete();
+                    .target("/manual/deployment/tasks/{taskId}")
+                    .resolveTemplate("taskId", 1L)
+                    .request()
+                    .delete();
 
             assertAcceptedResponse(response);
             verify(TASK_DAO).deleteById(1L);
@@ -455,10 +516,10 @@ class TaskResourceTest {
             when(TASK_DAO.findById(1L)).thenReturn(Optional.empty());
 
             var response = RESOURCES.client()
-                .target("/manual/deployment/tasks/{taskId}")
-                .resolveTemplate("taskId", 1L)
-                .request()
-                .delete();
+                    .target("/manual/deployment/tasks/{taskId}")
+                    .resolveTemplate("taskId", 1L)
+                    .request()
+                    .delete();
 
             assertNotFoundResponse(response);
         }
@@ -485,10 +546,10 @@ class TaskResourceTest {
 
         private ReleaseStatus newReleaseStatus(DeploymentTaskStatus status) {
             return ReleaseStatus.builder()
-                .id(1L)
-                .environmentId(1L)
-                .status(status)
-                .build();
+                    .id(1L)
+                    .environmentId(1L)
+                    .status(status)
+                    .build();
         }
 
         @Test
@@ -514,10 +575,10 @@ class TaskResourceTest {
 
         private TaskStatus newTaskStatus(DeploymentTaskStatus status) {
             return TaskStatus.builder()
-                .id(1L)
-                .environmentId(1L)
-                .status(status)
-                .build();
+                    .id(1L)
+                    .environmentId(1L)
+                    .status(status)
+                    .build();
         }
 
         @Test
@@ -710,28 +771,29 @@ class TaskResourceTest {
         @Test
         void shouldReleaseStages() {
             var response = RESOURCES.client()
-                .target("/manual/deployment/tasks/stages")
-                .request()
-                .get();
+                    .target("/manual/deployment/tasks/stages")
+                    .request()
+                    .get();
 
             assertOkResponse(response);
 
-            var result = response.readEntity(new GenericType<List<ReleaseStage>>(){});
+            var result = response.readEntity(new GenericType<List<ReleaseStage>>() {
+            });
 
             assertThat(result).contains(ReleaseStage.values());
         }
-        
+
     }
-    
+
 
     private void verifyAuditRecorded(long id, Class<?> taskClass, Action action) {
         verify(AUDIT_RECORD_DAO).insertAuditRecord(argThat(audit -> audit.getRecordId() == id
-            && audit.getRecordType().equalsIgnoreCase(taskClass.getSimpleName())
-            && audit.getAction() == action));
+                && audit.getRecordType().equalsIgnoreCase(taskClass.getSimpleName())
+                && audit.getAction() == action));
     }
 
-    private void verifyMultipleStatusRecordsAuditRecorded(int times, Class<?> statusClass, Action action) {
-        verify(AUDIT_RECORD_DAO, times(times)).insertAuditRecord(
+    private void verifyMultipleStatusRecordsAuditRecorded(Class<?> statusClass, Action action) {
+        verify(AUDIT_RECORD_DAO).insertAuditRecord(
                 argThat(audit -> audit.getRecordType().equalsIgnoreCase(statusClass.getSimpleName())
                         && audit.getAction() == action));
     }

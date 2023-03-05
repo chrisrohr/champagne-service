@@ -1,7 +1,18 @@
 package org.kiwiproject.champagne.resource;
 
+import static java.util.Objects.isNull;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.kiwiproject.base.KiwiPreconditions.requireNotNull;
+import static org.kiwiproject.champagne.util.DeployableSystems.getSystemIdOrThrowBadRequest;
+
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
+import org.kiwiproject.champagne.dao.AuditRecordDao;
+import org.kiwiproject.champagne.dao.DeploymentEnvironmentDao;
+import org.kiwiproject.champagne.model.AuditRecord.Action;
+import org.kiwiproject.champagne.model.DeploymentEnvironment;
+import org.kiwiproject.champagne.service.ManualTaskService;
+import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
 
 import javax.annotation.security.PermitAll;
 import javax.validation.Valid;
@@ -14,16 +25,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
-
-import org.kiwiproject.champagne.dao.AuditRecordDao;
-import org.kiwiproject.champagne.dao.DeploymentEnvironmentDao;
-import org.kiwiproject.champagne.model.DeploymentEnvironment;
-import org.kiwiproject.champagne.model.AuditRecord.Action;
-import org.kiwiproject.champagne.service.ManualTaskService;
-
-import com.codahale.metrics.annotation.ExceptionMetered;
-import com.codahale.metrics.annotation.Timed;
-import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
 
 @Path("/environments")
 @Produces(APPLICATION_JSON)
@@ -45,7 +46,8 @@ public class DeploymentEnvironmentResource extends AuditableResource {
     @Timed
     @ExceptionMetered
     public Response listEnvironments() {
-        var envs = deploymentEnvironmentDao.findAllEnvironments();
+        var systemId = getSystemIdOrThrowBadRequest();
+        var envs = deploymentEnvironmentDao.findAllEnvironments(systemId);
 
         return Response.ok(envs).build();
     }
@@ -54,6 +56,11 @@ public class DeploymentEnvironmentResource extends AuditableResource {
     @Timed
     @ExceptionMetered
     public Response createEnvironment(@Valid DeploymentEnvironment deploymentEnvironment) {
+        if (isNull(deploymentEnvironment.getDeployableSystemId())) {
+            var systemId = getSystemIdOrThrowBadRequest();
+            deploymentEnvironment = deploymentEnvironment.withDeployableSystemId(systemId);
+        }
+
         var id = deploymentEnvironmentDao.insertEnvironment(deploymentEnvironment);
 
         auditAction(id, DeploymentEnvironment.class, Action.CREATED);
