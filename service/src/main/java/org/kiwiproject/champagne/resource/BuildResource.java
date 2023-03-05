@@ -1,7 +1,15 @@
 package org.kiwiproject.champagne.resource;
 
 import static java.util.Objects.isNull;
+import static org.kiwiproject.champagne.util.DeployableSystems.getSystemIdOrThrowBadRequest;
 import static org.kiwiproject.search.KiwiSearching.zeroBasedOffset;
+
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
+import org.kiwiproject.champagne.dao.BuildDao;
+import org.kiwiproject.champagne.model.Build;
+import org.kiwiproject.json.JsonHelper;
+import org.kiwiproject.spring.data.KiwiPage;
 
 import javax.annotation.security.PermitAll;
 import javax.ws.rs.DefaultValue;
@@ -12,16 +20,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-
-import org.kiwiproject.champagne.dao.BuildDao;
-import org.kiwiproject.champagne.model.Build;
-import org.kiwiproject.champagne.model.DeployableSystemThreadLocal;
-import org.kiwiproject.jaxrs.exception.JaxrsBadRequestException;
-import org.kiwiproject.json.JsonHelper;
-import org.kiwiproject.spring.data.KiwiPage;
-
-import com.codahale.metrics.annotation.ExceptionMetered;
-import com.codahale.metrics.annotation.Timed;
 
 @Path("/build")
 @Produces(MediaType.APPLICATION_JSON)
@@ -44,9 +42,7 @@ public class BuildResource {
                               @QueryParam("componentIdentifierFilter") String componentIdentifierFilter,
                               @QueryParam("componentVersionFilter") String componentVersionFilter) {
 
-        var systemId = DeployableSystemThreadLocal.getCurrentDeployableSystem()
-                .orElseThrow(() -> new JaxrsBadRequestException("Missing deployable system"));
-    
+        var systemId = getSystemIdOrThrowBadRequest();
         var offset = zeroBasedOffset(pageNumber, pageSize);
 
         var builds = buildDao.findPagedBuilds(offset, pageSize, systemId, componentIdentifierFilter, componentVersionFilter);
@@ -61,8 +57,7 @@ public class BuildResource {
     public Response recordNewBuild(Build build) {
 
         if (isNull(build.getDeployableSystemId())) {
-            var systemId = DeployableSystemThreadLocal.getCurrentDeployableSystem()
-                    .orElseThrow(() -> new JaxrsBadRequestException("Missing deployable system"));
+            var systemId = getSystemIdOrThrowBadRequest();
             build = build.withDeployableSystemId(systemId);
         }
 

@@ -12,17 +12,16 @@ import static org.mockito.Mockito.when;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.kiwiproject.champagne.dao.AuditRecordDao;
+import org.kiwiproject.champagne.junit.jupiter.DeployableSystemExtension;
 import org.kiwiproject.champagne.junit.jupiter.JwtExtension;
 import org.kiwiproject.champagne.model.AuditRecord;
 import org.kiwiproject.champagne.model.AuditRecord.Action;
-import org.kiwiproject.champagne.model.DeployableSystemThreadLocal;
 import org.kiwiproject.champagne.model.User;
 import org.kiwiproject.dropwizard.util.exception.JerseyViolationExceptionMapper;
 import org.kiwiproject.jaxrs.exception.JaxrsExceptionMapper;
@@ -32,7 +31,7 @@ import java.util.List;
 import javax.ws.rs.core.GenericType;
 
 @DisplayName("AuditRecordResource")
-@ExtendWith(DropwizardExtensionsSupport.class)
+@ExtendWith({DropwizardExtensionsSupport.class, DeployableSystemExtension.class})
 class AuditRecordResourceTest {
 
     private static final AuditRecordDao AUDIT_RECORD_DAO = mock(AuditRecordDao.class);
@@ -48,15 +47,9 @@ class AuditRecordResourceTest {
     @RegisterExtension
     private final JwtExtension jwtExtension = new JwtExtension("bob");
 
-    @BeforeEach
-    void setUp() {
-        DeployableSystemThreadLocal.setCurrentDeployableSystem(1L);
-    }
-
     @AfterEach
     void cleanup() {
         reset(AUDIT_RECORD_DAO);
-        DeployableSystemThreadLocal.clearDeployableSystem();
     }
 
     @Nested

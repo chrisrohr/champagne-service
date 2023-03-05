@@ -20,7 +20,6 @@ import static org.mockito.Mockito.when;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -28,12 +27,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.kiwiproject.champagne.dao.AuditRecordDao;
 import org.kiwiproject.champagne.dao.DeploymentEnvironmentDao;
+import org.kiwiproject.champagne.junit.jupiter.DeployableSystemExtension;
 import org.kiwiproject.champagne.junit.jupiter.JwtExtension;
 import org.kiwiproject.champagne.model.AuditRecord;
 import org.kiwiproject.champagne.model.AuditRecord.Action;
 import org.kiwiproject.champagne.model.DeployableSystemThreadLocal;
-import org.kiwiproject.champagne.service.ManualTaskService;
 import org.kiwiproject.champagne.model.DeploymentEnvironment;
+import org.kiwiproject.champagne.service.ManualTaskService;
 import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
 import org.kiwiproject.dropwizard.error.test.junit.jupiter.ApplicationErrorExtension;
 import org.kiwiproject.jaxrs.exception.JaxrsExceptionMapper;
@@ -43,7 +43,7 @@ import java.util.List;
 import javax.ws.rs.core.GenericType;
 
 @DisplayName("DeploymentEnvironmentResource")
-@ExtendWith({DropwizardExtensionsSupport.class, ApplicationErrorExtension.class})
+@ExtendWith({DropwizardExtensionsSupport.class, ApplicationErrorExtension.class, DeployableSystemExtension.class})
 class DeploymentEnvironmentResourceTest {
     private static final DeploymentEnvironmentDao DEPLOYMENT_ENVIRONMENT_DAO = mock(DeploymentEnvironmentDao.class);
     private static final AuditRecordDao AUDIT_RECORD_DAO = mock(AuditRecordDao.class);
@@ -60,15 +60,9 @@ class DeploymentEnvironmentResourceTest {
     @RegisterExtension
     private final JwtExtension jwtExtension = new JwtExtension("bob");
 
-    @BeforeEach
-    void setUp() {
-        DeployableSystemThreadLocal.setCurrentDeployableSystem(1L);
-    }
-
     @AfterEach
     void tearDown() {
         reset(DEPLOYMENT_ENVIRONMENT_DAO, AUDIT_RECORD_DAO, MANUAL_TASK_SERVICE);
-        DeployableSystemThreadLocal.clearDeployableSystem();
     }
 
     @Nested

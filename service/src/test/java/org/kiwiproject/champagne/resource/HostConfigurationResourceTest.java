@@ -4,8 +4,8 @@ import static javax.ws.rs.client.Entity.json;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.kiwiproject.collect.KiwiLists.first;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertAcceptedResponse;
-import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertOkResponse;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertNotFoundResponse;
+import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertOkResponse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -18,7 +18,6 @@ import static org.mockito.Mockito.when;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -27,11 +26,11 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.kiwiproject.champagne.dao.AuditRecordDao;
 import org.kiwiproject.champagne.dao.ComponentDao;
 import org.kiwiproject.champagne.dao.HostDao;
+import org.kiwiproject.champagne.junit.jupiter.DeployableSystemExtension;
 import org.kiwiproject.champagne.junit.jupiter.JwtExtension;
 import org.kiwiproject.champagne.model.AuditRecord;
-import org.kiwiproject.champagne.model.Component;
 import org.kiwiproject.champagne.model.AuditRecord.Action;
-import org.kiwiproject.champagne.model.DeployableSystemThreadLocal;
+import org.kiwiproject.champagne.model.Component;
 import org.kiwiproject.champagne.model.Host;
 import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
 import org.kiwiproject.dropwizard.error.test.junit.jupiter.ApplicationErrorExtension;
@@ -40,11 +39,10 @@ import org.mockito.ArgumentCaptor;
 
 import java.util.List;
 import java.util.Optional;
-
 import javax.ws.rs.core.GenericType;
 
 @DisplayName("HostConfigurationResource")
-@ExtendWith({DropwizardExtensionsSupport.class, ApplicationErrorExtension.class})
+@ExtendWith({DropwizardExtensionsSupport.class, ApplicationErrorExtension.class, DeployableSystemExtension.class})
 class HostConfigurationResourceTest {
     private static final HostDao HOST_DAO = mock(HostDao.class);
     private static final ComponentDao COMPONENT_DAO = mock(ComponentDao.class);
@@ -61,15 +59,9 @@ class HostConfigurationResourceTest {
     @RegisterExtension
     private final JwtExtension jwtExtension = new JwtExtension("bob");
 
-    @BeforeEach
-    void setUp() {
-        DeployableSystemThreadLocal.setCurrentDeployableSystem(1L);
-    }
-
     @AfterEach
     void tearDown() {
         reset(HOST_DAO, COMPONENT_DAO, AUDIT_RECORD_DAO);
-        DeployableSystemThreadLocal.clearDeployableSystem();
     }
 
     @Nested

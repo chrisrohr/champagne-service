@@ -6,8 +6,8 @@ import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.kiwiproject.champagne.model.AuditRecord;
 import org.kiwiproject.champagne.dao.mappers.AuditRecordMapper;
+import org.kiwiproject.champagne.model.AuditRecord;
 
 import java.time.Instant;
 import java.util.List;
@@ -21,10 +21,10 @@ public interface AuditRecordDao {
     long insertAuditRecord(@BindBean AuditRecord auditRecord);
 
     @SqlQuery("select * from audit_records where deployable_system_id = :systemId order by audit_timestamp desc offset :offset limit :limit")
-    List<AuditRecord> findPagedAuditRecords(@Bind("offset") int offset, @Bind("limit") int limit, @Bind("systemId") Long systemId);
+    List<AuditRecord> findPagedAuditRecords(@Bind("offset") int offset, @Bind("limit") int limit, @Bind("systemId") long systemId);
 
     @SqlQuery("select count(*) from audit_records where deployable_system_id = :systemId")
-    long countAuditRecords(@Bind("systemId") Long systemId);
+    long countAuditRecords(@Bind("systemId") long systemId);
 
     @SqlUpdate("delete from audit_records where audit_timestamp < :maxRetainDate")
     int deleteAuditRecordsOlderThan(@Bind("maxRetainDate") Instant maxRetainDate);

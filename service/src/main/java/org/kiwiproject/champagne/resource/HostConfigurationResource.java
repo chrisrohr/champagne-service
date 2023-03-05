@@ -2,9 +2,21 @@ package org.kiwiproject.champagne.resource;
 
 import static java.util.Objects.isNull;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.kiwiproject.champagne.util.DeployableSystems.getSystemIdOrThrowBadRequest;
+
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
+import org.apache.commons.lang3.StringUtils;
+import org.kiwiproject.champagne.dao.AuditRecordDao;
+import org.kiwiproject.champagne.dao.ComponentDao;
+import org.kiwiproject.champagne.dao.HostDao;
+import org.kiwiproject.champagne.model.AuditRecord.Action;
+import org.kiwiproject.champagne.model.Component;
+import org.kiwiproject.champagne.model.Host;
+import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
+import org.kiwiproject.jaxrs.exception.JaxrsNotFoundException;
 
 import java.util.List;
-
 import javax.annotation.security.PermitAll;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -16,21 +28,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-
-import org.apache.commons.lang3.StringUtils;
-import org.kiwiproject.champagne.dao.AuditRecordDao;
-import org.kiwiproject.champagne.dao.ComponentDao;
-import org.kiwiproject.champagne.dao.HostDao;
-import org.kiwiproject.champagne.model.Component;
-import org.kiwiproject.champagne.model.DeployableSystemThreadLocal;
-import org.kiwiproject.champagne.model.Host;
-import org.kiwiproject.champagne.model.AuditRecord.Action;
-import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
-import org.kiwiproject.jaxrs.exception.JaxrsBadRequestException;
-import org.kiwiproject.jaxrs.exception.JaxrsNotFoundException;
-
-import com.codahale.metrics.annotation.ExceptionMetered;
-import com.codahale.metrics.annotation.Timed;
 
 @Path("/host")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -53,7 +50,7 @@ public class HostConfigurationResource extends AuditableResource {
     @Timed
     @ExceptionMetered
     public Response listHostsForEnvironment(@PathParam("environment") Long envId, @QueryParam("componentFilter") String componentFilter) {
-        var systemId = getSystemId();
+        var systemId = getSystemIdOrThrowBadRequest();
         var hosts = isBlank(componentFilter) ? hostDao.findHostsByEnvId(envId, systemId) : List.of();
 
         return Response.ok(hosts).build();
@@ -64,7 +61,7 @@ public class HostConfigurationResource extends AuditableResource {
     @ExceptionMetered
     public Response createHost(Host host) {
         if (isNull(host.getDeployableSystemId())) {
-            var systemId = getSystemId();
+            var systemId = getSystemIdOrThrowBadRequest();
             host = host.withDeployableSystemId(systemId);
         }
 
@@ -106,7 +103,7 @@ public class HostConfigurationResource extends AuditableResource {
     @ExceptionMetered
     public Response createComponent(Component component) {
         if (isNull(component.getDeployableSystemId())) {
-            var systemId = getSystemId();
+            var systemId = getSystemIdOrThrowBadRequest();
             component = component.withDeployableSystemId(systemId);
         }
 
@@ -129,10 +126,5 @@ public class HostConfigurationResource extends AuditableResource {
         }
 
         return Response.accepted().build();
-    }
-
-    private long getSystemId() {
-        return DeployableSystemThreadLocal.getCurrentDeployableSystem()
-                .orElseThrow(() -> new JaxrsBadRequestException("Missing deployable system"));
     }
 }

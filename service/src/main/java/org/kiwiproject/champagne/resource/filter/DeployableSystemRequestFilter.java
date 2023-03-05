@@ -9,7 +9,7 @@ import javax.ws.rs.container.ContainerRequestFilter;
 
 public class DeployableSystemRequestFilter implements ContainerRequestFilter {
 
-    private static final String DEPLOYABLE_SYSTEM_HEADER_NAME = "DeployableSystem";
+    private static final String DEPLOYABLE_SYSTEM_HEADER_NAME = "Champagne-Deployable-System";
 
     private final DeployableSystemDao deployableSystemDao;
 

@@ -28,7 +28,7 @@ class DeployableSystemRequestFilterTest {
         var filter = new DeployableSystemRequestFilter(dao);
 
         var context = mock(ContainerRequestContext.class);
-        when(context.getHeaderString("DeployableSystem")).thenReturn(null);
+        when(context.getHeaderString("Champagne-Deployable-System")).thenReturn(null);
 
         filter.filter(context);
 
@@ -41,7 +41,7 @@ class DeployableSystemRequestFilterTest {
         var filter = new DeployableSystemRequestFilter(dao);
 
         var context = mock(ContainerRequestContext.class);
-        when(context.getHeaderString("DeployableSystem")).thenReturn("1");
+        when(context.getHeaderString("Champagne-Deployable-System")).thenReturn("1");
 
         var securityContext = mock(SecurityContext.class);
         when(context.getSecurityContext()).thenReturn(securityContext);
@@ -62,7 +62,7 @@ class DeployableSystemRequestFilterTest {
         var filter = new DeployableSystemRequestFilter(dao);
 
         var context = mock(ContainerRequestContext.class);
-        when(context.getHeaderString("DeployableSystem")).thenReturn("1");
+        when(context.getHeaderString("Champagne-Deployable-System")).thenReturn("1");
 
         var securityContext = mock(SecurityContext.class);
         when(context.getSecurityContext()).thenReturn(securityContext);

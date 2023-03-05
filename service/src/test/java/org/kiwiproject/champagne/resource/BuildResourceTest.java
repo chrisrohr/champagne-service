@@ -13,31 +13,28 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
-import java.util.Map;
-
-import javax.ws.rs.core.GenericType;
-
+import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+import io.dropwizard.testing.junit5.ResourceExtension;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.kiwiproject.champagne.dao.BuildDao;
+import org.kiwiproject.champagne.junit.jupiter.DeployableSystemExtension;
 import org.kiwiproject.champagne.junit.jupiter.JwtExtension;
 import org.kiwiproject.champagne.model.Build;
-import org.kiwiproject.champagne.model.DeployableSystemThreadLocal;
 import org.kiwiproject.dropwizard.util.exception.JerseyViolationExceptionMapper;
 import org.kiwiproject.jaxrs.exception.JaxrsExceptionMapper;
 import org.kiwiproject.spring.data.KiwiPage;
 
-import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
-import io.dropwizard.testing.junit5.ResourceExtension;
+import java.util.List;
+import java.util.Map;
+import javax.ws.rs.core.GenericType;
 
 @DisplayName("BuildResource")
-@ExtendWith(DropwizardExtensionsSupport.class)
+@ExtendWith({DropwizardExtensionsSupport.class, DeployableSystemExtension.class})
 class BuildResourceTest {
 
     private static final BuildDao BUILD_DAO = mock(BuildDao.class);
@@ -54,15 +51,9 @@ class BuildResourceTest {
     @RegisterExtension
     private final JwtExtension jwtExtension = new JwtExtension("bob");
 
-    @BeforeEach
-    void setUp() {
-        DeployableSystemThreadLocal.setCurrentDeployableSystem(1L);
-    }
-
     @AfterEach
     void cleanup() {
         reset(BUILD_DAO);
-        DeployableSystemThreadLocal.clearDeployableSystem();
     }
 
     @Nested

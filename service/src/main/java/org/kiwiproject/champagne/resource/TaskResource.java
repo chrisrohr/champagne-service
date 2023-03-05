@@ -5,35 +5,32 @@ import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
+import static org.kiwiproject.champagne.util.DeployableSystems.getSystemIdOrThrowBadRequest;
 import static org.kiwiproject.jaxrs.KiwiStandardResponses.standardNotFoundResponse;
 import static org.kiwiproject.search.KiwiSearching.zeroBasedOffset;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
-
-import org.kiwiproject.champagne.model.AuditRecord.Action;
-import org.kiwiproject.champagne.model.DeployableSystemThreadLocal;
-import org.kiwiproject.champagne.model.manualdeployment.DeploymentTaskStatus;
-import org.kiwiproject.champagne.model.manualdeployment.Release;
-import org.kiwiproject.champagne.model.manualdeployment.ReleaseStage;
-import org.kiwiproject.champagne.model.manualdeployment.ReleaseStatus;
-import org.kiwiproject.champagne.model.manualdeployment.Task;
-import org.kiwiproject.champagne.model.manualdeployment.TaskStatus;
 import org.kiwiproject.champagne.dao.AuditRecordDao;
 import org.kiwiproject.champagne.dao.DeploymentEnvironmentDao;
 import org.kiwiproject.champagne.dao.ReleaseDao;
 import org.kiwiproject.champagne.dao.ReleaseStatusDao;
 import org.kiwiproject.champagne.dao.TaskDao;
 import org.kiwiproject.champagne.dao.TaskStatusDao;
+import org.kiwiproject.champagne.model.AuditRecord.Action;
+import org.kiwiproject.champagne.model.manualdeployment.DeploymentTaskStatus;
+import org.kiwiproject.champagne.model.manualdeployment.Release;
+import org.kiwiproject.champagne.model.manualdeployment.ReleaseStage;
+import org.kiwiproject.champagne.model.manualdeployment.ReleaseStatus;
+import org.kiwiproject.champagne.model.manualdeployment.Task;
+import org.kiwiproject.champagne.model.manualdeployment.TaskStatus;
 import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
-import org.kiwiproject.jaxrs.exception.JaxrsBadRequestException;
 import org.kiwiproject.jaxrs.exception.JaxrsNotFoundException;
 import org.kiwiproject.spring.data.KiwiPage;
 
 import java.util.List;
 import java.util.Set;
-
 import javax.annotation.security.PermitAll;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -86,7 +83,7 @@ public class TaskResource extends AuditableResource {
     public Response getPagedReleases(@QueryParam("pageNumber") @DefaultValue("1") int pageNumber,
                                      @QueryParam("pageSize") @DefaultValue("50") int pageSize) {
 
-        var systemId = getSystemId();
+        var systemId = getSystemIdOrThrowBadRequest();
         var releases = releaseDao.findPagedReleases(zeroBasedOffset(pageNumber, pageSize), pageSize, systemId);
         var releasesWithStatus = releases.stream()
                 .map(this::buildReleaseWithStatusFrom)
@@ -138,7 +135,7 @@ public class TaskResource extends AuditableResource {
         var systemId = release.getDeployableSystemId();
 
         if (isNull(release.getDeployableSystemId())) {
-            systemId = getSystemId();
+            systemId = getSystemIdOrThrowBadRequest();
             release = release.withDeployableSystemId(systemId);
         }
 
@@ -163,7 +160,7 @@ public class TaskResource extends AuditableResource {
     @Timed
     @ExceptionMetered
     public Response addNewTask(@Valid @NotNull Task task) {
-        var systemId = getSystemId();
+        var systemId = getSystemIdOrThrowBadRequest();
         var taskId = taskDao.insertTask(task);
         auditAction(taskId, Task.class, Action.CREATED);
 
@@ -311,10 +308,5 @@ public class TaskResource extends AuditableResource {
     @ExceptionMetered
     public Response getReleaseStages() {
         return Response.ok(ReleaseStage.values()).build();
-    }
-
-    private long getSystemId() {
-        return DeployableSystemThreadLocal.getCurrentDeployableSystem()
-                .orElseThrow(() -> new JaxrsBadRequestException("Missing deployable system"));
     }
 }

@@ -21,7 +21,6 @@ import static org.mockito.Mockito.when;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -33,6 +32,7 @@ import org.kiwiproject.champagne.dao.ReleaseDao;
 import org.kiwiproject.champagne.dao.ReleaseStatusDao;
 import org.kiwiproject.champagne.dao.TaskDao;
 import org.kiwiproject.champagne.dao.TaskStatusDao;
+import org.kiwiproject.champagne.junit.jupiter.DeployableSystemExtension;
 import org.kiwiproject.champagne.junit.jupiter.JwtExtension;
 import org.kiwiproject.champagne.model.AuditRecord.Action;
 import org.kiwiproject.champagne.model.DeployableSystemThreadLocal;
@@ -54,7 +54,7 @@ import java.util.Optional;
 import javax.ws.rs.core.GenericType;
 
 @DisplayName("TaskResource")
-@ExtendWith({DropwizardExtensionsSupport.class, ApplicationErrorExtension.class})
+@ExtendWith({DropwizardExtensionsSupport.class, ApplicationErrorExtension.class, DeployableSystemExtension.class})
 class TaskResourceTest {
 
     private static final ReleaseDao RELEASE_DAO = mock(ReleaseDao.class);
@@ -77,15 +77,9 @@ class TaskResourceTest {
     @RegisterExtension
     private final JwtExtension jwtExtension = new JwtExtension("bob");
 
-    @BeforeEach
-    void setUp() {
-        DeployableSystemThreadLocal.setCurrentDeployableSystem(1L);
-    }
-
     @AfterEach
     void cleanup() {
         reset(RELEASE_DAO, RELEASE_STATUS_DAO, TASK_DAO, TASK_STATUS_DAO, DEPLOYMENT_ENVIRONMENT_DAO, AUDIT_RECORD_DAO);
-        DeployableSystemThreadLocal.clearDeployableSystem();
     }
 
     @Nested

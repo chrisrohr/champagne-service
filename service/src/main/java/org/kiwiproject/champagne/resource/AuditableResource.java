@@ -1,16 +1,16 @@
 package org.kiwiproject.champagne.resource;
 
-import java.util.Objects;
+import static org.kiwiproject.champagne.util.DeployableSystems.getSystemIdOrNull;
 
+import lombok.extern.slf4j.Slf4j;
 import org.dhatim.dropwizard.jwt.cookie.authentication.CurrentPrincipal;
 import org.kiwiproject.champagne.dao.AuditRecordDao;
 import org.kiwiproject.champagne.model.AuditRecord;
 import org.kiwiproject.champagne.model.AuditRecord.Action;
-
-import lombok.extern.slf4j.Slf4j;
-import org.kiwiproject.champagne.model.DeployableSystemThreadLocal;
 import org.kiwiproject.dropwizard.error.ApplicationErrorThrower;
 import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
+
+import java.util.Objects;
 
 @Slf4j
 public abstract class AuditableResource {
@@ -39,7 +39,7 @@ public abstract class AuditableResource {
                 .recordType(recordClass.getSimpleName())
                 .action(action)
                 .userSystemIdentifier(principal.getName())
-                .deployableSystemId(DeployableSystemThreadLocal.getCurrentDeployableSystem().orElse(null))
+                .deployableSystemId(getSystemIdOrNull())
                 .build();
 
         auditRecordDao.insertAuditRecord(auditRecord);
