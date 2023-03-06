@@ -44,8 +44,8 @@
       show-if-above
 
       :mini="miniState"
-      @mouseover="miniState.value = false"
-      @mouseout="miniState.value = true"
+      @mouseover="miniState = false"
+      @mouseout="miniState = true"
 
       bordered
       :width="200"
@@ -117,12 +117,23 @@
             </q-item-section>
           </q-item>
 
+          <q-separator />
+
           <q-item to="/audits" exact clickable v-ripple v-if="authStore.isAdmin">
             <q-item-section avatar>
               <q-icon name="assignment"/>
             </q-item-section>
             <q-item-section>
               Audit
+            </q-item-section>
+          </q-item>
+
+          <q-item to="/adminSystems" exact clickable v-ripple v-if="authStore.isAdmin">
+            <q-item-section avatar>
+              <q-icon name="conveyor_belt"/>
+            </q-item-section>
+            <q-item-section>
+              Systems
             </q-item-section>
           </q-item>
         </q-list>
