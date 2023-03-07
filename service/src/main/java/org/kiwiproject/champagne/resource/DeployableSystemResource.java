@@ -73,7 +73,10 @@ public class DeployableSystemResource extends AuditableResource {
 
         var offset = zeroBasedOffset(pageNumber, pageSize);
 
-        var systems = deployableSystemDao.findPagedDeployableSystems(offset, pageSize);
+        var systems = deployableSystemDao.findPagedDeployableSystems(offset, pageSize).stream()
+                .map(system -> system.withUsers(deployableSystemDao.findUsersForSystem(system.getId())))
+                .toList();
+
         var total = deployableSystemDao.countDeployableSystems();
 
         var page = KiwiPage.of(pageNumber, pageSize, total, systems);

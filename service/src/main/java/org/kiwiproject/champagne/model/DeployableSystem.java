@@ -5,6 +5,7 @@ import lombok.Value;
 import lombok.With;
 
 import java.time.Instant;
+import java.util.List;
 import javax.validation.constraints.NotBlank;
 
 @Builder
@@ -27,4 +28,17 @@ public class DeployableSystem {
      */
     @With
     boolean admin;
+
+    /**
+     * Transitive property that is the list of users assigned to this system and if they are an admin
+     */
+    @With
+    List<SystemUser> users;
+
+    @Builder
+    @Value
+    public static class SystemUser {
+        Long userId;
+        boolean admin;
+    }
 }

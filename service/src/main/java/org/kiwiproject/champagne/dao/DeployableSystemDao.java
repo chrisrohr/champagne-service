@@ -8,6 +8,7 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.kiwiproject.champagne.dao.mappers.DeployableSystemForUserMapper;
 import org.kiwiproject.champagne.dao.mappers.DeployableSystemMapper;
+import org.kiwiproject.champagne.dao.mappers.SystemUserMapper;
 import org.kiwiproject.champagne.model.DeployableSystem;
 
 import java.util.List;
@@ -28,6 +29,10 @@ public interface DeployableSystemDao {
 
     @SqlQuery("select count(*) from deployable_systems")
     long countDeployableSystems();
+
+    @SqlQuery("select * from users_deployable_systems where deployable_system_id = :systemId")
+    @RegisterRowMapper(SystemUserMapper.class)
+    List<DeployableSystem.SystemUser> findUsersForSystem(@Bind("systemId") long systemId);
 
     @SqlUpdate("update deployable_systems set dev_environment_id = :envId where id = :id")
     int updateDevEnvironment(@Bind("id") long id, @Bind("envId") long envId);

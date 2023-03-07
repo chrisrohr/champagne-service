@@ -22,6 +22,9 @@
 
         <template v-slot:body-cell-actions="props">
           <q-td :props="props">
+            <q-btn size="sm" icon="group_add" @click="startAssignUsers(props.row)" class="on-left">
+              <q-tooltip>Assign Users</q-tooltip>
+            </q-btn>
             <q-btn size="sm" icon="delete" @click="confirmDelete(props.row)">
               <q-tooltip>Delete System</q-tooltip>
             </q-btn>
@@ -50,6 +53,28 @@
           </q-card-actions>
         </q-card>
       </q-dialog>
+
+      <q-dialog v-model="showAssignUsers">
+        <q-card>
+          <q-card-section>
+            <div class="text-h5">Manage Users for System</div>
+          </q-card-section>
+          <q-card-section class="row">
+            <q-select
+              outlined
+              dense
+              style="min-width: 205px"
+              v-model="systemUsers.users"
+              :options="allUsers"
+              :loading="userStore.loading"
+              @virtual-scroll="onUserScroll"/>
+          </q-card-section>
+          <q-card-actions align="right">
+            <q-btn flat v-close-popup>Cancel</q-btn>
+            <q-btn flat color="primary" @click="createSystem">Save</q-btn>
+          </q-card-actions>
+        </q-card>
+      </q-dialog>
     </q-page>
   </template>
 
@@ -58,14 +83,23 @@ import { onMounted, ref } from 'vue'
 import { formatDate, fromNow } from '../utils/time'
 import { confirmAction } from '../utils/alerts'
 import { useAdminSystemStore } from 'stores/adminSystemStore'
+import { useUserStore } from 'stores/userStore'
 
 const adminSystemStore = useAdminSystemStore()
+const userStore = useUserStore()
 
 // Reactive data
 const showSystemAdd = ref(false)
 const activeSystem = ref({
   name: ''
 })
+const showAssignUsers = ref(false)
+const systemUsers = ref({
+  systemId: null,
+  users: []
+})
+const allUsers = ref([])
+const systemUserNextPage = ref(2)
 
 // Constant data
 const systemColumns = [
@@ -107,6 +141,23 @@ function confirmDelete (system) {
 
 function deleteSystem (id) {
   adminSystemStore.deleteSystem(id)
+}
+
+function startAssignUsers (system) {
+  userStore.load()
+  systemUsers.value.systemId = system.id
+  systemUsers.value.users = system.users
+  showAssignUsers.value = true
+}
+
+function onUserScroll ({ to, ref }) {
+  const lastPage = Math.ceil(userStore.pagination.rowsNumber / userStore.pagination.rowsPerPage)
+  const lastIndex = allUsers.value.length - 1
+
+  if (userStore.loading !== true && systemUserNextPage.value < lastPage && to === lastIndex) {
+    userStore.load({ pagination: { page: systemUserNextPage.value, rowsPerPage: userStore.pagination.rowsPerPage } })
+    allUsers.value.push(...userStore.users)
+  }
 }
 
 onMounted(() => {
