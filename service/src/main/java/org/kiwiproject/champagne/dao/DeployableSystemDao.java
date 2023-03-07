@@ -48,4 +48,21 @@ public interface DeployableSystemDao {
 
     @SqlQuery("select true from users_deployable_systems uds join users u on u.id = uds.user_id join deployable_systems ds on ds.id = uds.deployable_system_id where u.system_identifier = :userName and ds.id = :systemId")
     boolean isUserBySystemIdentifierInSystem(@Bind("userName") String systemIdentifier, @Bind("systemId") long systemId);
+
+    @SqlQuery("select true from users_deployable_systems where deployable_system_id = :systemId and user_id = :userId")
+    boolean isUserInSystem(@Bind("userId") long userId, @Bind("systemId") long systemId);
+
+    default void insertOrUpdateSystemUser(long systemId, long userId, boolean isAdmin) {
+        if (isUserInSystem(userId, systemId)) {
+            updateAdminStatusForUserInSystem(systemId, userId, isAdmin);
+        } else {
+            addUserToSystem(systemId, userId, isAdmin);
+        }
+    }
+
+    @SqlUpdate("update users_deployable_systems set admin = :admin where deployable_system_id = :systemId and user_id = :userId")
+    void updateAdminStatusForUserInSystem(@Bind("systemId") long systemId, @Bind("userId") long userId, @Bind("admin") boolean isAdmin);
+
+    @SqlUpdate("insert into users_deployable_systems (deployable_system_id, user_id, system_admin) values (:systemId, :userId, :admin)")
+    void addUserToSystem(@Bind("systemId") long systemId, @Bind("userId") long userId, @Bind("admin") boolean isAdmin);
 }

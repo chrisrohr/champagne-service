@@ -13,7 +13,7 @@ export const useUserStore = defineStore('user', () => {
   })
 
   async function load (props) {
-    doPagedRequest(loading, props, pagination, '/users', users)
+    return doPagedRequest(loading, props, pagination, '/users', users)
   }
 
   function create (userData) {

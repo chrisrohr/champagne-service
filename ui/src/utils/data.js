@@ -22,6 +22,8 @@ async function doPagedRequest (loading, props, pagination, path, contents, filte
   contents.value = response.data.content
   pagination.value.rowsNumber = response.data.totalElements
   loading.value = false
+
+  return Promise.resolve(contents)
 }
 
 export { doPagedRequest }

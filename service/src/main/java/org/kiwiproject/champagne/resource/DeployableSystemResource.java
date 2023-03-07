@@ -15,6 +15,7 @@ import org.kiwiproject.champagne.dao.AuditRecordDao;
 import org.kiwiproject.champagne.dao.DeployableSystemDao;
 import org.kiwiproject.champagne.dao.UserDao;
 import org.kiwiproject.champagne.model.DeployableSystem;
+import org.kiwiproject.champagne.model.DeployableSystem.SystemUser;
 import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
 import org.kiwiproject.jaxrs.exception.JaxrsNotAuthorizedException;
 import org.kiwiproject.spring.data.KiwiPage;
@@ -154,5 +155,18 @@ public class DeployableSystemResource extends AuditableResource {
         }
 
         return Response.noContent().build();
+    }
+
+    @POST
+    @Path("/{id}/users")
+    @Timed
+    @ExceptionMetered
+    @RolesAllowed({ "admin" })
+    public Response addUsersToSystem(@PathParam("id") long systemId, List<SystemUser> users) {
+        users.forEach(user -> {
+            deployableSystemDao.insertOrUpdateSystemUser(systemId, user.getUserId(), user.isAdmin());
+        });        
+
+        return Response.accepted().build();
     }
 }
