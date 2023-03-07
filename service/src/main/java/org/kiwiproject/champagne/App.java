@@ -32,6 +32,7 @@ import org.kiwiproject.champagne.model.Build;
 import org.kiwiproject.champagne.resource.AuditRecordResource;
 import org.kiwiproject.champagne.resource.AuthResource;
 import org.kiwiproject.champagne.resource.BuildResource;
+import org.kiwiproject.champagne.resource.DeployableSystemResource;
 import org.kiwiproject.champagne.resource.DeploymentEnvironmentResource;
 import org.kiwiproject.champagne.resource.HostConfigurationResource;
 import org.kiwiproject.champagne.resource.TaskResource;
@@ -116,6 +117,7 @@ public class App extends Application<AppConfig> {
         environment.jersey().register(new TaskResource(releaseDao, releaseStatusDao, taskDao, taskStatusDao, deploymentEnvironmentDao, auditRecordDao, errorDao));
         environment.jersey().register(new UserResource(userDao, auditRecordDao, errorDao));
         environment.jersey().register(new ApplicationErrorResource(errorDao));
+        environment.jersey().register(new DeployableSystemResource(deployableSystemDao, userDao, auditRecordDao, errorDao));
 
         configureCors(environment);
 
