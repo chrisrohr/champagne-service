@@ -1,10 +1,13 @@
 package org.kiwiproject.champagne.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Builder;
+import lombok.ToString;
 import lombok.Value;
 import lombok.With;
 
 import java.time.Instant;
+import java.util.List;
 import javax.validation.constraints.NotBlank;
 
 @Builder
@@ -27,4 +30,19 @@ public class DeployableSystem {
      */
     @With
     boolean admin;
+
+    /**
+     * Transitive property that is the list of users assigned to this system and if they are an admin
+     */
+    @With
+    List<SystemUser> users;
+
+    @Builder
+    @Value
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    @ToString
+    public static class SystemUser {
+        Long userId;
+        boolean admin;
+    }
 }

@@ -22,6 +22,9 @@
 
         <template v-slot:body-cell-actions="props">
           <q-td :props="props">
+            <q-btn size="sm" icon="group_add" @click="startAssignUsers(props.row)" class="on-left">
+              <q-tooltip>Assign Users</q-tooltip>
+            </q-btn>
             <q-btn size="sm" icon="delete" @click="confirmDelete(props.row)">
               <q-tooltip>Delete System</q-tooltip>
             </q-btn>
@@ -50,6 +53,44 @@
           </q-card-actions>
         </q-card>
       </q-dialog>
+
+      <q-dialog v-model="showAssignUsers">
+        <q-card>
+          <q-card-section>
+            <div class="text-h5">Manage Users for System</div>
+          </q-card-section>
+          <q-card-section class="row">
+            <q-select
+              outlined
+              dense
+              style="min-width: 205px"
+              v-model="selectedUser"
+              :options="allUsers"/>
+            <q-btn label="Add User" @click="addUserToSystem" class="on-right" color="primary"/>
+          </q-card-section>
+          <q-card-section>
+            <q-table :rows="systemUsers.users" :columns="selectedUserCols" :pagination="{ rowsNumber: 2000 }" hide-pagination>
+              <template v-slot:body-cell-admin="props">
+                <q-td :props="props">
+                  <q-checkbox v-model="props.row.admin"/>
+                </q-td>
+              </template>
+
+              <template v-slot:body-cell-action="props">
+                <q-td :props="props">
+                  <q-btn size="sm" icon="delete" @click="removeSelectedUser(props.row)">
+                    <q-tooltip>Remove User</q-tooltip>
+                  </q-btn>
+                </q-td>
+              </template>
+            </q-table>
+          </q-card-section>
+          <q-card-actions align="right">
+            <q-btn flat v-close-popup>Cancel</q-btn>
+            <q-btn flat color="primary" @click="addUsersToSystem">Save</q-btn>
+          </q-card-actions>
+        </q-card>
+      </q-dialog>
     </q-page>
   </template>
 
@@ -57,15 +98,25 @@
 import { onMounted, ref } from 'vue'
 import { formatDate, fromNow } from '../utils/time'
 import { confirmAction } from '../utils/alerts'
+import { _ } from 'lodash'
 import { useAdminSystemStore } from 'stores/adminSystemStore'
+import { useUserStore } from 'stores/userStore'
 
 const adminSystemStore = useAdminSystemStore()
+const userStore = useUserStore()
 
 // Reactive data
 const showSystemAdd = ref(false)
 const activeSystem = ref({
   name: ''
 })
+const showAssignUsers = ref(false)
+const selectedUser = ref(null)
+const systemUsers = ref({
+  systemId: null,
+  users: []
+})
+const allUsers = ref([])
 
 // Constant data
 const systemColumns = [
@@ -91,6 +142,23 @@ const systemColumns = [
     align: 'left'
   }
 ]
+const selectedUserCols = [
+  {
+    name: 'username',
+    label: 'User',
+    field: 'displayName',
+    align: 'left'
+  },
+  {
+    name: 'admin',
+    label: 'Admin?',
+    align: 'left'
+  },
+  {
+    name: 'action',
+    align: 'left'
+  }
+]
 
 // Methods
 function createSystem () {
@@ -107,6 +175,42 @@ function confirmDelete (system) {
 
 function deleteSystem (id) {
   adminSystemStore.deleteSystem(id)
+}
+
+function startAssignUsers (system) {
+  userStore.load({ pagination: { page: 1, rowsPerPage: 2000 } }).then(() => {
+    allUsers.value = userToOption(userStore.users)
+
+    systemUsers.value.systemId = system.id
+    populateNameOnExistingUsers(system.users)
+    systemUsers.value.users = system.users
+    showAssignUsers.value = true
+  })
+}
+
+function userToOption (users) {
+  return _.sortBy(users.map(e => { return { label: e.displayName, value: e.id } }), ['label'])
+}
+
+function populateNameOnExistingUsers (users) {
+  users.forEach(user => {
+    user.displayName = _.find(allUsers.value, u => u.value === user.userId).label
+  })
+}
+
+function addUserToSystem () {
+  systemUsers.value.users.push({ userId: selectedUser.value.value, displayName: selectedUser.value.label, admin: false })
+}
+
+function removeSelectedUser (selectedUser) {
+  systemUsers.value.users = _.without(systemUsers.value.users, selectedUser)
+}
+
+function addUsersToSystem () {
+  adminSystemStore.assignUsersToSystem(systemUsers.value.systemId, systemUsers.value.users)
+    .then(() => {
+      showAssignUsers.value = false
+    })
 }
 
 onMounted(() => {

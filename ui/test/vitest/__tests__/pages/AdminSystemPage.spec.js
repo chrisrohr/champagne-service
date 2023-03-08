@@ -5,6 +5,7 @@ import AdminSystemPage from 'pages/AdminSystemPage.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { useAdminSystemStore } from 'src/stores/adminSystemStore'
 import { confirmAction } from 'src/utils/alerts'
+import { useUserStore } from 'src/stores/userStore'
 
 installQuasar()
 
@@ -57,5 +58,62 @@ describe('confirmDelete', () => {
 
     expect(confirmAction).toHaveBeenCalled()
     expect(confirmAction).toHaveBeenCalledWith('Are you sure you want to delete system kiwi? This will cause all related components to be deleted as well!', expect.any(Function))
+  })
+})
+
+describe('startAssignUsers', () => {
+  it('should setup assign users dialog', () => {
+    const userStore = useUserStore()
+    userStore.load.mockImplementation(() => Promise.resolve(1))
+
+    wrapper.vm.startAssignUsers({ id: 1, users: [] })
+
+    expect(userStore.load).toHaveBeenCalled()
+  })
+})
+
+describe('populateNameOnExistingUsers', () => {
+  it('should add display name', () => {
+    wrapper.vm.allUsers = [{ label: 'John Doe', value: 1 }]
+
+    const users = [
+      { userId: 1, admin: false }
+    ]
+
+    wrapper.vm.populateNameOnExistingUsers(users)
+
+    expect(users[0].displayName).toEqual('John Doe')
+  })
+})
+
+describe('addUserToSystem', () => {
+  it('should add the user to the list for update', () => {
+    wrapper.vm.selectedUser = { label: 'John Doe', value: 1 }
+
+    wrapper.vm.addUserToSystem()
+
+    expect(wrapper.vm.systemUsers.users).toEqual([{ userId: 1, displayName: 'John Doe', admin: false }])
+  })
+})
+
+describe('removeSelectedUser', () => {
+  it('should remove the user from the list for update', () => {
+    const userToRemove = { userId: 1, displayName: 'John Doe', admin: false }
+    wrapper.vm.systemUsers.users = userToRemove
+
+    wrapper.vm.removeSelectedUser([userToRemove])
+
+    expect(wrapper.vm.systemUsers.users).toEqual([])
+  })
+})
+
+describe('addUsersToSystem', () => {
+  it('should call the adminSystemStore to update users assigned', () => {
+    const adminSystemStore = useAdminSystemStore()
+    adminSystemStore.assignUsersToSystem.mockImplementation(() => Promise.resolve(1))
+
+    wrapper.vm.addUsersToSystem()
+
+    expect(adminSystemStore.assignUsersToSystem).toHaveBeenCalled()
   })
 })

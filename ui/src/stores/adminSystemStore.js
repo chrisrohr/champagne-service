@@ -16,7 +16,7 @@ export const useAdminSystemStore = defineStore('adminSystem', () => {
     doPagedRequest(loading, props, pagination, '/systems/admin', systems)
   }
 
-  function create (systemData) {
+  async function create (systemData) {
     return api.post('/systems', systemData)
       .then(() => load())
   }
@@ -26,5 +26,10 @@ export const useAdminSystemStore = defineStore('adminSystem', () => {
       .then(() => load())
   }
 
-  return { systems, loading, load, create, deleteSystem }
+  async function assignUsersToSystem (systemId, usersToSet) {
+    return api.post(`/systems/${systemId}/users`, usersToSet)
+      .then(() => load())
+  }
+
+  return { systems, loading, load, create, deleteSystem, assignUsersToSystem }
 })

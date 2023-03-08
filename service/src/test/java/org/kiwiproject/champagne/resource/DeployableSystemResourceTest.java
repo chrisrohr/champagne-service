@@ -129,8 +129,14 @@ class DeployableSystemResourceTest {
                     .environmentPromotionOrder("2,3,4")
                     .build();
 
+            var systemUser = DeployableSystem.SystemUser.builder()
+                    .userId(1L)
+                    .admin(true)
+                    .build();
+
             when(DEPLOYABLE_SYSTEM_DAO.findPagedDeployableSystems(0, 10)).thenReturn(List.of(system));
             when(DEPLOYABLE_SYSTEM_DAO.countDeployableSystems()).thenReturn(1L);
+            when(DEPLOYABLE_SYSTEM_DAO.findUsersForSystem(1L)).thenReturn(List.of(systemUser));
 
             var token = generateJwt(true);
             var response = RESOURCES.client()
@@ -151,6 +157,7 @@ class DeployableSystemResourceTest {
 
             verify(DEPLOYABLE_SYSTEM_DAO).findPagedDeployableSystems(0, 10);
             verify(DEPLOYABLE_SYSTEM_DAO).countDeployableSystems();
+            verify(DEPLOYABLE_SYSTEM_DAO).findUsersForSystem(1L);
 
             verifyNoMoreInteractions(DEPLOYABLE_SYSTEM_DAO);
         }
@@ -164,8 +171,14 @@ class DeployableSystemResourceTest {
                     .environmentPromotionOrder("2,3,4")
                     .build();
 
+            var systemUser = DeployableSystem.SystemUser.builder()
+                    .userId(1L)
+                    .admin(true)
+                    .build();
+
             when(DEPLOYABLE_SYSTEM_DAO.findPagedDeployableSystems(0, 25)).thenReturn(List.of(system));
             when(DEPLOYABLE_SYSTEM_DAO.countDeployableSystems()).thenReturn(1L);
+            when(DEPLOYABLE_SYSTEM_DAO.findUsersForSystem(1L)).thenReturn(List.of(systemUser));
 
             var token = generateJwt(true);
             var response = RESOURCES.client()
@@ -184,6 +197,7 @@ class DeployableSystemResourceTest {
 
             verify(DEPLOYABLE_SYSTEM_DAO).findPagedDeployableSystems(0, 25);
             verify(DEPLOYABLE_SYSTEM_DAO).countDeployableSystems();
+            verify(DEPLOYABLE_SYSTEM_DAO).findUsersForSystem(1L);
 
             verifyNoMoreInteractions(DEPLOYABLE_SYSTEM_DAO);
         }
@@ -336,7 +350,7 @@ class DeployableSystemResourceTest {
                     .target("/systems/2/order")
                     .request()
                     .cookie("sessionToken", token)
-                    .put(json(List.of(1,2,3)));
+                    .put(json(List.of(1, 2, 3)));
 
             assertAcceptedResponse(response);
 
@@ -363,7 +377,7 @@ class DeployableSystemResourceTest {
                     .target("/systems/2/order")
                     .request()
                     .cookie("sessionToken", token)
-                    .put(json(List.of(1,2,3)));
+                    .put(json(List.of(1, 2, 3)));
 
             assertAcceptedResponse(response);
 
@@ -389,7 +403,7 @@ class DeployableSystemResourceTest {
                     .target("/systems/2/order")
                     .request()
                     .cookie("sessionToken", token)
-                    .put(json(List.of(1,2,3)));
+                    .put(json(List.of(1, 2, 3)));
 
             assertUnauthorizedResponse(response);
 
@@ -409,7 +423,7 @@ class DeployableSystemResourceTest {
                     .target("/systems/2/order")
                     .request()
                     .cookie("sessionToken", token)
-                    .put(json(List.of(1,2,3)));
+                    .put(json(List.of(1, 2, 3)));
 
             assertUnauthorizedResponse(response);
 
@@ -460,6 +474,29 @@ class DeployableSystemResourceTest {
             verify(DEPLOYABLE_SYSTEM_DAO).deleteById(1L);
             verifyNoMoreInteractions(DEPLOYABLE_SYSTEM_DAO);
             verifyNoInteractions(AUDIT_RECORD_DAO);
+        }
+    }
+
+    @Nested
+    class AddUsersToSystem {
+
+        @Test
+        void shouldAddGivenUsersToGivenSystem() {
+            var systemUser = DeployableSystem.SystemUser.builder()
+                    .userId(2L)
+                    .admin(false)
+                    .build();
+
+            var token = generateJwt(true);
+            var response = RESOURCES.client().target("/systems/{id}/users")
+                    .resolveTemplate("id", 1L)
+                    .request()
+                    .cookie("sessionToken", token)
+                    .post(json(List.of(systemUser)));
+
+            assertAcceptedResponse(response);
+
+            verify(DEPLOYABLE_SYSTEM_DAO).insertOrUpdateSystemUser(1L, 2L, false);
         }
     }
 }

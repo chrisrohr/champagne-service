@@ -1,5 +1,6 @@
 package org.kiwiproject.champagne.dao;
 
+import org.apache.commons.lang3.BooleanUtils;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
@@ -8,6 +9,7 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.kiwiproject.champagne.dao.mappers.DeployableSystemForUserMapper;
 import org.kiwiproject.champagne.dao.mappers.DeployableSystemMapper;
+import org.kiwiproject.champagne.dao.mappers.SystemUserMapper;
 import org.kiwiproject.champagne.model.DeployableSystem;
 
 import java.util.List;
@@ -29,6 +31,10 @@ public interface DeployableSystemDao {
     @SqlQuery("select count(*) from deployable_systems")
     long countDeployableSystems();
 
+    @SqlQuery("select * from users_deployable_systems where deployable_system_id = :systemId")
+    @RegisterRowMapper(SystemUserMapper.class)
+    List<DeployableSystem.SystemUser> findUsersForSystem(@Bind("systemId") long systemId);
+
     @SqlUpdate("update deployable_systems set dev_environment_id = :envId where id = :id")
     int updateDevEnvironment(@Bind("id") long id, @Bind("envId") long envId);
 
@@ -42,5 +48,22 @@ public interface DeployableSystemDao {
     boolean isUserAdminOfSystem(@Bind("userId") long userId, @Bind("systemId") long systemId);
 
     @SqlQuery("select true from users_deployable_systems uds join users u on u.id = uds.user_id join deployable_systems ds on ds.id = uds.deployable_system_id where u.system_identifier = :userName and ds.id = :systemId")
-    boolean isUserBySystemIdentifierInSystem(@Bind("userName") String systemIdentifier, @Bind("systemId") long systemId);
+    Boolean isUserBySystemIdentifierInSystem(@Bind("userName") String systemIdentifier, @Bind("systemId") long systemId);
+
+    @SqlQuery("select true from users_deployable_systems where deployable_system_id = :systemId and user_id = :userId")
+    Boolean isUserInSystem(@Bind("userId") long userId, @Bind("systemId") long systemId);
+
+    default void insertOrUpdateSystemUser(long systemId, long userId, boolean isAdmin) {
+        if (BooleanUtils.isTrue(isUserInSystem(userId, systemId))) {
+            updateAdminStatusForUserInSystem(systemId, userId, isAdmin);
+        } else {
+            addUserToSystem(systemId, userId, isAdmin);
+        }
+    }
+
+    @SqlUpdate("update users_deployable_systems set system_admin = :admin where deployable_system_id = :systemId and user_id = :userId")
+    void updateAdminStatusForUserInSystem(@Bind("systemId") long systemId, @Bind("userId") long userId, @Bind("admin") boolean isAdmin);
+
+    @SqlUpdate("insert into users_deployable_systems (deployable_system_id, user_id, system_admin) values (:systemId, :userId, :admin)")
+    void addUserToSystem(@Bind("systemId") long systemId, @Bind("userId") long userId, @Bind("admin") boolean isAdmin);
 }
