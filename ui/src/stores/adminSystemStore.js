@@ -31,5 +31,10 @@ export const useAdminSystemStore = defineStore('adminSystem', () => {
       .then(() => load())
   }
 
-  return { systems, loading, load, create, deleteSystem, assignUsersToSystem }
+  function removeUserFromSystem (systemId, userId) {
+    api.delete(`/systems/${systemId}/users/${userId}`)
+      .then(() => load())
+  }
+
+  return { systems, loading, load, create, deleteSystem, assignUsersToSystem, removeUserFromSystem }
 })

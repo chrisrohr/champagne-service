@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { api } from 'src/boot/axios'
 import { ref } from 'vue'
 import { doPagedRequest } from 'src/utils/data'
+import _ from 'lodash'
 
 export const useUserStore = defineStore('user', () => {
   const users = ref([])
@@ -31,5 +32,9 @@ export const useUserStore = defineStore('user', () => {
       .then(() => load())
   }
 
-  return { users, loading, pagination, load, create, update, deleteUser }
+  function userForId (id) {
+    return _.find(users.value, { id })
+  }
+
+  return { users, loading, pagination, load, create, update, deleteUser, userForId }
 })

@@ -1,36 +1,57 @@
 <template>
     <q-page padding>
       <q-table title="Deployable Systems" :columns="systemColumns" :rows="adminSystemStore.systems" :loading="adminSystemStore.loading" v-model:pagination="adminSystemStore.pagination" @request="adminSystemStore.load">
-
-        <template v-slot:body-cell-createdAt="props">
-          <q-td :props="props">
-            {{ fromNow(props.row.createdAt) }}
-            <q-tooltip class="bg-grey-5 text-black">
-                {{ formatDate(props.row.createdAt) }}
-            </q-tooltip>
-          </q-td>
+        <template v-slot:body="props">
+          <q-tr :props="props">
+            <q-td>
+              <q-btn round size="sm" color="primary" :icon="props.expand ? 'remove' : 'add'" @click="props.expand = !props.expand"/>
+            </q-td>
+            <q-td key="name" :props="props">
+              {{  props.row.name }}
+            </q-td>
+            <q-td key="createdAt" :props="props">
+              {{ fromNow(props.row.createdAt) }}
+              <q-tooltip class="bg-grey-5 text-black">
+                  {{ formatDate(props.row.createdAt) }}
+              </q-tooltip>
+            </q-td>
+            <q-td key="updatedAt" :props="props">
+              {{ fromNow(props.row.updatedAt) }}
+              <q-tooltip class="bg-grey-5 text-black">
+                  {{ formatDate(props.row.updatedAt) }}
+              </q-tooltip>
+            </q-td>
+            <q-td key="actions" :props="props">
+              <q-btn size="sm" icon="group_add" @click="startAssignUsers(props.row)" class="on-left">
+                <q-tooltip>Assign Users</q-tooltip>
+              </q-btn>
+              <q-btn size="sm" icon="delete" @click="confirmDelete(props.row)">
+                <q-tooltip>Delete System</q-tooltip>
+              </q-btn>
+            </q-td>
+          </q-tr>
+          <q-tr v-show="props.expand" :props="props">
+            <q-td colspan="100%">
+              <q-table :columns="systemUserCols" :rows="props.row.users" :pagination="userPagination">
+                <template v-slot:body="users">
+                  <q-td key="username">
+                    <q-icon name="fa-solid fa-crown" v-if="users.row.admin" class="text-yellow-14">
+                      <q-tooltip class="bg-grey-5 text-black">
+                          User is an Admin for this System
+                      </q-tooltip>
+                    </q-icon>
+                    {{ userStore.userForId(users.row.userId).displayName }}
+                  </q-td>
+                  <q-td key="actions">
+                    <q-btn size="sm" icon="delete" @click="removeUserFromSystem(props.row.id, users.row.userId)">
+                      <q-tooltip>Remove User</q-tooltip>
+                    </q-btn>
+                  </q-td>
+                </template>
+              </q-table>
+            </q-td>
+          </q-tr>
         </template>
-
-        <template v-slot:body-cell-updatedAt="props">
-          <q-td :props="props">
-            {{ fromNow(props.row.updatedAt) }}
-            <q-tooltip class="bg-grey-5 text-black">
-                {{ formatDate(props.row.updatedAt) }}
-            </q-tooltip>
-          </q-td>
-        </template>
-
-        <template v-slot:body-cell-actions="props">
-          <q-td :props="props">
-            <q-btn size="sm" icon="group_add" @click="startAssignUsers(props.row)" class="on-left">
-              <q-tooltip>Assign Users</q-tooltip>
-            </q-btn>
-            <q-btn size="sm" icon="delete" @click="confirmDelete(props.row)">
-              <q-tooltip>Delete System</q-tooltip>
-            </q-btn>
-          </q-td>
-        </template>
-
       </q-table>
 
       <q-page-sticky position="bottom-right" :offset="[18, 18]">
@@ -66,28 +87,13 @@
               style="min-width: 205px"
               v-model="selectedUser"
               :options="allUsers"/>
-            <q-btn label="Add User" @click="addUserToSystem" class="on-right" color="primary"/>
           </q-card-section>
           <q-card-section>
-            <q-table :rows="systemUsers.users" :columns="selectedUserCols" :pagination="{ rowsNumber: 2000 }" hide-pagination>
-              <template v-slot:body-cell-admin="props">
-                <q-td :props="props">
-                  <q-checkbox v-model="props.row.admin"/>
-                </q-td>
-              </template>
-
-              <template v-slot:body-cell-action="props">
-                <q-td :props="props">
-                  <q-btn size="sm" icon="delete" @click="removeSelectedUser(props.row)">
-                    <q-tooltip>Remove User</q-tooltip>
-                  </q-btn>
-                </q-td>
-              </template>
-            </q-table>
+            <q-checkbox v-model="selectedUserAdmin"/>
           </q-card-section>
           <q-card-actions align="right">
             <q-btn flat v-close-popup>Cancel</q-btn>
-            <q-btn flat color="primary" @click="addUsersToSystem">Save</q-btn>
+            <q-btn flat color="primary" @click="addOrUpdateUserInSystem">Save</q-btn>
           </q-card-actions>
         </q-card>
       </q-dialog>
@@ -112,18 +118,22 @@ const activeSystem = ref({
 })
 const showAssignUsers = ref(false)
 const selectedUser = ref(null)
-const systemUsers = ref({
+const selectedUserAdmin = ref(false)
+const systemUser = ref({
   systemId: null,
-  users: []
+  userId: null,
+  admin: false
 })
 const allUsers = ref([])
 
 // Constant data
 const systemColumns = [
   {
+    name: 'expand'
+  },
+  {
     name: 'name',
     label: 'Name',
-    field: 'name',
     align: 'left'
   },
   {
@@ -142,23 +152,21 @@ const systemColumns = [
     align: 'left'
   }
 ]
-const selectedUserCols = [
+const systemUserCols = [
   {
     name: 'username',
-    label: 'User',
-    field: 'displayName',
+    label: 'User Name',
     align: 'left'
   },
   {
-    name: 'admin',
-    label: 'Admin?',
-    align: 'left'
-  },
-  {
-    name: 'action',
+    name: 'actions',
+    label: 'Actions',
     align: 'left'
   }
 ]
+const userPagination = {
+  rowsPerPage: 10
+}
 
 // Methods
 function createSystem () {
@@ -178,43 +186,35 @@ function deleteSystem (id) {
 }
 
 function startAssignUsers (system) {
-  userStore.load({ pagination: { page: 1, rowsPerPage: 2000 } }).then(() => {
-    allUsers.value = userToOption(userStore.users)
-
-    systemUsers.value.systemId = system.id
-    populateNameOnExistingUsers(system.users)
-    systemUsers.value.users = system.users
-    showAssignUsers.value = true
-  })
+  allUsers.value = userToOption(userStore.users)
+    .filter(user => isNewUser(user, system.users))
+  systemUser.value.systemId = system.id
+  showAssignUsers.value = true
 }
 
 function userToOption (users) {
   return _.sortBy(users.map(e => { return { label: e.displayName, value: e.id } }), ['label'])
 }
 
-function populateNameOnExistingUsers (users) {
-  users.forEach(user => {
-    user.displayName = _.find(allUsers.value, u => u.value === user.userId).label
-  })
+function isNewUser (user, systemUsers) {
+  return _.indexOf(systemUsers.map(u => u.id), user.value) === -1
 }
 
-function addUserToSystem () {
-  systemUsers.value.users.push({ userId: selectedUser.value.value, displayName: selectedUser.value.label, admin: false })
-}
+// function addUsersToSystem () {
+//   adminSystemStore.assignUsersToSystem(systemUsers.value.systemId, systemUsers.value.users)
+//     .then(() => {
+//       showAssignUsers.value = false
+//     })
+// }
 
-function removeSelectedUser (selectedUser) {
-  systemUsers.value.users = _.without(systemUsers.value.users, selectedUser)
-}
-
-function addUsersToSystem () {
-  adminSystemStore.assignUsersToSystem(systemUsers.value.systemId, systemUsers.value.users)
-    .then(() => {
-      showAssignUsers.value = false
-    })
+function removeUserFromSystem (systemId, userId) {
+  adminSystemStore.removeUserFromSystem(systemId, userId)
 }
 
 onMounted(() => {
-  adminSystemStore.load()
+  userStore.load({ pagination: { page: 1, rowsPerPage: 2000 } }).then(() => {
+    adminSystemStore.load()
+  })
 })
 
 </script>
