@@ -179,36 +179,27 @@ function deleteSystem (id) {
 
 function startAssignUsers (system) {
   userStore.load({ pagination: { page: 1, rowsPerPage: 2000 } }).then(() => {
-    allUsers.value.push(...userToOption(userStore.users))
-    console.log(allUsers.value)
-  })
+    allUsers.value = userToOption(userStore.users)
 
-  systemUsers.value.systemId = system.id
-  systemUsers.value.users = system.users
-  showAssignUsers.value = true
+    systemUsers.value.systemId = system.id
+    populateNameOnExistingUsers(system.users)
+    systemUsers.value.users = system.users
+    showAssignUsers.value = true
+  })
 }
 
 function userToOption (users) {
-  return users
-    .map(e => { return { label: e.displayName, value: e.id } })
-    .sort((a, b) => {
-      const nameA = a.label
-      const nameB = b.label
+  return _.sortBy(users.map(e => { return { label: e.displayName, value: e.id } }), ['label'])
+}
 
-      if (nameA < nameB) {
-        return -1
-      }
-
-      if (nameB < nameA) {
-        return 1
-      }
-
-      return 0
-    })
+function populateNameOnExistingUsers (users) {
+  users.forEach(user => {
+    user.displayName = _.find(allUsers.value, u => u.value === user.userId).label
+  })
 }
 
 function addUserToSystem () {
-  systemUsers.value.users.push({ userId: selectedUser.value.id, displayName: selectedUser.value.label, admin: false })
+  systemUsers.value.users.push({ userId: selectedUser.value.value, displayName: selectedUser.value.label, admin: false })
 }
 
 function removeSelectedUser (selectedUser) {
@@ -216,8 +207,10 @@ function removeSelectedUser (selectedUser) {
 }
 
 function addUsersToSystem () {
-  console.log(systemUsers.value)
   adminSystemStore.assignUsersToSystem(systemUsers.value.systemId, systemUsers.value.users)
+    .then(() => {
+      showAssignUsers.value = false
+    })
 }
 
 onMounted(() => {

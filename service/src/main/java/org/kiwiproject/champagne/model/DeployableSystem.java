@@ -1,6 +1,8 @@
 package org.kiwiproject.champagne.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Builder;
+import lombok.ToString;
 import lombok.Value;
 import lombok.With;
 
@@ -37,6 +39,8 @@ public class DeployableSystem {
 
     @Builder
     @Value
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    @ToString
     public static class SystemUser {
         Long userId;
         boolean admin;

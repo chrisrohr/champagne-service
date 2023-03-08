@@ -219,5 +219,77 @@ class DeployableSystemDaoTest {
             assertThat(result).isFalse();
         }
     }
+
+    @Nested
+    class FindUsersForSystem {
+
+        @Test
+        void shouldReturnListOfUsersForASystem() {
+            var userId = insertUserRecord(handle, "jdoe");
+            var deployableSystemId = insertDeployableSystem(handle, "system1");
+            insertUserToDeployableSystemLink(handle, userId, deployableSystemId, true);
+
+            var users = dao.findUsersForSystem(deployableSystemId);
+
+            assertThat(users).extracting("userId", "admin").contains(tuple(userId, true));
+        }
+    }
+
+    @Nested
+    class IsUserInSystem {
+
+        @Test
+        void shouldReturnTrueWhenUserIsAssignedToSystem() {
+            var userId = insertUserRecord(handle, "jdoe");
+            var deployableSystemId = insertDeployableSystem(handle, "system1");
+            insertUserToDeployableSystemLink(handle, userId, deployableSystemId, true);
+
+            var result = dao.isUserInSystem(userId, deployableSystemId);
+
+            assertThat(result).isTrue();
+        }
+
+        @Test
+        void shouldReturnNullWhenUserIsNotAssignedToSystem() {
+            var userId = insertUserRecord(handle, "jdoe");
+            var deployableSystemId = insertDeployableSystem(handle, "system1");
+            insertUserToDeployableSystemLink(handle, userId, deployableSystemId, true);
+
+            var result = dao.isUserInSystem(userId+1, deployableSystemId);
+
+            assertThat(result).isNull();
+        }
+    }
+
+    @Nested
+    class InsertOrUpdateSystemUser {
+
+        @Test
+        void shouldInsertNewUserSystemLinkWhenDoesNotExist() {
+            var userId = insertUserRecord(handle, "jdoe");
+            var deployableSystemId = insertDeployableSystem(handle, "system1");
+
+            assertThat(dao.isUserInSystem(userId, deployableSystemId)).isNull();
+
+            dao.insertOrUpdateSystemUser(deployableSystemId, userId, false);
+
+            assertThat(dao.isUserInSystem(userId, deployableSystemId)).isTrue();
+        }
+
+        @Test
+        void shouldUpdateUserSystemLinkWhenExists() {
+            var userId = insertUserRecord(handle, "jdoe");
+            var deployableSystemId = insertDeployableSystem(handle, "system1");
+            insertUserToDeployableSystemLink(handle, userId, deployableSystemId, true);
+
+            var systemUsers = dao.findUsersForSystem(deployableSystemId);
+            assertThat(systemUsers).extracting("userId", "admin").contains(tuple(userId, true));
+
+            dao.insertOrUpdateSystemUser(deployableSystemId, userId, false);
+
+            systemUsers = dao.findUsersForSystem(deployableSystemId);
+            assertThat(systemUsers).extracting("userId", "admin").contains(tuple(userId, false));
+        }
+    }
    
 }

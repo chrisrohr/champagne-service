@@ -1,5 +1,6 @@
 package org.kiwiproject.champagne.resource.filter;
 
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.kiwiproject.champagne.dao.DeployableSystemDao;
 import org.kiwiproject.champagne.model.DeployableSystemThreadLocal;
@@ -24,7 +25,7 @@ public class DeployableSystemRequestFilter implements ContainerRequestFilter {
         if (StringUtils.isNotBlank(system)) {
             var userName = requestContext.getSecurityContext().getUserPrincipal().getName();
 
-            if (deployableSystemDao.isUserBySystemIdentifierInSystem(userName, Long.parseLong(system))) {
+            if (BooleanUtils.isTrue(deployableSystemDao.isUserBySystemIdentifierInSystem(userName, Long.parseLong(system)))) {
                 DeployableSystemThreadLocal.setCurrentDeployableSystem(Long.valueOf(system));
             }
         }

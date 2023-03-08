@@ -163,10 +163,7 @@ public class DeployableSystemResource extends AuditableResource {
     @ExceptionMetered
     @RolesAllowed({ "admin" })
     public Response addUsersToSystem(@PathParam("id") long systemId, List<SystemUser> users) {
-        users.forEach(user -> {
-            deployableSystemDao.insertOrUpdateSystemUser(systemId, user.getUserId(), user.isAdmin());
-        });        
-
+        users.forEach(user -> deployableSystemDao.insertOrUpdateSystemUser(systemId, user.getUserId(), user.isAdmin()));
         return Response.accepted().build();
     }
 }

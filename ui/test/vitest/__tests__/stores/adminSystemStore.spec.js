@@ -51,3 +51,13 @@ describe('deleteSystem', () => {
     expect(api.delete).toHaveBeenCalledWith('/systems/1')
   })
 })
+
+describe('assignUsersToSystem', () => {
+  it('should make call to update system users', async () => {
+    const adminSystemStore = useAdminSystemStore()
+    await adminSystemStore.assignUsersToSystem(1, [{ userId: 1, admin: true }])
+
+    expect(api.post).toHaveBeenCalled()
+    expect(api.post).toHaveBeenCalledWith('/systems/1/users', [{ userId: 1, admin: true }])
+  })
+})
