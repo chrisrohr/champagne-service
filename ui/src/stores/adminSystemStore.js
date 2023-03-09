@@ -26,8 +26,8 @@ export const useAdminSystemStore = defineStore('adminSystem', () => {
       .then(() => load())
   }
 
-  async function assignUsersToSystem (systemId, usersToSet) {
-    return api.post(`/systems/${systemId}/users`, usersToSet)
+  async function assignUserToSystem (systemId, userToSet) {
+    return api.post(`/systems/${systemId}/user`, userToSet)
       .then(() => load())
   }
 
@@ -36,5 +36,5 @@ export const useAdminSystemStore = defineStore('adminSystem', () => {
       .then(() => load())
   }
 
-  return { systems, loading, load, create, deleteSystem, assignUsersToSystem, removeUserFromSystem }
+  return { systems, loading, load, create, deleteSystem, assignUserToSystem, removeUserFromSystem }
 })

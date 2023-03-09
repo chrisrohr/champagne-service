@@ -15,9 +15,15 @@ vi.mock('src/utils/alerts', () => {
   return { confirmAction }
 })
 
+const pinia = createTestingPinia()
+const adminSystemStore = useAdminSystemStore(pinia)
+const userStore = useUserStore(pinia)
+userStore.load.mockImplementation(() => Promise.resolve(1))
+userStore.users = [{ id: 1, displayName: 'John Doe' }]
+
 const wrapper = shallowMount(AdminSystemPage, {
   global: {
-    plugins: [createTestingPinia()]
+    plugins: [pinia]
   }
 })
 
@@ -29,7 +35,6 @@ describe('AdminSystemPage', () => {
 
 describe('createSystem', () => {
   it('should call the admin system store to create a new system', () => {
-    const adminSystemStore = useAdminSystemStore()
     adminSystemStore.create.mockImplementation(() => Promise.resolve(1))
 
     wrapper.vm.activeSystem.name = 'kiwi'
@@ -43,8 +48,6 @@ describe('createSystem', () => {
 
 describe('deleteSystem', () => {
   it('should call deleteSystem on the admin system store', () => {
-    const adminSystemStore = useAdminSystemStore()
-
     wrapper.vm.deleteSystem(1)
 
     expect(adminSystemStore.deleteSystem).toHaveBeenCalledTimes(1)
@@ -63,57 +66,35 @@ describe('confirmDelete', () => {
 
 describe('startAssignUsers', () => {
   it('should setup assign users dialog', () => {
-    const userStore = useUserStore()
-    userStore.load.mockImplementation(() => Promise.resolve(1))
-
     wrapper.vm.startAssignUsers({ id: 1, users: [] })
 
-    expect(userStore.load).toHaveBeenCalled()
+    expect(wrapper.vm.selectedSystem).toEqual(1)
+    expect(wrapper.vm.showAssignUsers).toBeTruthy()
   })
 })
 
-describe('populateNameOnExistingUsers', () => {
-  it('should add display name', () => {
-    wrapper.vm.allUsers = [{ label: 'John Doe', value: 1 }]
+describe('addOrUpdateUserInSystem', () => {
+  it('should call the adminSystemStore to add or update user assigned', () => {
+    adminSystemStore.assignUserToSystem.mockImplementation(() => Promise.resolve(1))
 
-    const users = [
-      { userId: 1, admin: false }
-    ]
+    wrapper.vm.selectedSystem = 1
+    wrapper.vm.selectedUser = { label: 'kiwi', value: 1 }
+    wrapper.vm.selectedUserAdmin = false
 
-    wrapper.vm.populateNameOnExistingUsers(users)
+    wrapper.vm.addOrUpdateUserInSystem()
 
-    expect(users[0].displayName).toEqual('John Doe')
+    expect(adminSystemStore.assignUserToSystem).toHaveBeenCalled()
+    expect(adminSystemStore.assignUserToSystem).toHaveBeenCalledWith(1, { userId: 1, admin: false })
   })
 })
 
-describe('addUserToSystem', () => {
-  it('should add the user to the list for update', () => {
-    wrapper.vm.selectedUser = { label: 'John Doe', value: 1 }
+describe('removeUserFromSystem', () => {
+  it('should call the adminSystemStore to remove assigned user', () => {
+    // adminSystemStore.removeUserFromSystem.mockImplementation(() => Promise.resolve(1))
 
-    wrapper.vm.addUserToSystem()
+    wrapper.vm.removeUserFromSystem(1, 2)
 
-    expect(wrapper.vm.systemUsers.users).toEqual([{ userId: 1, displayName: 'John Doe', admin: false }])
-  })
-})
-
-describe('removeSelectedUser', () => {
-  it('should remove the user from the list for update', () => {
-    const userToRemove = { userId: 1, displayName: 'John Doe', admin: false }
-    wrapper.vm.systemUsers.users = userToRemove
-
-    wrapper.vm.removeSelectedUser([userToRemove])
-
-    expect(wrapper.vm.systemUsers.users).toEqual([])
-  })
-})
-
-describe('addUsersToSystem', () => {
-  it('should call the adminSystemStore to update users assigned', () => {
-    const adminSystemStore = useAdminSystemStore()
-    adminSystemStore.assignUsersToSystem.mockImplementation(() => Promise.resolve(1))
-
-    wrapper.vm.addUsersToSystem()
-
-    expect(adminSystemStore.assignUsersToSystem).toHaveBeenCalled()
+    expect(adminSystemStore.removeUserFromSystem).toHaveBeenCalled()
+    expect(adminSystemStore.removeUserFromSystem).toHaveBeenCalledWith(1, 2)
   })
 })

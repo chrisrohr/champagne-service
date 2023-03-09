@@ -52,12 +52,22 @@ describe('deleteSystem', () => {
   })
 })
 
-describe('assignUsersToSystem', () => {
-  it('should make call to update system users', async () => {
+describe('assignUserToSystem', () => {
+  it('should make call to add or update system user', async () => {
     const adminSystemStore = useAdminSystemStore()
-    await adminSystemStore.assignUsersToSystem(1, [{ userId: 1, admin: true }])
+    await adminSystemStore.assignUserToSystem(1, { userId: 1, admin: true })
 
     expect(api.post).toHaveBeenCalled()
-    expect(api.post).toHaveBeenCalledWith('/systems/1/users', [{ userId: 1, admin: true }])
+    expect(api.post).toHaveBeenCalledWith('/systems/1/user', { userId: 1, admin: true })
+  })
+})
+
+describe('removeUserFromSystem', () => {
+  it('should make call to remove system user', async () => {
+    const adminSystemStore = useAdminSystemStore()
+    await adminSystemStore.removeUserFromSystem(1, 2)
+
+    expect(api.delete).toHaveBeenCalled()
+    expect(api.delete).toHaveBeenCalledWith('/systems/1/users/2')
   })
 })

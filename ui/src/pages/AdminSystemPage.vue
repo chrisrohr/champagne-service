@@ -32,21 +32,23 @@
           </q-tr>
           <q-tr v-show="props.expand" :props="props">
             <q-td colspan="100%">
-              <q-table :columns="systemUserCols" :rows="props.row.users" :pagination="userPagination">
+              <q-table :columns="systemUserCols" :rows="props.row.users" :pagination="userPagination" hide-pagination>
                 <template v-slot:body="users">
-                  <q-td key="username">
-                    <q-icon name="fa-solid fa-crown" v-if="users.row.admin" class="text-yellow-14">
-                      <q-tooltip class="bg-grey-5 text-black">
-                          User is an Admin for this System
-                      </q-tooltip>
-                    </q-icon>
-                    {{ userStore.userForId(users.row.userId).displayName }}
-                  </q-td>
-                  <q-td key="actions">
-                    <q-btn size="sm" icon="delete" @click="removeUserFromSystem(props.row.id, users.row.userId)">
-                      <q-tooltip>Remove User</q-tooltip>
-                    </q-btn>
-                  </q-td>
+                  <q-tr>
+                    <q-td key="username">
+                      <q-icon name="fa-solid fa-crown" v-if="users.row.admin" class="text-yellow-14">
+                        <q-tooltip class="bg-grey-5 text-black">
+                            User is an Admin for this System
+                        </q-tooltip>
+                      </q-icon>
+                      {{ userStore.userForId(users.row.userId).displayName }}
+                    </q-td>
+                    <q-td key="actions">
+                      <q-btn size="sm" icon="delete" @click="removeUserFromSystem(props.row.id, users.row.userId)">
+                        <q-tooltip>Remove User</q-tooltip>
+                      </q-btn>
+                    </q-td>
+                  </q-tr>
                 </template>
               </q-table>
             </q-td>
@@ -84,12 +86,13 @@
             <q-select
               outlined
               dense
+              label="Select a user"
               style="min-width: 205px"
               v-model="selectedUser"
               :options="allUsers"/>
           </q-card-section>
           <q-card-section>
-            <q-checkbox v-model="selectedUserAdmin"/>
+            <q-checkbox v-model="selectedUserAdmin" label="System Admin?" dense/>
           </q-card-section>
           <q-card-actions align="right">
             <q-btn flat v-close-popup>Cancel</q-btn>
@@ -119,11 +122,7 @@ const activeSystem = ref({
 const showAssignUsers = ref(false)
 const selectedUser = ref(null)
 const selectedUserAdmin = ref(false)
-const systemUser = ref({
-  systemId: null,
-  userId: null,
-  admin: false
-})
+const selectedSystem = ref(null)
 const allUsers = ref([])
 
 // Constant data
@@ -165,7 +164,7 @@ const systemUserCols = [
   }
 ]
 const userPagination = {
-  rowsPerPage: 10
+  rowsPerPage: 1000
 }
 
 // Methods
@@ -188,7 +187,7 @@ function deleteSystem (id) {
 function startAssignUsers (system) {
   allUsers.value = userToOption(userStore.users)
     .filter(user => isNewUser(user, system.users))
-  systemUser.value.systemId = system.id
+  selectedSystem.value = system.id
   showAssignUsers.value = true
 }
 
@@ -200,12 +199,10 @@ function isNewUser (user, systemUsers) {
   return _.indexOf(systemUsers.map(u => u.id), user.value) === -1
 }
 
-// function addUsersToSystem () {
-//   adminSystemStore.assignUsersToSystem(systemUsers.value.systemId, systemUsers.value.users)
-//     .then(() => {
-//       showAssignUsers.value = false
-//     })
-// }
+function addOrUpdateUserInSystem () {
+  adminSystemStore.assignUserToSystem(selectedSystem.value, { userId: selectedUser.value.value, admin: selectedUserAdmin.value })
+    .then(() => { showAssignUsers.value = false })
+}
 
 function removeUserFromSystem (systemId, userId) {
   adminSystemStore.removeUserFromSystem(systemId, userId)

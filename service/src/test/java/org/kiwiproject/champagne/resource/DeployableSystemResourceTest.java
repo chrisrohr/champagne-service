@@ -478,21 +478,21 @@ class DeployableSystemResourceTest {
     }
 
     @Nested
-    class AddUsersToSystem {
+    class AddUserToSystem {
 
         @Test
-        void shouldAddGivenUsersToGivenSystem() {
+        void shouldAddGivenUserToGivenSystem() {
             var systemUser = DeployableSystem.SystemUser.builder()
                     .userId(2L)
                     .admin(false)
                     .build();
 
             var token = generateJwt(true);
-            var response = RESOURCES.client().target("/systems/{id}/users")
+            var response = RESOURCES.client().target("/systems/{id}/user")
                     .resolveTemplate("id", 1L)
                     .request()
                     .cookie("sessionToken", token)
-                    .post(json(List.of(systemUser)));
+                    .post(json(systemUser));
 
             assertAcceptedResponse(response);
 
