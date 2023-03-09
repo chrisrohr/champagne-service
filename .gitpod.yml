@@ -1,11 +1,2 @@
 image:
   file: .gitpod.Dockerfile
-# ports:
-#   - name: Service
-#     description: Champagne service port
-#     port: 8080
-#     onOpen: notify
-#   - name: UI
-#     description: Champagne UI port
-#     port: 9000
-#     onOpen: open-browser
