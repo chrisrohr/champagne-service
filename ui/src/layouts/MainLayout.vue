@@ -24,6 +24,7 @@
 
         <q-space />
 
+        <q-select dense outlined filled v-model="systemStore.currentSystem" :options="systemStore.systems" style="min-width:205px; background-color: white;" label="Select a System" option-value="id" option-label="name"/>
         <q-btn round flat v-if="authStore.isLoggedIn">
           <q-avatar size="26px" class="bg-grey-4 text-grey-9">
             {{ authStore.loggedInUserAvatar }}
@@ -147,14 +148,19 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useAuthStore } from 'stores/auth'
+import { useSystemStore } from 'stores/systemStore'
 
 // Stores
 const authStore = useAuthStore()
+const systemStore = useSystemStore()
 
 // Reactive data
 const drawer = ref(false)
 const miniState = ref(true)
 
+onMounted(() => {
+  systemStore.load()
+})
 </script>
