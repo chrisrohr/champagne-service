@@ -478,25 +478,44 @@ class DeployableSystemResourceTest {
     }
 
     @Nested
-    class AddUsersToSystem {
+    class AddUserToSystem {
 
         @Test
-        void shouldAddGivenUsersToGivenSystem() {
+        void shouldAddGivenUserToGivenSystem() {
             var systemUser = DeployableSystem.SystemUser.builder()
                     .userId(2L)
                     .admin(false)
                     .build();
 
             var token = generateJwt(true);
-            var response = RESOURCES.client().target("/systems/{id}/users")
+            var response = RESOURCES.client().target("/systems/{id}/user")
                     .resolveTemplate("id", 1L)
                     .request()
                     .cookie("sessionToken", token)
-                    .post(json(List.of(systemUser)));
+                    .post(json(systemUser));
 
             assertAcceptedResponse(response);
 
             verify(DEPLOYABLE_SYSTEM_DAO).insertOrUpdateSystemUser(1L, 2L, false);
+        }
+    }
+
+    @Nested
+    class RemoveUserFromSystem {
+
+        @Test
+        void shouldRemoveUserSystemLinkMatchingGivenSystemIdAndUserId() {
+            var token = generateJwt(true);
+            var response = RESOURCES.client().target("/systems/{systemId}/users/{userId}")
+                    .resolveTemplate("systemId", 1L)
+                    .resolveTemplate("userId", 1L)
+                    .request()
+                    .cookie("sessionToken", token)
+                    .delete();
+
+            assertNoContentResponse(response);
+
+            verify(DEPLOYABLE_SYSTEM_DAO).deleteUserFromSystem(1L, 1L);
         }
     }
 }

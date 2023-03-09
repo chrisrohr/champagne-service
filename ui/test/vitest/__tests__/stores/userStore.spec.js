@@ -1,8 +1,8 @@
-import { setActivePinia, createPinia } from 'pinia'
+import { createPinia, setActivePinia } from 'pinia'
 import { useUserStore } from 'src/stores/userStore'
-import { vi } from "vitest";
-import { api } from "src/boot/axios";
-import { doPagedRequest } from "src/utils/data";
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { api } from 'src/boot/axios'
+import { doPagedRequest } from 'src/utils/data'
 
 vi.mock('src/utils/data', () => {
   const doPagedRequest = vi.fn()
@@ -25,14 +25,12 @@ beforeEach(() => {
 })
 
 describe('load', () => {
-
   it('should load users', async () => {
     const userStore = useUserStore()
     await userStore.load()
 
     expect(doPagedRequest).toHaveBeenCalled()
   })
-
 })
 
 describe('create', () => {
@@ -62,5 +60,25 @@ describe('deleteUser', () => {
 
     expect(api.delete).toHaveBeenCalled()
     expect(api.delete).toHaveBeenCalledWith('/users/1')
+  })
+})
+
+describe('userForId', () => {
+  it('should return user that matches id when exists', () => {
+    const userStore = useUserStore()
+    userStore.users = [{ id: 1, displayName: 'John Doe' }]
+
+    const result = userStore.userForId(1)
+
+    expect(result).toEqual({ id: 1, displayName: 'John Doe' })
+  })
+
+  it('should return undefined when matching user does not exist', () => {
+    const userStore = useUserStore()
+    userStore.users = [{ id: 1, displayName: 'John Doe' }]
+
+    const result = userStore.userForId(2)
+
+    expect(result).toEqual(undefined)
   })
 })

@@ -291,5 +291,24 @@ class DeployableSystemDaoTest {
             assertThat(systemUsers).extracting("userId", "admin").contains(tuple(userId, false));
         }
     }
+
+    @Nested
+    class DeleteUserFromSystem {
+
+        @Test
+        void shouldDeleteUserSystemLink() {
+            var userId = insertUserRecord(handle, "jdoe");
+            var deployableSystemId = insertDeployableSystem(handle, "system1");
+            insertUserToDeployableSystemLink(handle, userId, deployableSystemId, true);
+
+            var systemUsers = dao.findUsersForSystem(deployableSystemId);
+            assertThat(systemUsers).hasSize(1);
+
+            dao.deleteUserFromSystem(deployableSystemId, userId);
+
+            systemUsers = dao.findUsersForSystem(deployableSystemId);
+            assertThat(systemUsers).isEmpty();
+        }
+    }
    
 }

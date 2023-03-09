@@ -66,4 +66,7 @@ public interface DeployableSystemDao {
 
     @SqlUpdate("insert into users_deployable_systems (deployable_system_id, user_id, system_admin) values (:systemId, :userId, :admin)")
     void addUserToSystem(@Bind("systemId") long systemId, @Bind("userId") long userId, @Bind("admin") boolean isAdmin);
+
+    @SqlUpdate("delete from users_deployable_systems where deployable_system_id = :systemId and user_id = :userId")
+    void deleteUserFromSystem(@Bind("systemId") long systemId, @Bind("userId") long userId);
 }

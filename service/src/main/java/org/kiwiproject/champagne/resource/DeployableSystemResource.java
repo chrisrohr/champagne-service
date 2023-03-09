@@ -158,12 +158,22 @@ public class DeployableSystemResource extends AuditableResource {
     }
 
     @POST
-    @Path("/{id}/users")
+    @Path("/{id}/user")
     @Timed
     @ExceptionMetered
     @RolesAllowed({ "admin" })
-    public Response addUsersToSystem(@PathParam("id") long systemId, List<SystemUser> users) {
-        users.forEach(user -> deployableSystemDao.insertOrUpdateSystemUser(systemId, user.getUserId(), user.isAdmin()));
+    public Response addUserToSystem(@PathParam("id") long systemId, SystemUser user) {
+        deployableSystemDao.insertOrUpdateSystemUser(systemId, user.getUserId(), user.isAdmin());
         return Response.accepted().build();
+    }
+
+    @DELETE
+    @Path("/{systemId}/users/{userId}")
+    @Timed
+    @ExceptionMetered
+    @RolesAllowed({ "admin" })
+    public Response removeUserFromSystem(@PathParam("systemId") long systemId, @PathParam("userId") long userId) {
+        deployableSystemDao.deleteUserFromSystem(systemId, userId);
+        return Response.noContent().build();
     }
 }

@@ -60,7 +60,8 @@ module.exports = configure(function (ctx) {
       },
 
       env: {
-        API_BASE_URL: process.env.API_BASE_URL
+        API_BASE_URL: process.env.API_BASE_URL,
+        HMR_PORT: process.env.HMR_PORT
       },
 
       vueRouterMode: 'hash' // available values: 'hash', 'history'
@@ -90,7 +91,11 @@ module.exports = configure(function (ctx) {
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#devServer
     devServer: {
       // https: true
-      open: true // opens browser window automatically
+      open: true, // opens browser window automatically
+      hmr: {
+        // This port is used for the websocket during development for hot reloads. It is needed in case we are in a cloud IDE like gitpod
+        clientPort: process.env.HMR_PORT
+      }
     },
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#framework
