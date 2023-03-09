@@ -93,6 +93,7 @@ module.exports = configure(function (ctx) {
       // https: true
       open: true, // opens browser window automatically
       hmr: {
+        // This port is used for the websocket during development for hot reloads. It is needed in case we are in a cloud IDE like gitpod
         clientPort: process.env.HMR_PORT
       }
     },
