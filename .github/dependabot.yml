@@ -11,7 +11,7 @@ updates:
       - "sleberknight"
       - "chrisrohr"
     open-pull-requests-limit: 10
-  - package-ecosystem: "yarn"
+  - package-ecosystem: "npm"
     directory: "/ui"
     schedule:
       interval: "daily"
