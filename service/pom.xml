@@ -28,7 +28,7 @@
         <dropwizard-jwt-cookie-auth.version>4.5.1</dropwizard-jwt-cookie-auth.version>
         <dropwizard-service-utilities.version>2.2.1</dropwizard-service-utilities.version>
         <kiwi.version>2.5.0</kiwi.version>
-        <kiwi-bom.version>0.28.0</kiwi-bom.version>
+        <kiwi-bom.version>0.29.0</kiwi-bom.version>
 
         <!-- Versions for test dependencies -->
         <kiwi-test.version>2.3.2</kiwi-test.version>
