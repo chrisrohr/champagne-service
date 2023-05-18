@@ -27,7 +27,7 @@
     "vue-router": "^4.2.0"
   },
   "devDependencies": {
-    "@pinia/testing": "^0.1.0",
+    "@pinia/testing": "^0.1.1",
     "@quasar/app-vite": "^1.4.3",
     "@quasar/quasar-app-extension-testing": "^2.1.0",
     "@quasar/quasar-app-extension-testing-unit-vitest": "^0.1.0",
