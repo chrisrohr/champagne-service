@@ -38,7 +38,7 @@ export const useComponentStore = defineStore('component', () => {
       loadPromises.push(load(id))
     })
 
-    await loadPromises.all(loadPromises)
+    await Promise.all(loadPromises)
   }
 
   return { componentsByHost, loadingForComponents, expandedHosts, load, create, deleteComponent }
