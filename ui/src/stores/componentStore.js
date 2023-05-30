@@ -32,10 +32,13 @@ export const useComponentStore = defineStore('component', () => {
       .then(() => reloadExpandedComponentLists())
   }
 
-  function reloadExpandedComponentLists () {
+  async function reloadExpandedComponentLists () {
+    const loadPromises = []
     expandedHosts.value.forEach((id) => {
-      load(id)
+      loadPromises.push(load(id))
     })
+
+    await loadPromises.all(loadPromises)
   }
 
   return { componentsByHost, loadingForComponents, expandedHosts, load, create, deleteComponent }

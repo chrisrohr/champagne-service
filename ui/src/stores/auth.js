@@ -7,7 +7,7 @@ export const useAuthStore = defineStore('auth', () => {
   const returnUrl = ref(null)
 
   const isLoggedIn = computed(() => user.value !== null)
-  const isAdmin = computed(() => user.value !== null && user.value.admin)
+  const isAdmin = computed(() => user.value?.admin)
   const loggedInUserAvatar = computed(() => {
     if (user.value === null) {
       return ''

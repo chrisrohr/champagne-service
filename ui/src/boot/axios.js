@@ -26,11 +26,11 @@ export default boot(({ app, router }) => {
 
   api.interceptors.response.use((response) => {
     return response
-  }, (error) => {
+  }, async (error) => {
     if (error.response.status) {
       switch (error.response.status) {
         case 401:
-          router.push('/login')
+          await router.push('/login')
           break
         case 500:
           notifyError(error.response.data.message)
