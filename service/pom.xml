@@ -27,7 +27,7 @@
         <dropwizard-application-errors.version>1.2.0</dropwizard-application-errors.version>
         <dropwizard-jwt-cookie-auth.version>4.5.1</dropwizard-jwt-cookie-auth.version>
         <dropwizard-service-utilities.version>2.2.1</dropwizard-service-utilities.version>
-        <kiwi.version>2.5.0</kiwi.version>
+        <kiwi.version>2.6.0</kiwi.version>
         <kiwi-bom.version>0.31.0</kiwi-bom.version>
 
         <!-- Versions for test dependencies -->
@@ -53,6 +53,12 @@
                 <version>${kiwi-bom.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+                 
+            <dependency>
+                <groupId>org.kiwiproject</groupId>
+                <artifactId>kiwi</artifactId>
+                <version>${kiwi.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
