@@ -34,8 +34,6 @@
       </card-table>
     </div>
 
-    <div>{{ currentUserStore.activeDeployableSystem}}</div>
-
     <confirmation-prompt title="Hold up!" :message="confirmationMessage" @cancelConfirm="confirmationState = false" @acceptConfirm="deleteEnv" v-if="confirmationState"/>
 
     <button v-if="currentUserStore.isDeployableSystemAdmin" class="fixed bottom-3 right-14 bg-emerald-500 text-white active:bg-emerald-600 font-bold uppercase text-xs w-10 h-10 p-0 rounded-full shadow hover:shadow-md outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150" type="button" @click="startCreate">

@@ -1,29 +1,29 @@
 package org.kiwiproject.champagne.dao;
 
+import org.jdbi.v3.core.Handle;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.kiwiproject.champagne.dao.mappers.ComponentMapper;
+import org.kiwiproject.champagne.model.Component;
+import org.kiwiproject.test.junit.jupiter.Jdbi3DaoExtension;
+import org.kiwiproject.test.junit.jupiter.PostgresLiquibaseTestExtension;
+
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.kiwiproject.champagne.util.TestObjects.insertComponentRecord;
 import static org.kiwiproject.collect.KiwiLists.first;
 import static org.kiwiproject.test.util.DateTimeTestHelper.assertTimeDifferenceWithinTolerance;
 
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.util.List;
-
-import org.jdbi.v3.core.Handle;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.extension.RegisterExtension;
-import org.kiwiproject.champagne.model.Component;
-import org.kiwiproject.champagne.dao.mappers.ComponentMapper;
-import org.kiwiproject.test.junit.jupiter.Jdbi3DaoExtension;
-import org.kiwiproject.test.junit.jupiter.PostgresLiquibaseTestExtension;
-
 @DisplayName("ComponentDao")
 class ComponentDaoTest {
-    
+
     @RegisterExtension
     static final PostgresLiquibaseTestExtension POSTGRES = new PostgresLiquibaseTestExtension("migrations.xml");
 
@@ -49,16 +49,22 @@ class ComponentDaoTest {
         void shouldInsertComponentSuccessfully() {
             var beforeInsert = ZonedDateTime.now();
 
+            var systemId = handle.createUpdate("insert into deployable_systems (name) values ('kiwi')")
+                    .executeAndReturnGeneratedKeys("id")
+                    .mapTo(Long.class)
+                    .first();
+
             var componentToInsert = Component.builder()
-                .componentName("foo-service")
-                .tag("core")
-                .build();
+                    .componentName("foo-service")
+                    .tag("core")
+                    .deployableSystemId(systemId)
+                    .build();
 
             var id = dao.insertComponent(componentToInsert);
 
             var components = handle.select("select * from components where id = ?", id)
-                .map(new ComponentMapper())
-                .list();
+                    .map(new ComponentMapper())
+                    .list();
 
             assertThat(components).hasSize(1);
 
@@ -69,9 +75,9 @@ class ComponentDaoTest {
             assertTimeDifferenceWithinTolerance("updatedAt", beforeInsert, component.getUpdatedAt().atZone(ZoneOffset.UTC), 1000L);
 
             assertThat(component)
-                .usingRecursiveComparison()
-                .ignoringFields("id", "createdAt", "updatedAt")
-                .isEqualTo(componentToInsert);
+                    .usingRecursiveComparison()
+                    .ignoringFields("id", "createdAt", "updatedAt")
+                    .isEqualTo(componentToInsert);
         }
     }
 
@@ -84,8 +90,8 @@ class ComponentDaoTest {
 
             var components = dao.findComponentsByHostTags(List.of("core"));
             assertThat(components)
-                .extracting("id", "componentName", "tag")
-                .contains(tuple(id, "foo-service", "core"));
+                    .extracting("id", "componentName", "tag")
+                    .contains(tuple(id, "foo-service", "core"));
         }
 
         @Test
