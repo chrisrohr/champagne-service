@@ -1,11 +1,5 @@
 package org.kiwiproject.champagne.resource;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static org.kiwiproject.champagne.model.AuditRecord.Action.CREATED;
-import static org.kiwiproject.champagne.model.AuditRecord.Action.DELETED;
-import static org.kiwiproject.champagne.model.AuditRecord.Action.UPDATED;
-import static org.kiwiproject.search.KiwiSearching.zeroBasedOffset;
-
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import io.dropwizard.auth.Auth;
@@ -20,21 +14,16 @@ import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
 import org.kiwiproject.jaxrs.exception.JaxrsNotAuthorizedException;
 import org.kiwiproject.spring.data.KiwiPage;
 
-import java.util.List;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.validation.Valid;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
+import java.util.List;
+
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.kiwiproject.champagne.model.AuditRecord.Action.*;
+import static org.kiwiproject.search.KiwiSearching.zeroBasedOffset;
 
 @Path("/systems")
 @Produces(APPLICATION_JSON)
@@ -176,4 +165,7 @@ public class DeployableSystemResource extends AuditableResource {
         deployableSystemDao.deleteUserFromSystem(systemId, userId);
         return Response.noContent().build();
     }
+
+    // TODO: Add endpoint to set and unset existing system user as admin (only can be done by system admins)
+    // TODO: Add endpoint to retrieve a list of users for the current system (only by system admin)
 }

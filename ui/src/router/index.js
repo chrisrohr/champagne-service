@@ -1,64 +1,65 @@
-import { route } from 'quasar/wrappers'
-import { createRouter, createMemoryHistory, createWebHistory, createWebHashHistory } from 'vue-router'
-import routes from './routes'
-import { useAuthStore } from 'stores/auth'
+import {createRouter, createWebHistory} from 'vue-router'
+import {useCurrentUserStore} from "@/stores/currentUser";
+import {useEnvironmentStore} from "@/stores/environments";
 
-/*
- * If not building with SSR mode, you can
- * directly export the Router instantiation;
- *
- * The function below can be async too; either use
- * async/await or return a Promise which resolves
- * with the Router instance.
- */
+import HostConfigView from "@/views/Observability/HostConfigView.vue";
+import LoginView from "@/views/LoginView.vue";
+import NoDeployableSystemView from "@/views/NoDeployableSystemView.vue";
+import EnvironmentView from "@/views/Observability/EnvironmentView.vue";
+import ManageSystemView from "@/views/SystemAdmin/ManageSystemView.vue";
 
-export default route(function () {
-  const webHistoryMethod = process.env.VUE_ROUTER_MODE === 'history' ? createWebHistory : createWebHashHistory
-
-  const createHistory = process.env.SERVER ? createMemoryHistory : webHistoryMethod
-
-  const Router = createRouter({
-    scrollBehavior: () => ({ left: 0, top: 0 }),
-    routes,
-
-    // Leave this as is and make changes in quasar.conf.js instead!
-    // quasar.conf.js -> build -> vueRouterMode
-    // quasar.conf.js -> build -> publicPath
-    history: createHistory(process.env.VUE_ROUTER_BASE)
-  })
-
-  let isFirstTransition = true
-  Router.beforeEach((to, from, next) => {
-    // redirect to login page if not logged in and trying to access a restricted page
-    const publicPages = ['LoginPage']
-    const authRequired = !publicPages.includes(to.name)
-
-    const auth = useAuthStore()
-
-    if (authRequired && !auth.user) {
-      auth.returnUrl = to.fullPath
-      next({ name: 'LoginPage' })
-      return true
+const router = createRouter({
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes: [
+    {
+      path: '/',
+      component: () => import('../layouts/ChampagneLayout.vue'),
+      children: [
+        { path: '/', redirect: { name: 'hostConfig' }, name: 'root' },
+        { path: '/hostConfig', component: HostConfigView, name: 'hostConfig' },
+        { path: '/environments', component: EnvironmentView, name: 'environments' },
+        { path: '/manageSystem', component: ManageSystemView, name: 'manageSystem' },
+        { path: '/noDeployableSystem', component: NoDeployableSystemView, name: 'noDeployableSystem' }
+      ]
+    },
+    {
+      path: '/login',
+      component: () => import('../layouts/NotLoggedInLayout.vue'),
+      children: [
+        { path: '/', component: LoginView, name: 'login' }
+      ]
     }
+  ]
+});
 
-    // Redirect to last used page on first transition
-    const lastRouteName = localStorage.getItem('champagne-last-page') ?? ''
-    const shouldRedirect = to.name === 'dashboard' && lastRouteName && isFirstTransition
+router.beforeEach(async (to) => {
+  const currentUserStore = useCurrentUserStore();
+  const environmentUserStore = useEnvironmentStore();
 
-    if (shouldRedirect) {
-      next({ name: lastRouteName })
+  if (!currentUserStore.isLoggedIn) {
+    // Attempt to pull user info first just in case we have a session already
+    await currentUserStore.loadUserInfo();
+  }
+
+  if (!currentUserStore.isLoggedInAndSystemChosen && to.name !== 'login' && to.name !== 'noDeployableSystem') {
+    if (!currentUserStore.isLoggedIn) {
+      return { name: 'login' };
     } else {
-      next()
+      await currentUserStore.loadDeployableSystems();
+
+      if (currentUserStore.deployableSystems.length === 0) {
+        return { name: 'login' };
+      } else if (currentUserStore.deployableSystems.length === 1) {
+        currentUserStore.makeDeployableSystemActive(currentUserStore.deployableSystems[0]);
+        await environmentUserStore.loadEnvironments();
+      } else {
+        return { name: 'noDeployableSystem' }
+      }
     }
+  } else if (to.name !== 'login' && to.name !== 'noDeployableSystem') {
+    await currentUserStore.loadDeployableSystems();
+    await environmentUserStore.loadEnvironments();
+  }
+});
 
-    isFirstTransition = false
-  })
-
-  Router.afterEach((to) => {
-    if (to.path !== '/login') {
-      localStorage.setItem('champagne-last-page', to.name)
-    }
-  })
-
-  return Router
-})
+export default router
