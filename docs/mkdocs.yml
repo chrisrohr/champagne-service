@@ -1,0 +1,9 @@
+site_name: Champagne
+site_url: https://github.com/kiwiproject/champagne-service
+theme: readthedocs
+nav:
+  - Overview: index.md
+  - Getting Started: getting_started.md
+  - User Guid:
+      - Environments: user_guide/environments.md
+      - Host Configuration: user_guide/host_configuration.md
