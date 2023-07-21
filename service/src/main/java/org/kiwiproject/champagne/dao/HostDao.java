@@ -22,6 +22,9 @@ public interface HostDao {
     @GetGeneratedKeys
     long insertHost(@BindBean Host host, @Bind("tagCsv") String tagCsv);
 
+    @SqlUpdate("update hosts set hostname = :hostname, tags = :tags where id = :id")
+    int updateHost(@Bind("hostname") String hostname, @Bind("tags") String tagCsv, @Bind("id") long id);
+
     @SqlUpdate("delete from hosts where id = :id")
     int deleteHost(@Bind("id") long id);
 

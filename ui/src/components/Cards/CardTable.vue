@@ -1,6 +1,6 @@
 <template>
   <div class="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded bg-white">
-    <div class="rounded mb-0 px-4 py-3 border-0" v-if="props.title">
+    <div class="rounded mb-0 px-4 py-3 border-0" v-if="props.title || !!slots.header">
       <div class="relative w-full px-4 max-w-full flex-grow flex-1">
         <slot name="header">
           <h3 class="font-semibold text-lg text-gray-700">

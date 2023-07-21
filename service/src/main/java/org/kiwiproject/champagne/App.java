@@ -1,7 +1,5 @@
 package org.kiwiproject.champagne;
 
-import static org.kiwiproject.dropwizard.util.job.MonitoredJobs.registerJob;
-
 import io.dropwizard.Application;
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
@@ -15,28 +13,11 @@ import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.postgres.PostgresPlugin;
 import org.kiwiproject.champagne.config.AppConfig;
-import org.kiwiproject.champagne.dao.AuditRecordDao;
-import org.kiwiproject.champagne.dao.BuildDao;
-import org.kiwiproject.champagne.dao.ComponentDao;
-import org.kiwiproject.champagne.dao.DeployableSystemDao;
-import org.kiwiproject.champagne.dao.DeploymentEnvironmentDao;
-import org.kiwiproject.champagne.dao.HostDao;
-import org.kiwiproject.champagne.dao.ReleaseDao;
-import org.kiwiproject.champagne.dao.ReleaseStatusDao;
-import org.kiwiproject.champagne.dao.TaskDao;
-import org.kiwiproject.champagne.dao.TaskStatusDao;
-import org.kiwiproject.champagne.dao.UserDao;
+import org.kiwiproject.champagne.dao.*;
 import org.kiwiproject.champagne.dao.mappers.BuildMapper;
 import org.kiwiproject.champagne.job.CleanOutAuditsJob;
 import org.kiwiproject.champagne.model.Build;
-import org.kiwiproject.champagne.resource.AuditRecordResource;
-import org.kiwiproject.champagne.resource.AuthResource;
-import org.kiwiproject.champagne.resource.BuildResource;
-import org.kiwiproject.champagne.resource.DeployableSystemResource;
-import org.kiwiproject.champagne.resource.DeploymentEnvironmentResource;
-import org.kiwiproject.champagne.resource.HostConfigurationResource;
-import org.kiwiproject.champagne.resource.TaskResource;
-import org.kiwiproject.champagne.resource.UserResource;
+import org.kiwiproject.champagne.resource.*;
 import org.kiwiproject.champagne.resource.filter.DeployableSystemRequestFilter;
 import org.kiwiproject.champagne.service.ManualTaskService;
 import org.kiwiproject.dropwizard.error.ErrorContextBuilder;
@@ -51,9 +32,11 @@ import org.kiwiproject.dropwizard.util.server.DropwizardConnectors;
 import org.kiwiproject.json.JsonHelper;
 import org.kiwiproject.net.KiwiInternetAddresses;
 
-import java.util.EnumSet;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
+import java.util.EnumSet;
+
+import static org.kiwiproject.dropwizard.util.job.MonitoredJobs.registerJob;
 
 public class App extends Application<AppConfig> {
 
@@ -125,7 +108,7 @@ public class App extends Application<AppConfig> {
         var cleanOutAuditsJob = new CleanOutAuditsJob(auditRecordDao, configuration.getAuditRecordsMaxRetain().toMilliseconds());
         registerJob(environment, "Clean Out Audits", configuration.getAuditCleanup(), cleanOutAuditsJob);
 
-        environment.jersey().register(new DeployableSystemRequestFilter(deployableSystemDao));
+        environment.jersey().register(new DeployableSystemRequestFilter(deployableSystemDao, userDao));
     }
 
     private static void setupJsonProcessing(Environment environment) {

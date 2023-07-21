@@ -1,14 +1,14 @@
 package org.kiwiproject.champagne.util;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.kiwiproject.champagne.model.DeployableSystemThreadLocal;
 import org.kiwiproject.jaxrs.exception.JaxrsBadRequestException;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("DeployableSystems")
 class DeployableSystemsTest {
@@ -23,7 +23,7 @@ class DeployableSystemsTest {
 
         @Test
         void shouldReturnSystemIdWhenFound() {
-            DeployableSystemThreadLocal.setCurrentDeployableSystem(1L);
+            DeployableSystemThreadLocal.setCurrentDeployableSystem(1L, false);
 
             assertThat(DeployableSystems.getSystemIdOrThrowBadRequest()).isEqualTo(1L);
         }
@@ -41,7 +41,7 @@ class DeployableSystemsTest {
 
         @Test
         void shouldReturnSystemIdWhenFound() {
-            DeployableSystemThreadLocal.setCurrentDeployableSystem(1L);
+            DeployableSystemThreadLocal.setCurrentDeployableSystem(1L, false);
 
             assertThat(DeployableSystems.getSystemIdOrNull()).isEqualTo(1L);
         }

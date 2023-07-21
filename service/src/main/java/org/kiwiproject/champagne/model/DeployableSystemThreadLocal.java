@@ -1,20 +1,29 @@
 package org.kiwiproject.champagne.model;
 
-import java.util.Optional;
-
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.experimental.UtilityClass;
+
+import java.util.Optional;
 
 @UtilityClass
 public class DeployableSystemThreadLocal {
 
-    private static final ThreadLocal<Long> THREAD_LOCAL = new ThreadLocal<>();
+    @Getter
+    @AllArgsConstructor
+    public class DeployableSystemInfo {
+        Long id;
+        boolean admin;
+    }
 
-    public static Optional<Long> getCurrentDeployableSystem() {
+    private static final ThreadLocal<DeployableSystemInfo> THREAD_LOCAL = new ThreadLocal<>();
+
+    public static Optional<DeployableSystemInfo> getCurrentDeployableSystem() {
         return Optional.ofNullable(THREAD_LOCAL.get());
     }
 
-    public static void setCurrentDeployableSystem(Long id) {
-        THREAD_LOCAL.set(id);
+    public static void setCurrentDeployableSystem(Long id, boolean admin) {
+        THREAD_LOCAL.set(new DeployableSystemInfo(id, admin));
     }
 
     public static void clearDeployableSystem() {

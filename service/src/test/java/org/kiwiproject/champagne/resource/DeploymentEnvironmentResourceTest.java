@@ -1,22 +1,5 @@
 package org.kiwiproject.champagne.resource;
 
-import static javax.ws.rs.client.Entity.json;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.kiwiproject.collect.KiwiLists.first;
-import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertAcceptedResponse;
-import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertBadRequest;
-import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertNoContentResponse;
-import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertOkResponse;
-import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertResponseStatusCode;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
-
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import org.junit.jupiter.api.AfterEach;
@@ -39,11 +22,19 @@ import org.kiwiproject.dropwizard.error.test.junit.jupiter.ApplicationErrorExten
 import org.kiwiproject.jaxrs.exception.JaxrsExceptionMapper;
 import org.mockito.ArgumentCaptor;
 
-import java.util.List;
 import javax.ws.rs.core.GenericType;
+import java.util.List;
+
+import static javax.ws.rs.client.Entity.json;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.kiwiproject.collect.KiwiLists.first;
+import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.Mockito.*;
 
 @DisplayName("DeploymentEnvironmentResource")
-@ExtendWith({DropwizardExtensionsSupport.class, ApplicationErrorExtension.class, DeployableSystemExtension.class})
+@ExtendWith({DropwizardExtensionsSupport.class, ApplicationErrorExtension.class})
 class DeploymentEnvironmentResourceTest {
     private static final DeploymentEnvironmentDao DEPLOYMENT_ENVIRONMENT_DAO = mock(DeploymentEnvironmentDao.class);
     private static final AuditRecordDao AUDIT_RECORD_DAO = mock(AuditRecordDao.class);
@@ -58,7 +49,10 @@ class DeploymentEnvironmentResourceTest {
             .build();
 
     @RegisterExtension
-    private final JwtExtension jwtExtension = new JwtExtension("bob");
+    public final JwtExtension jwtExtension = new JwtExtension("bob");
+
+    @RegisterExtension
+    public final DeployableSystemExtension deployableSystemExtension = new DeployableSystemExtension(1L, true);
 
     @AfterEach
     void tearDown() {

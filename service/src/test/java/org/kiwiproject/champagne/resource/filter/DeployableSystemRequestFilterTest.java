@@ -1,18 +1,22 @@
 package org.kiwiproject.champagne.resource.filter;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import org.dhatim.dropwizard.jwt.cookie.authentication.DefaultJwtCookiePrincipal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.kiwiproject.champagne.dao.DeployableSystemDao;
+import org.kiwiproject.champagne.dao.UserDao;
 import org.kiwiproject.champagne.model.DeployableSystemThreadLocal;
+import org.kiwiproject.champagne.model.DeployableSystemThreadLocal.DeployableSystemInfo;
+import org.kiwiproject.champagne.model.User;
 
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.SecurityContext;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @DisplayName("DeployableSystemRequestFilter")
 class DeployableSystemRequestFilterTest {
@@ -25,7 +29,8 @@ class DeployableSystemRequestFilterTest {
     @Test
     void shouldNotSetDeployableSystemWhenHeaderNotSet() {
         var dao = mock(DeployableSystemDao.class);
-        var filter = new DeployableSystemRequestFilter(dao);
+        var userDao = mock(UserDao.class);
+        var filter = new DeployableSystemRequestFilter(dao, userDao);
 
         var context = mock(ContainerRequestContext.class);
         when(context.getHeaderString("Champagne-Deployable-System")).thenReturn(null);
@@ -38,7 +43,8 @@ class DeployableSystemRequestFilterTest {
     @Test
     void shouldNotSetDeployableSystemWhenHeaderSetButUserNotInSystem() {
         var dao = mock(DeployableSystemDao.class);
-        var filter = new DeployableSystemRequestFilter(dao);
+        var userDao = mock(UserDao.class);
+        var filter = new DeployableSystemRequestFilter(dao, userDao);
 
         var context = mock(ContainerRequestContext.class);
         when(context.getHeaderString("Champagne-Deployable-System")).thenReturn("1");
@@ -49,7 +55,8 @@ class DeployableSystemRequestFilterTest {
         var principal = new DefaultJwtCookiePrincipal("bob");
         when(securityContext.getUserPrincipal()).thenReturn(principal);
 
-        when(dao.isUserBySystemIdentifierInSystem("bob", 1)).thenReturn(false);
+        when(userDao.findBySystemIdentifier("bob")).thenReturn(Optional.of(User.builder().id(1L).build()));
+        when(dao.isUserInSystem(1L, 1L)).thenReturn(false);
 
         filter.filter(context);
 
@@ -59,7 +66,8 @@ class DeployableSystemRequestFilterTest {
     @Test
     void shouldSetDeployableSystemWhenHeaderSetAndUserInSystem() {
         var dao = mock(DeployableSystemDao.class);
-        var filter = new DeployableSystemRequestFilter(dao);
+        var userDao = mock(UserDao.class);
+        var filter = new DeployableSystemRequestFilter(dao, userDao);
 
         var context = mock(ContainerRequestContext.class);
         when(context.getHeaderString("Champagne-Deployable-System")).thenReturn("1");
@@ -70,10 +78,12 @@ class DeployableSystemRequestFilterTest {
         var principal = new DefaultJwtCookiePrincipal("bob");
         when(securityContext.getUserPrincipal()).thenReturn(principal);
 
-        when(dao.isUserBySystemIdentifierInSystem("bob", 1)).thenReturn(true);
+        when(userDao.findBySystemIdentifier("bob")).thenReturn(Optional.of(User.builder().id(1L).build()));
+        when(dao.isUserInSystem(1L, 1L)).thenReturn(true);
+        when(dao.isUserAdminOfSystem(1L, 1L)).thenReturn(true);
 
         filter.filter(context);
 
-        assertThat(DeployableSystemThreadLocal.getCurrentDeployableSystem()).contains(1L);
+        assertThat(DeployableSystemThreadLocal.getCurrentDeployableSystem().map(DeployableSystemInfo::getId)).contains(1L);
     }
 }

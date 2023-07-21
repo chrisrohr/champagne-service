@@ -1,10 +1,5 @@
 package org.kiwiproject.champagne.resource;
 
-import static java.util.Objects.isNull;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static org.kiwiproject.base.KiwiPreconditions.requireNotNull;
-import static org.kiwiproject.champagne.util.DeployableSystems.getSystemIdOrThrowBadRequest;
-
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import org.kiwiproject.champagne.dao.AuditRecordDao;
@@ -16,15 +11,14 @@ import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
 
 import javax.annotation.security.PermitAll;
 import javax.validation.Valid;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
+
+import static java.util.Objects.isNull;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.kiwiproject.base.KiwiPreconditions.requireNotNull;
+import static org.kiwiproject.champagne.util.DeployableSystems.checkUserAdminOfSystem;
+import static org.kiwiproject.champagne.util.DeployableSystems.getSystemIdOrThrowBadRequest;
 
 @Path("/environments")
 @Produces(APPLICATION_JSON)
@@ -56,6 +50,8 @@ public class DeploymentEnvironmentResource extends AuditableResource {
     @Timed
     @ExceptionMetered
     public Response createEnvironment(@Valid DeploymentEnvironment deploymentEnvironment) {
+        checkUserAdminOfSystem();
+
         if (isNull(deploymentEnvironment.getDeployableSystemId())) {
             var systemId = getSystemIdOrThrowBadRequest();
             deploymentEnvironment = deploymentEnvironment.withDeployableSystemId(systemId);
@@ -74,6 +70,8 @@ public class DeploymentEnvironmentResource extends AuditableResource {
     @Timed
     @ExceptionMetered
     public Response updateEnvironment(@Valid DeploymentEnvironment deploymentEnvironment) {
+        checkUserAdminOfSystem();
+
         requireNotNull(deploymentEnvironment.getId(), "An id is required to update a deployment environment");
 
         var updatedCount = deploymentEnvironmentDao.updateEnvironment(deploymentEnvironment);
@@ -90,6 +88,8 @@ public class DeploymentEnvironmentResource extends AuditableResource {
     @Timed
     @ExceptionMetered
     public Response hardDeleteEnvironment(@PathParam("id") Long id) {
+        checkUserAdminOfSystem();
+
         var deleteCount = deploymentEnvironmentDao.hardDeleteById(id);
 
         if (deleteCount > 0) {
@@ -104,6 +104,8 @@ public class DeploymentEnvironmentResource extends AuditableResource {
     @Timed
     @ExceptionMetered
     public Response deactivateEnvironment(@PathParam("id") Long id) {
+        checkUserAdminOfSystem();
+
         var updatedCount = deploymentEnvironmentDao.softDeleteById(id);
 
         if (updatedCount > 0) {
@@ -118,6 +120,8 @@ public class DeploymentEnvironmentResource extends AuditableResource {
     @Timed
     @ExceptionMetered
     public Response activateEnvironment(@PathParam("id") Long id) {
+        checkUserAdminOfSystem();
+
         var updatedCount = deploymentEnvironmentDao.unSoftDeleteById(id);
 
         if (updatedCount > 0) {

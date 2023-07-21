@@ -1,20 +1,5 @@
 package org.kiwiproject.champagne.resource;
 
-import static javax.ws.rs.client.Entity.json;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.kiwiproject.collect.KiwiLists.first;
-import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertAcceptedResponse;
-import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertNotFoundResponse;
-import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertOkResponse;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
-
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import org.junit.jupiter.api.AfterEach;
@@ -37,12 +22,20 @@ import org.kiwiproject.dropwizard.error.test.junit.jupiter.ApplicationErrorExten
 import org.kiwiproject.jaxrs.exception.JaxrsExceptionMapper;
 import org.mockito.ArgumentCaptor;
 
+import javax.ws.rs.core.GenericType;
 import java.util.List;
 import java.util.Optional;
-import javax.ws.rs.core.GenericType;
+
+import static javax.ws.rs.client.Entity.json;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.kiwiproject.collect.KiwiLists.first;
+import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 @DisplayName("HostConfigurationResource")
-@ExtendWith({DropwizardExtensionsSupport.class, ApplicationErrorExtension.class, DeployableSystemExtension.class})
+@ExtendWith({DropwizardExtensionsSupport.class, ApplicationErrorExtension.class})
 class HostConfigurationResourceTest {
     private static final HostDao HOST_DAO = mock(HostDao.class);
     private static final ComponentDao COMPONENT_DAO = mock(ComponentDao.class);
@@ -57,7 +50,10 @@ class HostConfigurationResourceTest {
             .build();
 
     @RegisterExtension
-    private final JwtExtension jwtExtension = new JwtExtension("bob");
+    public final JwtExtension jwtExtension = new JwtExtension("bob");
+
+    @RegisterExtension
+    public final DeployableSystemExtension deployableSystemExtension = new DeployableSystemExtension(1L, true);
 
     @AfterEach
     void tearDown() {
