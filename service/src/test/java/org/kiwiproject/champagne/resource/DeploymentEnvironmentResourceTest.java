@@ -17,6 +17,9 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import javax.ws.rs.core.GenericType;
+import java.util.List;
+
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import org.junit.jupiter.api.AfterEach;
@@ -39,11 +42,8 @@ import org.kiwiproject.dropwizard.error.test.junit.jupiter.ApplicationErrorExten
 import org.kiwiproject.jaxrs.exception.JaxrsExceptionMapper;
 import org.mockito.ArgumentCaptor;
 
-import java.util.List;
-import javax.ws.rs.core.GenericType;
-
 @DisplayName("DeploymentEnvironmentResource")
-@ExtendWith({DropwizardExtensionsSupport.class, ApplicationErrorExtension.class, DeployableSystemExtension.class})
+@ExtendWith({DropwizardExtensionsSupport.class, ApplicationErrorExtension.class})
 class DeploymentEnvironmentResourceTest {
     private static final DeploymentEnvironmentDao DEPLOYMENT_ENVIRONMENT_DAO = mock(DeploymentEnvironmentDao.class);
     private static final AuditRecordDao AUDIT_RECORD_DAO = mock(AuditRecordDao.class);
@@ -58,7 +58,10 @@ class DeploymentEnvironmentResourceTest {
             .build();
 
     @RegisterExtension
-    private final JwtExtension jwtExtension = new JwtExtension("bob");
+    public final JwtExtension jwtExtension = new JwtExtension("bob");
+
+    @RegisterExtension
+    public final DeployableSystemExtension deployableSystemExtension = new DeployableSystemExtension(1L, true);
 
     @AfterEach
     void tearDown() {

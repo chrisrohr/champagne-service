@@ -3,9 +3,11 @@ package org.kiwiproject.champagne.util;
 import java.util.List;
 import java.util.Map;
 
+import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 import org.kiwiproject.champagne.model.AuditRecord;
+import org.kiwiproject.champagne.model.AuditRecord.Action;
 import org.kiwiproject.champagne.model.Build;
 import org.kiwiproject.champagne.model.Component;
 import org.kiwiproject.champagne.model.DeployableSystem;
@@ -13,15 +15,12 @@ import org.kiwiproject.champagne.model.DeploymentEnvironment;
 import org.kiwiproject.champagne.model.GitProvider;
 import org.kiwiproject.champagne.model.Host;
 import org.kiwiproject.champagne.model.User;
-import org.kiwiproject.champagne.model.AuditRecord.Action;
 import org.kiwiproject.champagne.model.manualdeployment.DeploymentTaskStatus;
 import org.kiwiproject.champagne.model.manualdeployment.Release;
 import org.kiwiproject.champagne.model.manualdeployment.ReleaseStage;
 import org.kiwiproject.champagne.model.manualdeployment.ReleaseStatus;
 import org.kiwiproject.champagne.model.manualdeployment.Task;
 import org.kiwiproject.champagne.model.manualdeployment.TaskStatus;
-
-import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class TestObjects {
@@ -192,16 +191,17 @@ public class TestObjects {
                 .first();
     }
 
-    public static long insertComponentRecord(Handle handle, String componentName, String tag) {
+    public static long insertComponentRecord(Handle handle, String componentName, String tag, Long deployableSystemId) {
         var componentToInsert = Component.builder()
                 .componentName(componentName)
                 .tag(tag)
+                .deployableSystemId(deployableSystemId)
                 .build();
 
         return handle.createUpdate("insert into components "
-                        + "(component_name, tag) "
+                        + "(component_name, tag, deployable_system_id) "
                         + "values "
-                        + "(:componentName, :tag)")
+                        + "(:componentName, :tag, :deployableSystemId)")
                 .bindBean(componentToInsert)
                 .executeAndReturnGeneratedKeys("id")
                 .mapTo(Long.class)

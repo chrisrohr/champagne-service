@@ -1,5 +1,16 @@
 package org.kiwiproject.champagne.dao;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
+import static org.kiwiproject.champagne.util.TestObjects.insertComponentRecord;
+import static org.kiwiproject.champagne.util.TestObjects.insertDeployableSystem;
+import static org.kiwiproject.collect.KiwiLists.first;
+import static org.kiwiproject.test.util.DateTimeTestHelper.assertTimeDifferenceWithinTolerance;
+
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.List;
+
 import org.jdbi.v3.core.Handle;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -10,16 +21,6 @@ import org.kiwiproject.champagne.dao.mappers.ComponentMapper;
 import org.kiwiproject.champagne.model.Component;
 import org.kiwiproject.test.junit.jupiter.Jdbi3DaoExtension;
 import org.kiwiproject.test.junit.jupiter.PostgresLiquibaseTestExtension;
-
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.tuple;
-import static org.kiwiproject.champagne.util.TestObjects.insertComponentRecord;
-import static org.kiwiproject.collect.KiwiLists.first;
-import static org.kiwiproject.test.util.DateTimeTestHelper.assertTimeDifferenceWithinTolerance;
 
 @DisplayName("ComponentDao")
 class ComponentDaoTest {
@@ -49,11 +50,7 @@ class ComponentDaoTest {
         void shouldInsertComponentSuccessfully() {
             var beforeInsert = ZonedDateTime.now();
 
-            var systemId = handle.createUpdate("insert into deployable_systems (name) values ('kiwi')")
-                    .executeAndReturnGeneratedKeys("id")
-                    .mapTo(Long.class)
-                    .first();
-
+            var systemId = insertDeployableSystem(handle, "kiwi");
             var componentToInsert = Component.builder()
                     .componentName("foo-service")
                     .tag("core")
@@ -86,7 +83,8 @@ class ComponentDaoTest {
 
         @Test
         void shouldReturnListOfComponents() {
-            var id = insertComponentRecord(handle, "foo-service", "core");
+            var systemId = insertDeployableSystem(handle, "my-system");
+            var id = insertComponentRecord(handle, "foo-service", "core", systemId);
 
             var components = dao.findComponentsByHostTags(List.of("core"));
             assertThat(components)
@@ -96,9 +94,34 @@ class ComponentDaoTest {
 
         @Test
         void shouldReturnEmptyListWhenNoComponentsFound() {
-            insertComponentRecord(handle, "foo-service", "audit");
+            var systemId = insertDeployableSystem(handle, "my-system");
+            insertComponentRecord(handle, "foo-service", "audit", systemId);
 
             var hosts = dao.findComponentsByHostTags(List.of("core"));
+            assertThat(hosts).isEmpty();
+        }
+    }
+
+    @Nested
+    class FindComponentsForSystem {
+
+        @Test
+        void shouldReturnListOfComponents() {
+            var systemId = insertDeployableSystem(handle, "my-system");
+            var id = insertComponentRecord(handle, "foo-service", "core", systemId);
+
+            var components = dao.findComponentsForSystem(systemId);
+            assertThat(components)
+                    .extracting("id", "componentName", "tag")
+                    .contains(tuple(id, "foo-service", "core"));
+        }
+
+        @Test
+        void shouldReturnEmptyListWhenNoComponentsFound() {
+            var systemId = insertDeployableSystem(handle, "my-system");
+            insertComponentRecord(handle, "foo-service", "audit", systemId);
+
+            var hosts = dao.findComponentsForSystem(500L);
             assertThat(hosts).isEmpty();
         }
     }
@@ -108,7 +131,8 @@ class ComponentDaoTest {
 
         @Test
         void shouldDeleteComponentSuccessfully() {
-            var id = insertComponentRecord(handle, "foo-service", "core");
+            var systemId = insertDeployableSystem(handle, "my-system");
+            var id = insertComponentRecord(handle, "foo-service", "core", systemId);
 
             dao.deleteComponent(id);
 
@@ -116,6 +140,26 @@ class ComponentDaoTest {
             assertThat(components).isEmpty();
         }
 
+    }
+
+    @Nested
+    class UpdateComponent {
+        @Test
+        void shouldUpdateSuccessfully() {
+            var systemId = insertDeployableSystem(handle, "my-system");
+            var id = insertComponentRecord(handle, "old-name", "badTag", systemId);
+
+            var updateCount = dao.updateComponent("new-name", "goodTag", id);
+
+            assertThat(updateCount).isOne();
+
+            var component = handle.select("select * from components where id = ?", id)
+                    .map(new ComponentMapper())
+                    .first();
+
+            assertThat(component.getComponentName()).isEqualTo("new-name");
+            assertThat(component.getTag()).isEqualTo("goodTag");
+        }
     }
 
 }

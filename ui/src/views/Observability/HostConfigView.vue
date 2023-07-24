@@ -38,6 +38,9 @@
               {{ props.row.source }}
             </td>
             <td class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4">
+              <button type="button" v-if="currentUserStore.isDeployableSystemAdmin" @click="startUpdate(props.row)" class="text-emerald-500 bg-transparent border border-solid border-emerald-500 hover:bg-emerald-500 hover:text-white active:bg-emerald-600 font-bold uppercase text-xs px-4 py-2 rounded outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150">
+                <i class="fas fa-edit"></i>
+              </button>
               <button type="button" v-if="currentUserStore.isDeployableSystemAdmin" @click="confirmDeleteHost(props.row)" class="text-emerald-500 bg-transparent border border-solid border-emerald-500 hover:bg-emerald-500 hover:text-white active:bg-emerald-600 font-bold uppercase text-xs px-4 py-2 rounded outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150">
                 <i class="fas fa-trash"></i>
               </button>
@@ -49,12 +52,6 @@
                 <template #body-cell-currentVersion>
                   Coming Soon
                 </template>
-
-                <template #body-cell-actions="props">
-                  <button type="button" v-if="currentUserStore.isDeployableSystemAdmin" @click="confirmDeleteComponent(props.row)" class="text-emerald-500 bg-transparent border border-solid border-emerald-500 hover:bg-emerald-500 hover:text-white active:bg-emerald-600 font-bold uppercase text-xs px-4 py-2 rounded outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                </template>
               </card-table>
             </td>
           </tr>
@@ -63,30 +60,18 @@
     </div>
 
     <confirmation-prompt title="Hold up!" :message="deleteHostConfirmationMessage" @cancelConfirm="deleteHostConfirmationState = false" @acceptConfirm="deleteHost" v-if="deleteHostConfirmationState"/>
-    <confirmation-prompt title="Hold up!" :message="deleteComponentConfirmationMessage" @cancelConfirm="deleteComponentConfirmationState = false" @acceptConfirm="deleteComponent" v-if="deleteComponentConfirmationState"/>
 
-    <button v-if="currentUserStore.isDeployableSystemAdmin" ref="btnDropdownRef" class="fixed bottom-3 right-14 bg-emerald-500 text-white active:bg-emerald-600 font-bold uppercase text-xs w-10 h-10 p-0 rounded-full shadow hover:shadow-md outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150" type="button" @click="toggleActions">
-      <i class="fas fa-angle-up"></i>
+    <button v-if="currentUserStore.isDeployableSystemAdmin" class="fixed bottom-3 right-14 bg-emerald-500 text-white active:bg-emerald-600 font-bold uppercase text-xs w-10 h-10 p-0 rounded-full shadow hover:shadow-md outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150" type="button" @click="startCreate">
+      <i class="fas fa-plus"></i>
     </button>
-    <div ref="popoverDropdownRef" class="fixed bottom-14 right-14 bg-transparent z-50 py-2 mb-2 text-right min-w-48" v-bind:class="{hidden: !dropdownPopoverShow, block: dropdownPopoverShow}">
-      <div class="w-full justify-end">
-        <button type="button" class="bg-emerald-500 text-white font-bold text-xs rounded-full px-4 py-2 mb-2" @click="startCreateHost">
-          <i class="fas fa-plus"></i> New Host
-        </button>
-      </div>
-      <div class="w-full justify-end">
-        <button type="button" class="bg-emerald-500 text-white font-bold text-xs rounded-full px-4 py-2 mb-2" @click="startCreateComponent">
-          <i class="fas fa-plus"></i> New Component
-        </button>
-      </div>
-    </div>
 
     <div v-if="showAddHost" class="overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none justify-center items-center flex">
       <div class="relative w-auto my-6 mx-auto max-w-sm">
         <div class="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none">
           <div class="flex items-start justify-between p-5 border-b border-solid border-gray-200 rounded-t">
             <h5 class="text-lg font-semibold uppercase">
-              Add new host
+              <span v-if="hostToCreate.id === null">Add new host</span>
+              <span v-else>Update host</span>
             </h5>
           </div>
           <div class="relative p-6 flex-auto">
@@ -109,7 +94,7 @@
             <button class="text-red-500 bg-transparent font-bold uppercase px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150" type="button" @click="showAddHost = false">
               Cancel
             </button>
-            <button class="bg-emerald-500 text-white active:bg-emerald-600 font-bold uppercase px-6 py-3 text-sm rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150" type="button" @click="createHost">
+            <button class="bg-emerald-500 text-white active:bg-emerald-600 font-bold uppercase px-6 py-3 text-sm rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150" type="button" @click="hostToCreate.id === null ? createHost() : updateHost()">
               Save
             </button>
           </div>
@@ -117,58 +102,21 @@
       </div>
     </div>
     <div v-if="showAddHost" class="opacity-25 fixed inset-0 z-40 bg-black"></div>
-
-    <div v-if="showAddComponent" class="overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none justify-center items-center flex">
-      <div class="relative w-auto my-6 mx-auto max-w-sm">
-        <div class="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none">
-          <div class="flex items-start justify-between p-5 border-b border-solid border-gray-200 rounded-t">
-            <h5 class="text-lg font-semibold uppercase">
-              Add new component
-            </h5>
-          </div>
-          <div class="relative p-6 flex-auto">
-            <div class="mb-3 pt-0">
-              <input type="text" placeholder="Name" v-model="componentToCreate.name" class="px-2 py-1 placeholder-gray-300 text-gray-600 relative bg-white rounded text-sm border border-gray-300 outline-none focus:outline-none focus:shadow-outline w-full"/>
-            </div>
-            <div class="mb-3 pt-0 text-red-600 text-xs" v-if="componentToCreate.showNameError">
-              Name is required!
-            </div>
-            <div class="mb-3 pt-0">
-              <input type="text" placeholder="Tag" v-model="componentToCreate.tag" class="px-2 py-1 placeholder-gray-300 text-gray-600 relative bg-white rounded text-sm border border-gray-300 outline-none focus:outline-none focus:shadow-outline w-full"/>
-            </div>
-            <div class="mb-3 pt-0 text-red-600 text-xs" v-if="componentToCreate.showTagError">
-              Tag is required!
-            </div>
-          </div>
-          <div class="flex items-center justify-end p-6 border-t border-solid border-gray-200 rounded-b">
-            <button class="text-red-500 bg-transparent font-bold uppercase px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150" type="button" @click="showAddComponent = false">
-              Cancel
-            </button>
-            <button class="bg-emerald-500 text-white active:bg-emerald-600 font-bold uppercase px-6 py-3 text-sm rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150" type="button" @click="createComponent">
-              Save
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div v-if="showAddComponent" class="opacity-25 fixed inset-0 z-40 bg-black"></div>
   </div>
 </template>
 
 <script setup>
 import {onMounted, ref, watch} from "vue";
+
 import {usePageInfoStore} from "@/stores/pageInfo";
 import {useCurrentUserStore} from "@/stores/currentUser";
 import {useEnvironmentStore} from "@/stores/environments";
-import CardTable from "@/components/Cards/CardTable.vue";
-import {api} from "@/plugins/axios";
-import ConfirmationPrompt from "@/components/Alerts/ConfirmationPrompt.vue";
-import {createPopper} from "@popperjs/core";
-import _ from "lodash";
 
-const dropdownPopoverShow = ref(false);
-const popoverDropdownRef = ref(null);
-const btnDropdownRef = ref(null);
+import CardTable from "@/components/Cards/CardTable.vue";
+import ConfirmationPrompt from "@/components/Alerts/ConfirmationPrompt.vue";
+
+import {api} from "@/plugins/axios";
+import _ from "lodash";
 
 const pageInfoStore = usePageInfoStore();
 const environmentStore = useEnvironmentStore();
@@ -178,28 +126,17 @@ const deleteHostConfirmationMessage = ref('');
 const deleteHostConfirmationState = ref(false);
 const currentHost = ref(null);
 
-const deleteComponentConfirmationMessage = ref('');
-const deleteComponentConfirmationState = ref(false);
-const currentComponent = ref(null);
-
 const loading = ref(false);
 const selectedEnv = ref(currentUserStore.activeDeployableSystem.devEnvironmentId);
 watch(selectedEnv, loadHosts);
 
 const showAddHost = ref(false);
 const hostToCreate = ref({
+  id: null,
   hostname: '',
   tag: '',
   tags: [],
   showHostnameError: false
-});
-
-const showAddComponent = ref(false);
-const componentToCreate = ref({
-  name: '',
-  tag: '',
-  showNameError: false,
-  showTagError: false
 });
 
 const expandedHosts = ref([]);
@@ -251,22 +188,8 @@ const componentColumns = [
     name: 'tag',
     label: 'Tag',
     field: 'tag'
-  },
-  {
-    name: 'actions',
-    label: 'Actions'
   }
 ];
-
-function toggleActions() {
-  dropdownPopoverShow.value = !dropdownPopoverShow.value;
-
-  if (dropdownPopoverShow.value) {
-    createPopper(btnDropdownRef, popoverDropdownRef, {
-      placement: 'top'
-    });
-  }
-}
 
 function loadHosts() {
   loading.value = true;
@@ -274,6 +197,9 @@ function loadHosts() {
       .then(response => {
         hostRows.value = response.data;
         loading.value = false;
+        expandedHosts.value.forEach(hostId => {
+          loadComponentsForHost(hostId);
+        });
       });
 }
 
@@ -307,22 +233,6 @@ function deleteHost() {
       .then(() => loadHosts());
 }
 
-function confirmDeleteComponent(component) {
-  deleteComponentConfirmationMessage.value = `Are you sure you want to delete component ${component.componentName}?`;
-  currentComponent.value = component;
-  deleteComponentConfirmationState.value = true;
-}
-
-function deleteComponent() {
-  deleteComponentConfirmationState.value = false;
-  api.delete(`/host/component/${currentComponent.value.id}`)
-      .then(() => {
-        expandedHosts.value.forEach(hostId => {
-          loadComponentsForHost(hostId);
-        });
-      });
-}
-
 function addTag() {
   hostToCreate.value.tags.push(hostToCreate.value.tag);
   hostToCreate.value.tag = '';
@@ -332,13 +242,21 @@ function removeTag(tag) {
   _.pull(hostToCreate.value.tags, tag);
 }
 
-function startCreateHost() {
+function startCreate() {
+  hostToCreate.value.id = null;
   hostToCreate.value.hostname = '';
   hostToCreate.value.tag = '';
   hostToCreate.value.tags = [];
   hostToCreate.value.showHostnameError = false;
   showAddHost.value = true;
-  dropdownPopoverShow.value = false;
+}
+
+function startUpdate(host) {
+  hostToCreate.value.id = host.id;
+  hostToCreate.value.hostname = host.hostname;
+  hostToCreate.value.tags = host.tags;
+  hostToCreate.value.showHostnameError = false;
+  showAddHost.value = true;
 }
 
 function createHost() {
@@ -356,40 +274,21 @@ function createHost() {
   }
 }
 
-function startCreateComponent() {
-  componentToCreate.value.name = '';
-  componentToCreate.value.tag = '';
-  componentToCreate.value.showNameError = false;
-  componentToCreate.value.showTagError = false;
-  showAddComponent.value = true;
-  dropdownPopoverShow.value = false;
-}
-
-function createComponent() {
-  if (componentToCreate.value.name === '') {
-    componentToCreate.value.showNameError = true;
-  }
-
-  if (componentToCreate.value.tag === '') {
-    componentToCreate.value.showTagError = true;
-  }
-
-  if (componentToCreate.value.name !== '' && componentToCreate.value.tag !== '') {
-    showAddComponent.value = false;
-    api.post('/host/component', {
-      componentName: componentToCreate.value.name,
-      tag: componentToCreate.value.tag
+function updateHost() {
+  if (hostToCreate.value.hostname === '') {
+    hostToCreate.value.showHostnameError = true;
+  } else {
+    showAddHost.value = false;
+    api.put(`/host/${hostToCreate.value.id}`, {
+      hostname: hostToCreate.value.hostname,
+      tags: hostToCreate.value.tags,
     })
-        .then(() => {
-          expandedHosts.value.forEach(hostId => {
-            loadComponentsForHost(hostId);
-          })
-        });
+        .then(() => loadHosts());
   }
 }
 
 onMounted(() => {
-  pageInfoStore.setPageTitle('Host Config');
+  pageInfoStore.setPageTitle('Hosts');
 
   loadHosts();
 });

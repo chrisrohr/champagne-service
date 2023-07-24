@@ -9,19 +9,22 @@ public class DeployableSystemExtension implements BeforeEachCallback, AfterEachC
 
     private final long systemId;
 
+    private final boolean admin;
+
     // Used by Jupiter's ExtendWith
     @SuppressWarnings("unused")
     public DeployableSystemExtension() {
-        this(1L);
+        this(1L, false);
     }
 
-    public DeployableSystemExtension(long systemId) {
+    public DeployableSystemExtension(long systemId, boolean admin) {
         this.systemId = systemId;
+        this.admin = admin;
     }
 
     @Override
     public void beforeEach(ExtensionContext extensionContext) {
-        DeployableSystemThreadLocal.setCurrentDeployableSystem(systemId);
+        DeployableSystemThreadLocal.setCurrentDeployableSystem(systemId, admin);
     }
 
     @Override

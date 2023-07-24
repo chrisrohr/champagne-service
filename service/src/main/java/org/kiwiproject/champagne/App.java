@@ -2,6 +2,10 @@ package org.kiwiproject.champagne;
 
 import static org.kiwiproject.dropwizard.util.job.MonitoredJobs.registerJob;
 
+import javax.servlet.DispatcherType;
+import javax.servlet.FilterRegistration;
+import java.util.EnumSet;
+
 import io.dropwizard.Application;
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
@@ -50,10 +54,6 @@ import org.kiwiproject.dropwizard.util.jackson.StandardJacksonConfigurations;
 import org.kiwiproject.dropwizard.util.server.DropwizardConnectors;
 import org.kiwiproject.json.JsonHelper;
 import org.kiwiproject.net.KiwiInternetAddresses;
-
-import java.util.EnumSet;
-import javax.servlet.DispatcherType;
-import javax.servlet.FilterRegistration;
 
 public class App extends Application<AppConfig> {
 
@@ -125,7 +125,7 @@ public class App extends Application<AppConfig> {
         var cleanOutAuditsJob = new CleanOutAuditsJob(auditRecordDao, configuration.getAuditRecordsMaxRetain().toMilliseconds());
         registerJob(environment, "Clean Out Audits", configuration.getAuditCleanup(), cleanOutAuditsJob);
 
-        environment.jersey().register(new DeployableSystemRequestFilter(deployableSystemDao));
+        environment.jersey().register(new DeployableSystemRequestFilter(deployableSystemDao, userDao));
     }
 
     private static void setupJsonProcessing(Environment environment) {

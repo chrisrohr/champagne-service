@@ -7,6 +7,7 @@ import LoginView from "@/views/LoginView.vue";
 import NoDeployableSystemView from "@/views/NoDeployableSystemView.vue";
 import EnvironmentView from "@/views/Observability/EnvironmentView.vue";
 import ManageSystemView from "@/views/SystemAdmin/ManageSystemView.vue";
+import ComponentView from "@/views/Observability/ComponentView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -15,8 +16,9 @@ const router = createRouter({
       path: '/',
       component: () => import('../layouts/ChampagneLayout.vue'),
       children: [
-        { path: '/', redirect: { name: 'hostConfig' }, name: 'root' },
-        { path: '/hostConfig', component: HostConfigView, name: 'hostConfig' },
+        { path: '/', redirect: { name: 'hosts' }, name: 'root' },
+        { path: '/hosts', component: HostConfigView, name: 'hosts' },
+        { path: '/components', component: ComponentView, name: 'components' },
         { path: '/environments', component: EnvironmentView, name: 'environments' },
         { path: '/manageSystem', component: ManageSystemView, name: 'manageSystem' },
         { path: '/noDeployableSystem', component: NoDeployableSystemView, name: 'noDeployableSystem' }
