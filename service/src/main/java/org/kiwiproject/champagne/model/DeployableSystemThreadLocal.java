@@ -1,10 +1,10 @@
 package org.kiwiproject.champagne.model;
 
+import java.util.Optional;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.experimental.UtilityClass;
-
-import java.util.Optional;
 
 @UtilityClass
 public class DeployableSystemThreadLocal {

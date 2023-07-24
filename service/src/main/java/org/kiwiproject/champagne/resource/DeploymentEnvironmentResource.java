@@ -1,5 +1,23 @@
 package org.kiwiproject.champagne.resource;
 
+import static java.util.Objects.isNull;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.kiwiproject.base.KiwiPreconditions.requireNotNull;
+import static org.kiwiproject.champagne.util.DeployableSystems.checkUserAdminOfSystem;
+import static org.kiwiproject.champagne.util.DeployableSystems.getSystemIdOrThrowBadRequest;
+
+import javax.annotation.security.PermitAll;
+import javax.validation.Valid;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Response;
+
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import org.kiwiproject.champagne.dao.AuditRecordDao;
@@ -8,17 +26,6 @@ import org.kiwiproject.champagne.model.AuditRecord.Action;
 import org.kiwiproject.champagne.model.DeploymentEnvironment;
 import org.kiwiproject.champagne.service.ManualTaskService;
 import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
-
-import javax.annotation.security.PermitAll;
-import javax.validation.Valid;
-import javax.ws.rs.*;
-import javax.ws.rs.core.Response;
-
-import static java.util.Objects.isNull;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static org.kiwiproject.base.KiwiPreconditions.requireNotNull;
-import static org.kiwiproject.champagne.util.DeployableSystems.checkUserAdminOfSystem;
-import static org.kiwiproject.champagne.util.DeployableSystems.getSystemIdOrThrowBadRequest;
 
 @Path("/environments")
 @Produces(APPLICATION_JSON)

@@ -1,5 +1,16 @@
 package org.kiwiproject.champagne.dao;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
+import static org.kiwiproject.champagne.util.TestObjects.insertComponentRecord;
+import static org.kiwiproject.champagne.util.TestObjects.insertDeployableSystem;
+import static org.kiwiproject.collect.KiwiLists.first;
+import static org.kiwiproject.test.util.DateTimeTestHelper.assertTimeDifferenceWithinTolerance;
+
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.List;
+
 import org.jdbi.v3.core.Handle;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -10,17 +21,6 @@ import org.kiwiproject.champagne.dao.mappers.ComponentMapper;
 import org.kiwiproject.champagne.model.Component;
 import org.kiwiproject.test.junit.jupiter.Jdbi3DaoExtension;
 import org.kiwiproject.test.junit.jupiter.PostgresLiquibaseTestExtension;
-
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.tuple;
-import static org.kiwiproject.champagne.util.TestObjects.insertComponentRecord;
-import static org.kiwiproject.champagne.util.TestObjects.insertDeployableSystem;
-import static org.kiwiproject.collect.KiwiLists.first;
-import static org.kiwiproject.test.util.DateTimeTestHelper.assertTimeDifferenceWithinTolerance;
 
 @DisplayName("ComponentDao")
 class ComponentDaoTest {

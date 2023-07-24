@@ -1,5 +1,25 @@
 package org.kiwiproject.champagne.resource;
 
+import static javax.ws.rs.client.Entity.json;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.kiwiproject.collect.KiwiLists.first;
+import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertAcceptedResponse;
+import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertNotFoundResponse;
+import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertOkResponse;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+
+import javax.ws.rs.core.GenericType;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import org.junit.jupiter.api.AfterEach;
@@ -21,18 +41,6 @@ import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
 import org.kiwiproject.dropwizard.error.test.junit.jupiter.ApplicationErrorExtension;
 import org.kiwiproject.jaxrs.exception.JaxrsExceptionMapper;
 import org.mockito.ArgumentCaptor;
-
-import javax.ws.rs.core.GenericType;
-import java.util.List;
-import java.util.Optional;
-
-import static javax.ws.rs.client.Entity.json;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.kiwiproject.collect.KiwiLists.first;
-import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
 
 @DisplayName("HostConfigurationResource")
 @ExtendWith({DropwizardExtensionsSupport.class, ApplicationErrorExtension.class})
@@ -145,6 +153,46 @@ class HostConfigurationResourceTest {
     }
 
     @Nested
+    class UpdateHost {
+
+        @Test
+        void shouldUpdateGivenHost() {
+            when(HOST_DAO.updateHost("foo", "tag1,tag2", 1L)).thenReturn(1);
+
+            var response = APP.client().target("/host")
+                    .path("{id}")
+                    .resolveTemplate("id", 1)
+                    .request()
+                    .put(json(Map.of("hostname", "foo", "tags", List.of("tag1", "tag2"), "id", 1L)));
+
+            assertAcceptedResponse(response);
+
+            verify(HOST_DAO).updateHost("foo", "tag1,tag2", 1L);
+
+            verifyAuditRecorded(Host.class, Action.UPDATED);
+
+            verifyNoMoreInteractions(HOST_DAO, AUDIT_RECORD_DAO);
+        }
+
+        @Test
+        void shouldNotAuditUpdateIfDoesNotChangeAnything() {
+            when(HOST_DAO.updateHost("foo", "tag1,tag2", 1L)).thenReturn(0);
+
+            var response = APP.client().target("/host")
+                    .path("{id}")
+                    .resolveTemplate("id", 1)
+                    .request()
+                    .put(json(Map.of("hostname", "foo", "tags", List.of("tag1", "tag2"), "id", 1L)));
+
+            assertAcceptedResponse(response);
+
+            verify(HOST_DAO).updateHost("foo", "tag1,tag2", 1L);
+            verifyNoMoreInteractions(HOST_DAO);
+            verifyNoInteractions(AUDIT_RECORD_DAO);
+        }
+    }
+
+    @Nested
     class DeleteHost {
 
         @Test
@@ -193,6 +241,40 @@ class HostConfigurationResourceTest {
         assertThat(audit.getRecordId()).isEqualTo(1);
         assertThat(audit.getRecordType()).isEqualTo(auditRecordClass.getSimpleName());
         assertThat(audit.getAction()).isEqualTo(action);
+    }
+
+    @Nested
+    class ListComponents {
+
+        @Test
+        void shouldReturnListOfComponents() {
+            var component = Component.builder()
+                    .id(2L)
+                    .componentName("foo-service")
+                    .tag("core")
+                    .build();
+
+            when(COMPONENT_DAO.findComponentsForSystem(1L)).thenReturn(List.of(component));
+
+            var response = APP.client().target("/host/components")
+                    .request()
+                    .get();
+
+            assertOkResponse(response);
+
+            var components = response.readEntity(new GenericType<List<Component>>() {
+            });
+
+            var foundComponent = first(components);
+            assertThat(foundComponent)
+                    .usingRecursiveComparison()
+                    .ignoringFields("createdAt", "updatedAt")
+                    .isEqualTo(component);
+
+            verify(COMPONENT_DAO).findComponentsForSystem(1L);
+            verifyNoMoreInteractions(HOST_DAO, COMPONENT_DAO);
+            verifyNoInteractions(AUDIT_RECORD_DAO);
+        }
     }
 
     @Nested
@@ -297,6 +379,46 @@ class HostConfigurationResourceTest {
             verifyAuditRecorded(Component.class, Action.CREATED);
 
             verifyNoMoreInteractions(COMPONENT_DAO, AUDIT_RECORD_DAO);
+        }
+    }
+
+    @Nested
+    class UpdateComponent {
+
+        @Test
+        void shouldUpdateGivenComponent() {
+            when(COMPONENT_DAO.updateComponent("foo", "tag1", 1L)).thenReturn(1);
+
+            var response = APP.client().target("/host/component")
+                    .path("{id}")
+                    .resolveTemplate("id", 1)
+                    .request()
+                    .put(json(Map.of("componentName", "foo", "tag", "tag1", "id", 1L)));
+
+            assertAcceptedResponse(response);
+
+            verify(COMPONENT_DAO).updateComponent("foo", "tag1", 1L);
+
+            verifyAuditRecorded(Component.class, Action.UPDATED);
+
+            verifyNoMoreInteractions(COMPONENT_DAO, AUDIT_RECORD_DAO);
+        }
+
+        @Test
+        void shouldNotAuditUpdateIfDoesNotChangeAnything() {
+            when(COMPONENT_DAO.updateComponent("foo", "tag1", 1L)).thenReturn(0);
+
+            var response = APP.client().target("/host/component")
+                    .path("{id}")
+                    .resolveTemplate("id", 1)
+                    .request()
+                    .put(json(Map.of("componentName", "foo", "tag", "tag1", "id", 1L)));
+
+            assertAcceptedResponse(response);
+
+            verify(COMPONENT_DAO).updateComponent("foo", "tag1", 1L);
+            verifyNoMoreInteractions(COMPONENT_DAO);
+            verifyNoInteractions(AUDIT_RECORD_DAO);
         }
     }
 

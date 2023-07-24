@@ -1,5 +1,24 @@
 package org.kiwiproject.champagne.resource;
 
+import static java.util.Objects.isNull;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.kiwiproject.champagne.util.DeployableSystems.checkUserAdminOfSystem;
+import static org.kiwiproject.champagne.util.DeployableSystems.getSystemIdOrThrowBadRequest;
+
+import javax.annotation.security.PermitAll;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.util.List;
+
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import org.apache.commons.lang3.StringUtils;
@@ -11,17 +30,6 @@ import org.kiwiproject.champagne.model.Component;
 import org.kiwiproject.champagne.model.Host;
 import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
 import org.kiwiproject.jaxrs.exception.JaxrsNotFoundException;
-
-import javax.annotation.security.PermitAll;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.util.List;
-
-import static java.util.Objects.isNull;
-import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.kiwiproject.champagne.util.DeployableSystems.checkUserAdminOfSystem;
-import static org.kiwiproject.champagne.util.DeployableSystems.getSystemIdOrThrowBadRequest;
 
 @Path("/host")
 @Consumes(MediaType.APPLICATION_JSON)

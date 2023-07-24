@@ -1,14 +1,14 @@
 package org.kiwiproject.champagne.resource.filter;
 
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ContainerRequestFilter;
+
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.kiwiproject.champagne.dao.DeployableSystemDao;
 import org.kiwiproject.champagne.dao.UserDao;
 import org.kiwiproject.champagne.model.DeployableSystemThreadLocal;
 import org.kiwiproject.jaxrs.exception.JaxrsBadRequestException;
-
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerRequestFilter;
 
 public class DeployableSystemRequestFilter implements ContainerRequestFilter {
 

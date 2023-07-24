@@ -1,14 +1,14 @@
 package org.kiwiproject.champagne.resource.filter;
 
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.kiwiproject.champagne.model.DeployableSystemThreadLocal;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerResponseContext;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.kiwiproject.champagne.model.DeployableSystemThreadLocal;
 
 @DisplayName("DeployableSystemResponseFilter")
 class DeployableSystemResponseFilterTest {

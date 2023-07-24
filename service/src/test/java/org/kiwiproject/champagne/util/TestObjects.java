@@ -1,14 +1,26 @@
 package org.kiwiproject.champagne.util;
 
+import java.util.List;
+import java.util.Map;
+
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
-import org.kiwiproject.champagne.model.*;
+import org.kiwiproject.champagne.model.AuditRecord;
 import org.kiwiproject.champagne.model.AuditRecord.Action;
-import org.kiwiproject.champagne.model.manualdeployment.*;
-
-import java.util.List;
-import java.util.Map;
+import org.kiwiproject.champagne.model.Build;
+import org.kiwiproject.champagne.model.Component;
+import org.kiwiproject.champagne.model.DeployableSystem;
+import org.kiwiproject.champagne.model.DeploymentEnvironment;
+import org.kiwiproject.champagne.model.GitProvider;
+import org.kiwiproject.champagne.model.Host;
+import org.kiwiproject.champagne.model.User;
+import org.kiwiproject.champagne.model.manualdeployment.DeploymentTaskStatus;
+import org.kiwiproject.champagne.model.manualdeployment.Release;
+import org.kiwiproject.champagne.model.manualdeployment.ReleaseStage;
+import org.kiwiproject.champagne.model.manualdeployment.ReleaseStatus;
+import org.kiwiproject.champagne.model.manualdeployment.Task;
+import org.kiwiproject.champagne.model.manualdeployment.TaskStatus;
 
 @UtilityClass
 public class TestObjects {

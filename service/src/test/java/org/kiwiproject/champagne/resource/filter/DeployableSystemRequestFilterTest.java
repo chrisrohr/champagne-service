@@ -1,5 +1,13 @@
 package org.kiwiproject.champagne.resource.filter;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.SecurityContext;
+import java.util.Optional;
+
 import org.dhatim.dropwizard.jwt.cookie.authentication.DefaultJwtCookiePrincipal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -9,14 +17,6 @@ import org.kiwiproject.champagne.dao.UserDao;
 import org.kiwiproject.champagne.model.DeployableSystemThreadLocal;
 import org.kiwiproject.champagne.model.DeployableSystemThreadLocal.DeployableSystemInfo;
 import org.kiwiproject.champagne.model.User;
-
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.SecurityContext;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 @DisplayName("DeployableSystemRequestFilter")
 class DeployableSystemRequestFilterTest {
