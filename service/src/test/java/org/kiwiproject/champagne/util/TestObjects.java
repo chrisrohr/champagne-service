@@ -159,10 +159,12 @@ public class TestObjects {
                 .deployableSystemId(systemId)
                 .build();
 
-        return handle.createUpdate("insert into builds "
-                        + "(repo_namespace, repo_name, commit_ref, commit_user, source_branch, component_identifier, component_version, distribution_location, extra_deployment_info, git_provider, deployable_system_id) "
-                        + "values "
-                        + "(:repoNamespace, :repoName, :commitRef, :commitUser, :sourceBranch, :componentIdentifier, :componentVersion, :distributionLocation, :extraData, :gitProvider, :deployableSystemId)")
+        return handle.createUpdate("""
+                        insert into builds
+                          (repo_namespace, repo_name, commit_ref, commit_user, source_branch, component_identifier, component_version, distribution_location, extra_deployment_info, git_provider, deployable_system_id)
+                          values
+                          (:repoNamespace, :repoName, :commitRef, :commitUser, :sourceBranch, :componentIdentifier, :componentVersion, :distributionLocation, :extraData, :gitProvider, :deployableSystemId)
+                        """)
                 .bindBean(buildToInsert)
                 .bind("extraData", "{}")
                 .executeAndReturnGeneratedKeys("id")
@@ -178,10 +180,12 @@ public class TestObjects {
                 .deployableSystemId(systemId)
                 .build();
 
-        return handle.createUpdate("insert into hosts "
-                        + "(environment_id, hostname, source, deployable_system_id) "
-                        + "values "
-                        + "(:environmentId, :hostname, :source, :deployableSystemId)")
+        return handle.createUpdate("""
+                        insert into hosts
+                          (environment_id, hostname, source, deployable_system_id)
+                          values
+                          (:environmentId, :hostname, :source, :deployableSystemId)
+                          """)
                 .bindBean(hostToInsert)
                 .executeAndReturnGeneratedKeys("id")
                 .mapTo(Long.class)
@@ -195,10 +199,12 @@ public class TestObjects {
                 .deployableSystemId(deployableSystemId)
                 .build();
 
-        return handle.createUpdate("insert into components "
-                        + "(component_name, tag_id, deployable_system_id) "
-                        + "values "
-                        + "(:componentName, :tagId, :deployableSystemId)")
+        return handle.createUpdate("""
+                        insert into components
+                          (component_name, tag_id, deployable_system_id)
+                          values
+                          (:componentName, :tagId, :deployableSystemId)
+                          """)
                 .bindBean(componentToInsert)
                 .executeAndReturnGeneratedKeys("id")
                 .mapTo(Long.class)
@@ -211,10 +217,12 @@ public class TestObjects {
                 .deployableSystemId(deployableSystemId)
                 .build();
 
-        return handle.createUpdate("insert into tags "
-                        + "(name, deployable_system_id) "
-                        + "values "
-                        + "(:name, :deployableSystemId)")
+        return handle.createUpdate("""
+                        insert into tags
+                          (name, deployable_system_id)
+                          values
+                          (:name, :deployableSystemId)
+                          """)
                 .bindBean(tagToInsert)
                 .executeAndReturnGeneratedKeys("id")
                 .mapTo(Long.class)
@@ -226,10 +234,12 @@ public class TestObjects {
                 .name(name)
                 .build();
 
-        return handle.createUpdate("insert into deployable_systems "
-                        + "(name) "
-                        + "values "
-                        + "(:name)")
+        return handle.createUpdate("""
+                        insert into deployable_systems
+                          (name)
+                          values
+                          (:name)
+                          """)
                 .bindBean(deployableSystemToInsert)
                 .executeAndReturnGeneratedKeys("id")
                 .mapTo(Long.class)

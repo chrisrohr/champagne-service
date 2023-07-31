@@ -27,7 +27,7 @@ import org.kiwiproject.test.junit.jupiter.PostgresLiquibaseTestExtension;
 
 @DisplayName("HostDao")
 class HostDaoTest {
-    
+
     @RegisterExtension
     static final PostgresLiquibaseTestExtension POSTGRES = new PostgresLiquibaseTestExtension("migrations.xml");
 
@@ -57,16 +57,16 @@ class HostDaoTest {
             var beforeInsert = ZonedDateTime.now();
 
             var hostToInsert = Host.builder()
-                .environmentId(envId)
-                .hostname("localhost")
-                .source(Host.Source.CHAMPAGNE)
-                .build();
+                    .environmentId(envId)
+                    .hostname("localhost")
+                    .source(Host.Source.CHAMPAGNE)
+                    .build();
 
             var id = dao.insertHost(hostToInsert);
 
             var host = handle.select("select * from hosts where id = ?", id)
-                .map(new HostMapper())
-                .first();
+                    .map(new HostMapper())
+                    .first();
 
             assertThat(host.getId()).isEqualTo(id);
 
@@ -74,9 +74,9 @@ class HostDaoTest {
             assertTimeDifferenceWithinTolerance("updatedAt", beforeInsert, host.getUpdatedAt().atZone(ZoneOffset.UTC), 1000L);
 
             assertThat(host)
-                .usingRecursiveComparison()
-                .ignoringFields("id", "createdAt", "updatedAt")
-                .isEqualTo(hostToInsert);
+                    .usingRecursiveComparison()
+                    .ignoringFields("id", "createdAt", "updatedAt")
+                    .isEqualTo(hostToInsert);
         }
     }
 
@@ -91,8 +91,8 @@ class HostDaoTest {
 
             var hosts = dao.findHostsByEnvId(envId, systemId);
             assertThat(hosts)
-                .extracting("id", "hostname", "environmentId")
-                .contains(tuple(hostId, "localhost", envId));
+                    .extracting("id", "hostname", "environmentId")
+                    .contains(tuple(hostId, "localhost", envId));
         }
 
         @Test
@@ -176,10 +176,12 @@ class HostDaoTest {
             var hostId = insertHostRecord(handle, "localhost", envId, systemId);
             var tagId = insertTagRecord(handle, "core", systemId);
 
-            handle.createUpdate("insert into host_tags "
-                            + "(host_id, tag_id) "
-                            + "values "
-                            + "(:hostId, :tagId)")
+            handle.createUpdate("""
+                                    insert into host_tags
+                                      (host_id, tag_id)
+                                      values
+                                      (:hostId, :tagId)
+                            """)
                     .bind("hostId", hostId)
                     .bind("tagId", tagId)
                     .execute();
