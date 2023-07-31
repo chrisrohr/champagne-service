@@ -49,7 +49,6 @@ public class TagResource extends AuditableResource {
         var systemId = getSystemIdOrThrowBadRequest();
 
         var tags = tagDao.findTagsForSystem(systemId);
-        LOG.info("Tags {}", tags);
 
         return Response.ok(tags).build();
     }
@@ -92,7 +91,7 @@ public class TagResource extends AuditableResource {
     @Path("/{id}")
     @Timed
     @ExceptionMetered
-    public Response deleteSystem(@PathParam("id") Long id) {
+    public Response deleteTag(@PathParam("id") Long id) {
         checkUserAdminOfSystem();
 
         var count = tagDao.deleteTag(id);

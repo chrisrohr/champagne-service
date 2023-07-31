@@ -35,13 +35,13 @@ public interface HostDao {
     @SqlQuery("select tag_id from host_tags where host_id = :hostId")
     List<Long> findTagIdsForHost(@Bind("hostId") long hostId);
 
-    @SqlQuery("select h.* from hosts h inner join host_tags ht on ht.host_id = h.id where ht.tag_id in (<tagIds>) order by h.hostname")
-    List<Host> findHostsForTags(@BindList("tagIds") List<Long> tagIds);
+    @SqlQuery("select h.* from hosts h inner join host_tags ht on ht.host_id = h.id where h.deployable_system_id = :systemId and h.environment_id = :envId and ht.tag_id in (<tagIds>) order by h.hostname")
+    List<Host> findHostsForTagsInEnv(@Bind("systemId") long systemId, @Bind("envId") long envId, @BindList("tagIds") List<Long> tagIds);
 
     @SqlBatch("insert into host_tags (host_id, tag_id) values (:hostId, :tagId)")
     void addTagsForHost(@Bind("hostId") long hostId, @Bind("tagId") List<Long> tagIds);
 
-    @SqlUpdate("update hosts set hostname = :hostname where id = :id")
+    @SqlUpdate("update hosts set hostname = :hostname, updated_at = now() where id = :id")
     int updateHost(@Bind("hostname") String hostname, @Bind("id") long id);
 
     @SqlUpdate("delete from hosts where id = :id")

@@ -3,8 +3,9 @@ package org.kiwiproject.champagne.dao;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.kiwiproject.champagne.util.TestObjects.insertDeployableSystem;
+import static org.kiwiproject.champagne.util.TestObjects.insertDeploymentEnvironmentRecord;
+import static org.kiwiproject.champagne.util.TestObjects.insertHostRecord;
 import static org.kiwiproject.champagne.util.TestObjects.insertTagRecord;
-import static org.kiwiproject.collect.KiwiLists.first;
 import static org.kiwiproject.test.util.DateTimeTestHelper.assertTimeDifferenceWithinTolerance;
 
 import java.time.ZoneOffset;
@@ -57,13 +58,10 @@ class TagDaoTest {
 
             var id = dao.insertTag(tagToInsert);
 
-            var tags = handle.select("select * from tags where id = ?", id)
+            var tag = handle.select("select * from tags where id = ?", id)
                     .map(new TagMapper())
-                    .list();
+                    .first();
 
-            assertThat(tags).hasSize(1);
-
-            var tag = first(tags);
             assertThat(tag.getId()).isEqualTo(id);
 
             assertTimeDifferenceWithinTolerance("createdAt", beforeInsert, tag.getCreatedAt().atZone(ZoneOffset.UTC), 1000L);
@@ -115,4 +113,71 @@ class TagDaoTest {
 
     }
 
+    @Nested
+    class UpdateTag {
+        @Test
+        void shouldUpdateGivenTag() {
+            var systemId = insertDeployableSystem(handle, "my-system");
+            var id = insertTagRecord(handle, "core", systemId);
+
+            var updateCount = dao.updateTag(id, "audit");
+
+            assertThat(updateCount).isOne();
+
+            var tag = handle.select("select * from tags where id = ?", id)
+                    .map(new TagMapper())
+                    .first();
+
+            assertThat(tag.getName()).isEqualTo("audit");
+        }
+    }
+
+    @Nested
+    class FindTagsForHost {
+
+        @Test
+        void shouldReturnListOfTags() {
+            var systemId = insertDeployableSystem(handle, "my-system");
+            var envId = insertDeploymentEnvironmentRecord(handle, "dev", systemId);
+            var hostId = insertHostRecord(handle, "localhost", envId, systemId);
+            var id = insertTagRecord(handle, "core", systemId);
+
+            handle.createUpdate("insert into host_tags "
+                            + "(host_id, tag_id) "
+                            + "values "
+                            + "(:hostId, :tagId)")
+                    .bind("hostId", hostId)
+                    .bind("tagId", id)
+                    .execute();
+
+            var tags = dao.findTagsForHost(hostId);
+            assertThat(tags)
+                    .extracting("id", "name")
+                    .contains(tuple(id, "core"));
+        }
+
+        @Test
+        void shouldReturnEmptyListWhenNoTagsFound() {
+            var systemId = insertDeployableSystem(handle, "my-system");
+            insertTagRecord(handle, "audit", systemId);
+
+            var tags = dao.findTagsForHost(1L);
+            assertThat(tags).isEmpty();
+        }
+    }
+
+    @Nested
+    class FindTagById {
+
+        @Test
+        void shouldReturnTagWhenFound() {
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            var id = insertTagRecord(handle, "core", systemId);
+
+            var tag = dao.findTagById(id);
+
+            assertThat(tag.getId()).isEqualTo(id);
+            assertThat(tag.getName()).isEqualTo("core");
+        }
+    }
 }

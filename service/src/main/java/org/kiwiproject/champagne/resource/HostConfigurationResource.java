@@ -74,7 +74,7 @@ public class HostConfigurationResource extends AuditableResource {
             if (componentTags.isEmpty()) {
                 hosts = List.of();
             } else {
-                hosts = hostDao.findHostsForTags(componentTags);
+                hosts = hostDao.findHostsForTagsInEnv(systemId, envId, componentTags);
                 hosts = hosts.stream().map(host -> {
                     var tags = tagDao.findTagsForHost(host.getId());
                     return host.withTags(tags);

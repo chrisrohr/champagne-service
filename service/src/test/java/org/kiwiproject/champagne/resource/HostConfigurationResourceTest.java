@@ -67,7 +67,7 @@ class HostConfigurationResourceTest {
 
     @AfterEach
     void tearDown() {
-        reset(HOST_DAO, COMPONENT_DAO, AUDIT_RECORD_DAO);
+        reset(HOST_DAO, COMPONENT_DAO, TAG_DAO, AUDIT_RECORD_DAO);
     }
 
     @Nested
@@ -82,6 +82,7 @@ class HostConfigurationResourceTest {
                     .build();
 
             when(HOST_DAO.findHostsByEnvId(1L, 1L)).thenReturn(List.of(host));
+            when(TAG_DAO.findTagsForHost(1L)).thenReturn(List.of());
 
             var response = APP.client().target("/host/{envId}")
                     .resolveTemplate("envId", 1L)
@@ -100,8 +101,73 @@ class HostConfigurationResourceTest {
                     .isEqualTo(host);
 
             verify(HOST_DAO).findHostsByEnvId(1L, 1L);
-            verifyNoMoreInteractions(HOST_DAO);
+            verify(TAG_DAO).findTagsForHost(1L);
+            verifyNoMoreInteractions(HOST_DAO, TAG_DAO);
+            verifyNoInteractions(AUDIT_RECORD_DAO, COMPONENT_DAO);
+        }
+
+        @Test
+        void shouldReturnListOfHostsForEnvMatchingGivenFilter() {
+            var component = Component.builder()
+                    .componentName("service")
+                    .tagId(1L)
+                    .build();
+
+            when(COMPONENT_DAO.findComponentsForSystemMatchingName(1L, "%service%")).thenReturn(List.of(component));
+            when(TAG_DAO.findTagsForHost(1L)).thenReturn(List.of());
+
+            var host = Host.builder()
+                    .id(1L)
+                    .hostname("localhost")
+                    .deployableSystemId(1L)
+                    .build();
+
+            when(HOST_DAO.findHostsForTagsInEnv(1L, 1L, List.of(1L))).thenReturn(List.of(host));
+
+            var response = APP.client().target("/host/{envId}")
+                    .resolveTemplate("envId", 1L)
+                    .queryParam("componentFilter", "service")
+                    .request()
+                    .get();
+
+            assertOkResponse(response);
+
+            var hosts = response.readEntity(new GenericType<List<Host>>() {
+            });
+
+            var foundHost = first(hosts);
+            assertThat(foundHost)
+                    .usingRecursiveComparison()
+                    .ignoringFields("createdAt", "updatedAt")
+                    .isEqualTo(host);
+
+            verify(COMPONENT_DAO).findComponentsForSystemMatchingName(1L, "%service%");
+            verify(HOST_DAO).findHostsForTagsInEnv(1L, 1L, List.of(1L));
+            verify(TAG_DAO).findTagsForHost(1L);
+            verifyNoMoreInteractions(HOST_DAO, COMPONENT_DAO, TAG_DAO);
             verifyNoInteractions(AUDIT_RECORD_DAO);
+        }
+
+        @Test
+        void shouldReturnEmptyListWhenFilteredAndNoComponentsFound() {
+            when(COMPONENT_DAO.findComponentsForSystemMatchingName(1L, "%service%")).thenReturn(List.of());
+
+            var response = APP.client().target("/host/{envId}")
+                    .resolveTemplate("envId", 1L)
+                    .queryParam("componentFilter", "service")
+                    .request()
+                    .get();
+
+            assertOkResponse(response);
+
+            var hosts = response.readEntity(new GenericType<List<Host>>() {
+            });
+
+            assertThat(hosts).isEmpty();
+
+            verify(COMPONENT_DAO).findComponentsForSystemMatchingName(1L, "%service%");
+            verifyNoMoreInteractions(COMPONENT_DAO);
+            verifyNoInteractions(HOST_DAO, TAG_DAO, AUDIT_RECORD_DAO);
         }
     }
 
@@ -255,6 +321,41 @@ class HostConfigurationResourceTest {
             var component = Component.builder()
                     .id(2L)
                     .componentName("foo-service")
+                    .tagId(1L)
+                    .build();
+
+            when(COMPONENT_DAO.findComponentsForSystem(1L)).thenReturn(List.of(component));
+
+            when(TAG_DAO.findTagById(1L)).thenReturn(Tag.builder().build());
+
+            var response = APP.client().target("/host/components")
+                    .request()
+                    .get();
+
+            assertOkResponse(response);
+
+            var components = response.readEntity(new GenericType<List<Component>>() {
+            });
+
+            var foundComponent = first(components);
+            assertThat(foundComponent)
+                    .usingRecursiveComparison()
+                    .ignoringFields("createdAt", "updatedAt", "tag")
+                    .isEqualTo(component);
+
+            assertThat(foundComponent.getTag()).isNotNull();
+
+            verify(COMPONENT_DAO).findComponentsForSystem(1L);
+            verify(TAG_DAO).findTagById(1L);
+            verifyNoMoreInteractions(COMPONENT_DAO, TAG_DAO);
+            verifyNoInteractions(HOST_DAO, AUDIT_RECORD_DAO);
+        }
+
+        @Test
+        void shouldReturnListOfComponentsIgnoringTagLookupIfTagIdIsNull() {
+            var component = Component.builder()
+                    .id(2L)
+                    .componentName("foo-service")
                     .build();
 
             when(COMPONENT_DAO.findComponentsForSystem(1L)).thenReturn(List.of(component));
@@ -271,12 +372,14 @@ class HostConfigurationResourceTest {
             var foundComponent = first(components);
             assertThat(foundComponent)
                     .usingRecursiveComparison()
-                    .ignoringFields("createdAt", "updatedAt")
+                    .ignoringFields("createdAt", "updatedAt", "tag")
                     .isEqualTo(component);
 
+            assertThat(foundComponent.getTag()).isNull();
+
             verify(COMPONENT_DAO).findComponentsForSystem(1L);
-            verifyNoMoreInteractions(HOST_DAO, COMPONENT_DAO);
-            verifyNoInteractions(AUDIT_RECORD_DAO);
+            verifyNoMoreInteractions(COMPONENT_DAO, TAG_DAO);
+            verifyNoInteractions(HOST_DAO, TAG_DAO, AUDIT_RECORD_DAO);
         }
     }
 
@@ -285,6 +388,49 @@ class HostConfigurationResourceTest {
 
         @Test
         void shouldReturnListOfComponentsForHost() {
+            var host = Host.builder()
+                    .id(1L)
+                    .hostname("localhost")
+                    .build();
+
+            when(HOST_DAO.findById(1L)).thenReturn(Optional.of(host));
+            when(HOST_DAO.findTagIdsForHost(1L)).thenReturn(List.of(1L));
+
+            var component = Component.builder()
+                    .id(2L)
+                    .componentName("foo-service")
+                    .tagId(1L)
+                    .build();
+
+            when(COMPONENT_DAO.findComponentsByHostTags(List.of(1L))).thenReturn(List.of(component));
+            when(TAG_DAO.findTagById(1L)).thenReturn(Tag.builder().build());
+
+            var response = APP.client().target("/host/{hostId}/components")
+                    .resolveTemplate("hostId", 1L)
+                    .request()
+                    .get();
+
+            assertOkResponse(response);
+
+            var components = response.readEntity(new GenericType<List<Component>>() {
+            });
+
+            var foundComponent = first(components);
+            assertThat(foundComponent)
+                    .usingRecursiveComparison()
+                    .ignoringFields("createdAt", "updatedAt", "tag")
+                    .isEqualTo(component);
+
+            verify(HOST_DAO).findById(1L);
+            verify(HOST_DAO).findTagIdsForHost(1L);
+            verify(COMPONENT_DAO).findComponentsByHostTags(List.of(1L));
+            verify(TAG_DAO).findTagById(1L);
+            verifyNoMoreInteractions(HOST_DAO, TAG_DAO, COMPONENT_DAO);
+            verifyNoInteractions(AUDIT_RECORD_DAO);
+        }
+
+        @Test
+        void shouldReturnListOfComponentsForHostOmittingTagLookupWhenTagIdIsNull() {
             var host = Host.builder()
                     .id(1L)
                     .hostname("localhost")
@@ -313,14 +459,14 @@ class HostConfigurationResourceTest {
             var foundComponent = first(components);
             assertThat(foundComponent)
                     .usingRecursiveComparison()
-                    .ignoringFields("createdAt", "updatedAt")
+                    .ignoringFields("createdAt", "updatedAt", "tag")
                     .isEqualTo(component);
 
             verify(HOST_DAO).findById(1L);
             verify(HOST_DAO).findTagIdsForHost(1L);
             verify(COMPONENT_DAO).findComponentsByHostTags(List.of(1L));
             verifyNoMoreInteractions(HOST_DAO, COMPONENT_DAO);
-            verifyNoInteractions(AUDIT_RECORD_DAO);
+            verifyNoInteractions(TAG_DAO, AUDIT_RECORD_DAO);
         }
 
         @Test
