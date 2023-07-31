@@ -7,7 +7,6 @@ import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertAcceptedResponse;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertNotFoundResponse;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertOkResponse;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
@@ -31,12 +30,14 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.kiwiproject.champagne.dao.AuditRecordDao;
 import org.kiwiproject.champagne.dao.ComponentDao;
 import org.kiwiproject.champagne.dao.HostDao;
+import org.kiwiproject.champagne.dao.TagDao;
 import org.kiwiproject.champagne.junit.jupiter.DeployableSystemExtension;
 import org.kiwiproject.champagne.junit.jupiter.JwtExtension;
 import org.kiwiproject.champagne.model.AuditRecord;
 import org.kiwiproject.champagne.model.AuditRecord.Action;
 import org.kiwiproject.champagne.model.Component;
 import org.kiwiproject.champagne.model.Host;
+import org.kiwiproject.champagne.model.Tag;
 import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
 import org.kiwiproject.dropwizard.error.test.junit.jupiter.ApplicationErrorExtension;
 import org.kiwiproject.jaxrs.exception.JaxrsExceptionMapper;
@@ -47,9 +48,10 @@ import org.mockito.ArgumentCaptor;
 class HostConfigurationResourceTest {
     private static final HostDao HOST_DAO = mock(HostDao.class);
     private static final ComponentDao COMPONENT_DAO = mock(ComponentDao.class);
+    private static final TagDao TAG_DAO = mock(TagDao.class);
     private static final AuditRecordDao AUDIT_RECORD_DAO = mock(AuditRecordDao.class);
     private static final ApplicationErrorDao APPLICATION_ERROR_DAO = mock(ApplicationErrorDao.class);
-    private static final HostConfigurationResource HOST_CONFIGURATION_RESOURCE = new HostConfigurationResource(HOST_DAO, COMPONENT_DAO, AUDIT_RECORD_DAO, APPLICATION_ERROR_DAO);
+    private static final HostConfigurationResource HOST_CONFIGURATION_RESOURCE = new HostConfigurationResource(HOST_DAO, COMPONENT_DAO, TAG_DAO, AUDIT_RECORD_DAO, APPLICATION_ERROR_DAO);
 
     private static final ResourceExtension APP = ResourceExtension.builder()
             .bootstrapLogging(false)
@@ -108,11 +110,10 @@ class HostConfigurationResourceTest {
 
         @Test
         void shouldAddTheGivenHost() {
-            when(HOST_DAO.insertHost(any(Host.class), anyString())).thenReturn(1L);
+            when(HOST_DAO.insertHost(any(Host.class))).thenReturn(1L);
 
             var host = Host.builder()
                     .hostname("localhost")
-                    .tags(List.of("foo"))
                     .deployableSystemId(1L)
                     .build();
 
@@ -122,7 +123,7 @@ class HostConfigurationResourceTest {
 
             assertAcceptedResponse(response);
 
-            verify(HOST_DAO).insertHost(any(Host.class), anyString());
+            verify(HOST_DAO).insertHost(any(Host.class));
 
             verifyAuditRecorded(Host.class, Action.CREATED);
 
@@ -131,11 +132,11 @@ class HostConfigurationResourceTest {
 
         @Test
         void shouldAddTheGivenHostWithTheCurrentSystemWhenNotProvided() {
-            when(HOST_DAO.insertHost(any(Host.class), anyString())).thenReturn(1L);
+            when(HOST_DAO.insertHost(any(Host.class))).thenReturn(1L);
 
             var host = Host.builder()
                     .hostname("localhost")
-                    .tags(List.of("foo"))
+                    .tags(List.of(Tag.builder().id(1L).name("tag1").build(), Tag.builder().id(2L).name("tag2").build()))
                     .build();
 
             var response = APP.client().target("/host")
@@ -144,7 +145,8 @@ class HostConfigurationResourceTest {
 
             assertAcceptedResponse(response);
 
-            verify(HOST_DAO).insertHost(any(Host.class), anyString());
+            verify(HOST_DAO).insertHost(any(Host.class));
+            verify(HOST_DAO).addTagsForHost(1L, List.of(1L, 2L));
 
             verifyAuditRecorded(Host.class, Action.CREATED);
 
@@ -157,17 +159,18 @@ class HostConfigurationResourceTest {
 
         @Test
         void shouldUpdateGivenHost() {
-            when(HOST_DAO.updateHost("foo", "tag1,tag2", 1L)).thenReturn(1);
+            when(HOST_DAO.updateHost("foo", 1L)).thenReturn(1);
 
             var response = APP.client().target("/host")
                     .path("{id}")
                     .resolveTemplate("id", 1)
                     .request()
-                    .put(json(Map.of("hostname", "foo", "tags", List.of("tag1", "tag2"), "id", 1L)));
+                    .put(json(Map.of("hostname", "foo", "tags", List.of(Tag.builder().id(1L).name("tag1").build(), Tag.builder().id(2L).name("tag2").build()), "id", 1L)));
 
             assertAcceptedResponse(response);
 
-            verify(HOST_DAO).updateHost("foo", "tag1,tag2", 1L);
+            verify(HOST_DAO).updateHost("foo", 1L);
+            verify(HOST_DAO).updateTagList(1L, List.of(1L, 2L));
 
             verifyAuditRecorded(Host.class, Action.UPDATED);
 
@@ -176,17 +179,18 @@ class HostConfigurationResourceTest {
 
         @Test
         void shouldNotAuditUpdateIfDoesNotChangeAnything() {
-            when(HOST_DAO.updateHost("foo", "tag1,tag2", 1L)).thenReturn(0);
+            when(HOST_DAO.updateHost("foo", 1L)).thenReturn(0);
 
             var response = APP.client().target("/host")
                     .path("{id}")
                     .resolveTemplate("id", 1)
                     .request()
-                    .put(json(Map.of("hostname", "foo", "tags", List.of("tag1", "tag2"), "id", 1L)));
+                    .put(json(Map.of("hostname", "foo", "tags", List.of(Tag.builder().id(1L).name("tag1").build(), Tag.builder().id(2L).name("tag2").build()), "id", 1L)));
 
             assertAcceptedResponse(response);
 
-            verify(HOST_DAO).updateHost("foo", "tag1,tag2", 1L);
+            verify(HOST_DAO).updateHost("foo", 1L);
+            verify(HOST_DAO).updateTagList(1L, List.of(1L, 2L));
             verifyNoMoreInteractions(HOST_DAO);
             verifyNoInteractions(AUDIT_RECORD_DAO);
         }
@@ -251,7 +255,6 @@ class HostConfigurationResourceTest {
             var component = Component.builder()
                     .id(2L)
                     .componentName("foo-service")
-                    .tag("core")
                     .build();
 
             when(COMPONENT_DAO.findComponentsForSystem(1L)).thenReturn(List.of(component));
@@ -285,18 +288,17 @@ class HostConfigurationResourceTest {
             var host = Host.builder()
                     .id(1L)
                     .hostname("localhost")
-                    .tags(List.of("core"))
                     .build();
 
             when(HOST_DAO.findById(1L)).thenReturn(Optional.of(host));
+            when(HOST_DAO.findTagIdsForHost(1L)).thenReturn(List.of(1L));
 
             var component = Component.builder()
                     .id(2L)
                     .componentName("foo-service")
-                    .tag("core")
                     .build();
 
-            when(COMPONENT_DAO.findComponentsByHostTags(List.of("core"))).thenReturn(List.of(component));
+            when(COMPONENT_DAO.findComponentsByHostTags(List.of(1L))).thenReturn(List.of(component));
 
             var response = APP.client().target("/host/{hostId}/components")
                     .resolveTemplate("hostId", 1L)
@@ -315,7 +317,8 @@ class HostConfigurationResourceTest {
                     .isEqualTo(component);
 
             verify(HOST_DAO).findById(1L);
-            verify(COMPONENT_DAO).findComponentsByHostTags(List.of("core"));
+            verify(HOST_DAO).findTagIdsForHost(1L);
+            verify(COMPONENT_DAO).findComponentsByHostTags(List.of(1L));
             verifyNoMoreInteractions(HOST_DAO, COMPONENT_DAO);
             verifyNoInteractions(AUDIT_RECORD_DAO);
         }
@@ -342,7 +345,6 @@ class HostConfigurationResourceTest {
 
             var component = Component.builder()
                     .componentName("foo-service")
-                    .tag("core")
                     .deployableSystemId(1L)
                     .build();
 
@@ -365,7 +367,6 @@ class HostConfigurationResourceTest {
 
             var component = Component.builder()
                     .componentName("foo-service")
-                    .tag("core")
                     .build();
 
             var response = APP.client().target("/host/component")
@@ -387,17 +388,17 @@ class HostConfigurationResourceTest {
 
         @Test
         void shouldUpdateGivenComponent() {
-            when(COMPONENT_DAO.updateComponent("foo", "tag1", 1L)).thenReturn(1);
+            when(COMPONENT_DAO.updateComponent("foo", 1L, 1L)).thenReturn(1);
 
             var response = APP.client().target("/host/component")
                     .path("{id}")
                     .resolveTemplate("id", 1)
                     .request()
-                    .put(json(Map.of("componentName", "foo", "tag", "tag1", "id", 1L)));
+                    .put(json(Map.of("componentName", "foo", "tagId", 1L, "id", 1L)));
 
             assertAcceptedResponse(response);
 
-            verify(COMPONENT_DAO).updateComponent("foo", "tag1", 1L);
+            verify(COMPONENT_DAO).updateComponent("foo", 1L, 1L);
 
             verifyAuditRecorded(Component.class, Action.UPDATED);
 
@@ -406,17 +407,17 @@ class HostConfigurationResourceTest {
 
         @Test
         void shouldNotAuditUpdateIfDoesNotChangeAnything() {
-            when(COMPONENT_DAO.updateComponent("foo", "tag1", 1L)).thenReturn(0);
+            when(COMPONENT_DAO.updateComponent("foo", 1L, 1L)).thenReturn(0);
 
             var response = APP.client().target("/host/component")
                     .path("{id}")
                     .resolveTemplate("id", 1)
                     .request()
-                    .put(json(Map.of("componentName", "foo", "tag", "tag1", "id", 1L)));
+                    .put(json(Map.of("componentName", "foo", "tagId", 1L, "id", 1L)));
 
             assertAcceptedResponse(response);
 
-            verify(COMPONENT_DAO).updateComponent("foo", "tag1", 1L);
+            verify(COMPONENT_DAO).updateComponent("foo", 1L, 1L);
             verifyNoMoreInteractions(COMPONENT_DAO);
             verifyNoInteractions(AUDIT_RECORD_DAO);
         }

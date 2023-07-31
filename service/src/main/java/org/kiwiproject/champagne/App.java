@@ -27,6 +27,7 @@ import org.kiwiproject.champagne.dao.DeploymentEnvironmentDao;
 import org.kiwiproject.champagne.dao.HostDao;
 import org.kiwiproject.champagne.dao.ReleaseDao;
 import org.kiwiproject.champagne.dao.ReleaseStatusDao;
+import org.kiwiproject.champagne.dao.TagDao;
 import org.kiwiproject.champagne.dao.TaskDao;
 import org.kiwiproject.champagne.dao.TaskStatusDao;
 import org.kiwiproject.champagne.dao.UserDao;
@@ -39,6 +40,7 @@ import org.kiwiproject.champagne.resource.BuildResource;
 import org.kiwiproject.champagne.resource.DeployableSystemResource;
 import org.kiwiproject.champagne.resource.DeploymentEnvironmentResource;
 import org.kiwiproject.champagne.resource.HostConfigurationResource;
+import org.kiwiproject.champagne.resource.TagResource;
 import org.kiwiproject.champagne.resource.TaskResource;
 import org.kiwiproject.champagne.resource.UserResource;
 import org.kiwiproject.champagne.resource.filter.DeployableSystemRequestFilter;
@@ -103,6 +105,7 @@ public class App extends Application<AppConfig> {
         var componentDao = jdbi.onDemand(ComponentDao.class);
         var errorDao = setupApplicationErrors(jdbi, configuration, environment);
         var deployableSystemDao = jdbi.onDemand(DeployableSystemDao.class);
+        var tagDao = jdbi.onDemand(TagDao.class);
 
         var jsonHelper = JsonHelper.newDropwizardJsonHelper();
         jdbi.registerRowMapper(Build.class, new BuildMapper(jsonHelper));
@@ -113,11 +116,12 @@ public class App extends Application<AppConfig> {
         environment.jersey().register(new AuditRecordResource(auditRecordDao));
         environment.jersey().register(new BuildResource(buildDao, jsonHelper));
         environment.jersey().register(new DeploymentEnvironmentResource(deploymentEnvironmentDao, auditRecordDao, errorDao, manualTaskService));
-        environment.jersey().register(new HostConfigurationResource(hostDao, componentDao, auditRecordDao, errorDao));
+        environment.jersey().register(new HostConfigurationResource(hostDao, componentDao, tagDao, auditRecordDao, errorDao));
         environment.jersey().register(new TaskResource(releaseDao, releaseStatusDao, taskDao, taskStatusDao, deploymentEnvironmentDao, auditRecordDao, errorDao));
         environment.jersey().register(new UserResource(userDao, auditRecordDao, errorDao));
         environment.jersey().register(new ApplicationErrorResource(errorDao));
         environment.jersey().register(new DeployableSystemResource(deployableSystemDao, userDao, auditRecordDao, errorDao));
+        environment.jersey().register(new TagResource(tagDao, auditRecordDao, errorDao));
 
         configureCors(environment);
 

@@ -25,7 +25,10 @@ public class Component {
     /**
      * A tag for the component used to link up with {@link Host} instances for deployments
      */
-    String tag;
+    Long tagId;
+
+    @With
+    Tag tag;
 
     /**
      * The Deployable System that this component is tied to

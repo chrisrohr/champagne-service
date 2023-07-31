@@ -1,10 +1,8 @@
 package org.kiwiproject.champagne.util;
 
-import java.util.List;
 import java.util.Map;
 
 import lombok.experimental.UtilityClass;
-import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 import org.kiwiproject.champagne.model.AuditRecord;
 import org.kiwiproject.champagne.model.AuditRecord.Action;
@@ -14,6 +12,7 @@ import org.kiwiproject.champagne.model.DeployableSystem;
 import org.kiwiproject.champagne.model.DeploymentEnvironment;
 import org.kiwiproject.champagne.model.GitProvider;
 import org.kiwiproject.champagne.model.Host;
+import org.kiwiproject.champagne.model.Tag;
 import org.kiwiproject.champagne.model.User;
 import org.kiwiproject.champagne.model.manualdeployment.DeploymentTaskStatus;
 import org.kiwiproject.champagne.model.manualdeployment.Release;
@@ -176,33 +175,47 @@ public class TestObjects {
                 .environmentId(envId)
                 .hostname(hostname)
                 .source(Host.Source.CHAMPAGNE)
-                .tags(List.of("foo"))
                 .deployableSystemId(systemId)
                 .build();
 
         return handle.createUpdate("insert into hosts "
-                        + "(environment_id, hostname, source, tags, deployable_system_id) "
+                        + "(environment_id, hostname, source, deployable_system_id) "
                         + "values "
-                        + "(:environmentId, :hostname, :source, :tagCsv, :deployableSystemId)")
+                        + "(:environmentId, :hostname, :source, :deployableSystemId)")
                 .bindBean(hostToInsert)
-                .bind("tagCsv", StringUtils.join(hostToInsert.getTags(), ","))
                 .executeAndReturnGeneratedKeys("id")
                 .mapTo(Long.class)
                 .first();
     }
 
-    public static long insertComponentRecord(Handle handle, String componentName, String tag, Long deployableSystemId) {
+    public static long insertComponentRecord(Handle handle, String componentName, Long tagId, Long deployableSystemId) {
         var componentToInsert = Component.builder()
                 .componentName(componentName)
-                .tag(tag)
+                .tagId(tagId)
                 .deployableSystemId(deployableSystemId)
                 .build();
 
         return handle.createUpdate("insert into components "
-                        + "(component_name, tag, deployable_system_id) "
+                        + "(component_name, tag_id, deployable_system_id) "
                         + "values "
-                        + "(:componentName, :tag, :deployableSystemId)")
+                        + "(:componentName, :tagId, :deployableSystemId)")
                 .bindBean(componentToInsert)
+                .executeAndReturnGeneratedKeys("id")
+                .mapTo(Long.class)
+                .first();
+    }
+
+    public static long insertTagRecord(Handle handle, String name, Long deployableSystemId) {
+        var tagToInsert = Tag.builder()
+                .name(name)
+                .deployableSystemId(deployableSystemId)
+                .build();
+
+        return handle.createUpdate("insert into tags "
+                        + "(name, deployable_system_id) "
+                        + "values "
+                        + "(:name, :deployableSystemId)")
+                .bindBean(tagToInsert)
                 .executeAndReturnGeneratedKeys("id")
                 .mapTo(Long.class)
                 .first();

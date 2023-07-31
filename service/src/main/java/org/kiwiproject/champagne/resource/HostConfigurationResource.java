@@ -1,7 +1,9 @@
 package org.kiwiproject.champagne.resource;
 
 import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.kiwiproject.base.KiwiStrings.f;
 import static org.kiwiproject.champagne.util.DeployableSystems.checkUserAdminOfSystem;
 import static org.kiwiproject.champagne.util.DeployableSystems.getSystemIdOrThrowBadRequest;
 
@@ -21,13 +23,14 @@ import java.util.List;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
-import org.apache.commons.lang3.StringUtils;
 import org.kiwiproject.champagne.dao.AuditRecordDao;
 import org.kiwiproject.champagne.dao.ComponentDao;
 import org.kiwiproject.champagne.dao.HostDao;
+import org.kiwiproject.champagne.dao.TagDao;
 import org.kiwiproject.champagne.model.AuditRecord.Action;
 import org.kiwiproject.champagne.model.Component;
 import org.kiwiproject.champagne.model.Host;
+import org.kiwiproject.champagne.model.Tag;
 import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
 import org.kiwiproject.jaxrs.exception.JaxrsNotFoundException;
 
@@ -39,12 +42,14 @@ public class HostConfigurationResource extends AuditableResource {
 
     private final HostDao hostDao;
     private final ComponentDao componentDao;
+    private final TagDao tagDao;
 
-    public HostConfigurationResource(HostDao hostDao, ComponentDao componentDao, AuditRecordDao auditRecordDao, ApplicationErrorDao errorDao) {
+    public HostConfigurationResource(HostDao hostDao, ComponentDao componentDao, TagDao tagDao, AuditRecordDao auditRecordDao, ApplicationErrorDao errorDao) {
         super(auditRecordDao, errorDao);
 
         this.hostDao = hostDao;
         this.componentDao = componentDao;
+        this.tagDao = tagDao;
     }
     
     @GET
@@ -53,7 +58,29 @@ public class HostConfigurationResource extends AuditableResource {
     @ExceptionMetered
     public Response listHostsForEnvironment(@PathParam("environment") Long envId, @QueryParam("componentFilter") String componentFilter) {
         var systemId = getSystemIdOrThrowBadRequest();
-        var hosts = isBlank(componentFilter) ? hostDao.findHostsByEnvId(envId, systemId) : List.of();
+
+        List<Host> hosts;
+
+        if (isBlank(componentFilter)) {
+            hosts = hostDao.findHostsByEnvId(envId, systemId);
+            hosts = hosts.stream().map(host -> {
+                var tags = tagDao.findTagsForHost(host.getId());
+                return host.withTags(tags);
+            }).toList();
+        } else {
+            var components = componentDao.findComponentsForSystemMatchingName(systemId, f("%{}%", componentFilter));
+            var componentTags = components.stream().map(Component::getTagId).toList();
+
+            if (componentTags.isEmpty()) {
+                hosts = List.of();
+            } else {
+                hosts = hostDao.findHostsForTags(componentTags);
+                hosts = hosts.stream().map(host -> {
+                    var tags = tagDao.findTagsForHost(host.getId());
+                    return host.withTags(tags);
+                }).toList();
+            }
+        }
 
         return Response.ok(hosts).build();
     }
@@ -69,7 +96,13 @@ public class HostConfigurationResource extends AuditableResource {
             host = host.withDeployableSystemId(systemId);
         }
 
-        var hostId = hostDao.insertHost(host, StringUtils.join(host.getTags(), ","));
+        var hostId = hostDao.insertHost(host);
+
+        var tagIds = host.getTags().stream().map(Tag::getId).toList();
+
+        if (!tagIds.isEmpty()) {
+            hostDao.addTagsForHost(hostId, tagIds);
+        }
 
         auditAction(hostId, Host.class, Action.CREATED);
 
@@ -83,7 +116,10 @@ public class HostConfigurationResource extends AuditableResource {
     public Response updateHost(Host host, @PathParam("id") Long hostId) {
         checkUserAdminOfSystem();
 
-        var updateCount = hostDao.updateHost(host.getHostname(), StringUtils.join(host.getTags(), ","), hostId);
+        var updateCount = hostDao.updateHost(host.getHostname(), hostId);
+
+        var tagIds = host.getTags().stream().map(Tag::getId).toList();
+        hostDao.updateTagList(hostId, tagIds);
 
         if (updateCount > 0) {
             auditAction(hostId, Host.class, Action.UPDATED);
@@ -115,6 +151,12 @@ public class HostConfigurationResource extends AuditableResource {
     public Response listComponents() {
         var systemId = getSystemIdOrThrowBadRequest();
         var components = componentDao.findComponentsForSystem(systemId);
+        components = components.stream().map(component -> {
+            if (nonNull(component.getTagId())) {
+                return component.withTag(tagDao.findTagById(component.getTagId()));
+            }
+            return component;
+        }).toList();
 
         return Response.ok(components).build();
     }
@@ -125,7 +167,15 @@ public class HostConfigurationResource extends AuditableResource {
     @ExceptionMetered
     public Response listComponentsForHost(@PathParam("hostId") Long hostId) {
         var host = hostDao.findById(hostId).orElseThrow(() -> new JaxrsNotFoundException("No host found"));
-        var components = componentDao.findComponentsByHostTags(host.getTags());
+        var tagIds = hostDao.findTagIdsForHost(host.getId());
+        var components = componentDao.findComponentsByHostTags(tagIds);
+
+        components = components.stream().map(component -> {
+            if (nonNull(component.getTagId())) {
+                return component.withTag(tagDao.findTagById(component.getTagId()));
+            }
+            return component;
+        }).toList();
 
         return Response.ok(components).build();
     }
@@ -156,7 +206,7 @@ public class HostConfigurationResource extends AuditableResource {
     public Response updateComponent(Component component, @PathParam("id") Long componentId) {
         checkUserAdminOfSystem();
 
-        var updateCount = componentDao.updateComponent(component.getComponentName(), component.getTag(), componentId);
+        var updateCount = componentDao.updateComponent(component.getComponentName(), component.getTagId(), componentId);
 
         if (updateCount > 0) {
             auditAction(componentId, Component.class, Action.UPDATED);

@@ -12,15 +12,16 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
-import org.junit.jupiter.api.Test;
+import org.jdbi.v3.postgres.PostgresPlugin;
+import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.kiwiproject.champagne.model.Host;
 import org.kiwiproject.champagne.dao.mappers.HostMapper;
+import org.kiwiproject.champagne.model.Host;
 import org.kiwiproject.test.junit.jupiter.Jdbi3DaoExtension;
 import org.kiwiproject.test.junit.jupiter.PostgresLiquibaseTestExtension;
 
@@ -34,6 +35,7 @@ class HostDaoTest {
     final Jdbi3DaoExtension<HostDao> daoExtension = Jdbi3DaoExtension.<HostDao>builder()
             .daoType(HostDao.class)
             .dataSource(POSTGRES.getTestDataSource())
+            .plugins(List.of(new SqlObjectPlugin(), new PostgresPlugin()))
             .build();
 
     private HostDao dao;
@@ -58,10 +60,9 @@ class HostDaoTest {
                 .environmentId(envId)
                 .hostname("localhost")
                 .source(Host.Source.CHAMPAGNE)
-                .tags(List.of("foo"))
                 .build();
 
-            var id = dao.insertHost(hostToInsert, StringUtils.join(hostToInsert.getTags(), ","));
+            var id = dao.insertHost(hostToInsert);
 
             var hosts = handle.select("select * from hosts where id = ?", id)
                 .map(new HostMapper())

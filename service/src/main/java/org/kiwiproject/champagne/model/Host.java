@@ -1,6 +1,7 @@
 package org.kiwiproject.champagne.model;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 import lombok.Builder;
@@ -36,7 +37,9 @@ public class Host {
     /**
      * List of tags used to link up components to hosts dynamically.
      */
-    List<String> tags;
+    @With
+    @Builder.Default
+    List<Tag> tags = new ArrayList<>();
 
     /**
      * The source of truth for the definition of this host, whether it is stored in Champagne or pulled dynamically from a cloud.
