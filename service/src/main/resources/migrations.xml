@@ -395,4 +395,67 @@
             </column>
         </addColumn>
     </changeSet>
+
+    <changeSet id="add_tags" author="crohr">
+        <createTable tableName="tags">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="created_at" type="timestamp without time zone" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp without time zone" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deployable_system_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_tag_deployable_system" references="deployable_systems(id)" deleteCascade="true"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="host_tags">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="host_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_host_tag_host" references="hosts(id)" deleteCascade="true"/>
+            </column>
+            <column name="tag_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_host_tag_tag" references="tags(id)" deleteCascade="true"/>
+            </column>
+        </createTable>
+        
+        <dropColumn tableName="hosts">
+            <column name="tags"/>
+        </dropColumn>
+        
+        <dropColumn tableName="components">
+            <column name="tag"/>
+        </dropColumn>
+        
+        <addColumn tableName="components">
+            <column name="tag_id" type="bigint">
+                <constraints foreignKeyName="fk_component_tag" references="tags(id)"/>
+            </column>
+        </addColumn>
+
+        <rollback>
+            <dropColumn tableName="components">
+                <column name="tag_id"/>
+            </dropColumn>
+
+            <addColumn tableName="components">
+                <column name="tag" type="text"/>
+            </addColumn>
+
+            <addColumn tableName="hosts">
+                <column name="tags" type="text"/>
+            </addColumn>
+
+            <dropTable tableName="host_tags"/>
+            <dropTable tableName="tags"/>
+        </rollback>
+    </changeSet>
 </databaseChangeLog>

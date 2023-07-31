@@ -6,6 +6,12 @@
           Coming Soon
         </template>
 
+        <template #body-cell-tag="props">
+          <span v-if="props.row.tag !== null" class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200 last:mr-0 mr-1">
+            {{ props.row.tag?.name }}
+          </span>
+        </template>
+
         <template #body-cell-actions="props">
           <button type="button" v-if="currentUserStore.isDeployableSystemAdmin" @click="startUpdate(props.row)" class="text-emerald-500 bg-transparent border border-solid border-emerald-500 hover:bg-emerald-500 hover:text-white active:bg-emerald-600 font-bold uppercase text-xs px-4 py-2 rounded outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150">
             <i class="fas fa-edit"></i>
@@ -40,7 +46,7 @@
               Name is required!
             </div>
             <div class="mb-3 pt-0">
-              <input type="text" placeholder="Tag" v-model="componentToCreate.tag" class="px-2 py-1 placeholder-gray-300 text-gray-600 relative bg-white rounded text-sm border border-gray-300 outline-none focus:outline-none focus:shadow-outline w-full"/>
+              <Multiselect v-model="componentToCreate.tag" :options="allTags" value-prop="id" label="name"/>
             </div>
             <div class="mb-3 pt-0 text-red-600 text-xs" v-if="componentToCreate.showTagError">
               Tag is required!
@@ -68,6 +74,7 @@ import {useCurrentUserStore} from "@/stores/currentUser";
 import CardTable from "@/components/Cards/CardTable.vue";
 import {api} from "@/plugins/axios";
 import ConfirmationPrompt from "@/components/Alerts/ConfirmationPrompt.vue";
+import Multiselect from "@vueform/multiselect";
 
 const pageInfoStore = usePageInfoStore();
 const currentUserStore = useCurrentUserStore();
@@ -82,10 +89,12 @@ const showAddComponent = ref(false);
 const componentToCreate = ref({
   id: null,
   name: '',
-  tag: '',
+  tag: null,
   showNameError: false,
   showTagError: false
 });
+
+const allTags = ref([]);
 
 const componentRows = ref({});
 
@@ -134,16 +143,19 @@ function deleteComponent() {
 function startCreate() {
   componentToCreate.value.id = null;
   componentToCreate.value.name = '';
-  componentToCreate.value.tag = '';
+  componentToCreate.value.tag = null;
   componentToCreate.value.showNameError = false;
   componentToCreate.value.showTagError = false;
   showAddComponent.value = true;
+  loadAllTags();
 }
 
-function startUpdate(component) {
+async function startUpdate(component) {
+  await loadAllTags();
+
   componentToCreate.value.id = component.id;
   componentToCreate.value.name = component.componentName;
-  componentToCreate.value.tag = component.tag;
+  componentToCreate.value.tag = component.tagId;
   componentToCreate.value.showNameError = false;
   componentToCreate.value.showTagError = false;
   showAddComponent.value = true;
@@ -154,15 +166,15 @@ function createComponent() {
     componentToCreate.value.showNameError = true;
   }
 
-  if (componentToCreate.value.tag === '') {
+  if (componentToCreate.value.tag === null) {
     componentToCreate.value.showTagError = true;
   }
 
-  if (componentToCreate.value.name !== '' && componentToCreate.value.tag !== '') {
+  if (componentToCreate.value.name !== '' && componentToCreate.value.tag !== null) {
     showAddComponent.value = false;
     api.post('/host/component', {
       componentName: componentToCreate.value.name,
-      tag: componentToCreate.value.tag
+      tagId: componentToCreate.value.tag
     })
         .then(() => {
           loadComponents();
@@ -175,20 +187,25 @@ function updateComponent() {
     componentToCreate.value.showNameError = true;
   }
 
-  if (componentToCreate.value.tag === '') {
+  if (componentToCreate.value.tag === null) {
     componentToCreate.value.showTagError = true;
   }
 
-  if (componentToCreate.value.name !== '' && componentToCreate.value.tag !== '') {
+  if (componentToCreate.value.name !== '' && componentToCreate.value.tag !== null) {
     showAddComponent.value = false;
     api.put(`/host/component/${componentToCreate.value.id}`, {
       componentName: componentToCreate.value.name,
-      tag: componentToCreate.value.tag
+      tagId: componentToCreate.value.tag
     })
         .then(() => {
           loadComponents();
         });
   }
+}
+
+async function loadAllTags() {
+  const tagResponse = await api.get('/tag');
+  allTags.value = tagResponse.data;
 }
 
 onMounted(() => {
@@ -197,3 +214,7 @@ onMounted(() => {
   loadComponents();
 });
 </script>
+
+<style>
+@import '@vueform/multiselect/themes/tailwind.css';
+</style>

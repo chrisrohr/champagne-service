@@ -14,6 +14,15 @@
             <span class="float-right text-xs uppercase text-gray-500 mr-3 pt-1.5">
               Environment:
             </span>
+            <button type="button" @click="toggleFilter" class="float-right text-xs text-gray-500 bg-transparent border border-solid rounded border-gray-500 px-2 py-1 mr-2">
+              <i class="fas fa-filter"></i>
+            </button>
+            <span v-if="componentFilter !== ''" class="float-right mr-5 text-xs">
+              Filters:
+              <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200 last:mr-0 mr-1">
+                Component: {{ componentFilter }}
+              </span>
+            </span>
           </h3>
         </template>
         <template #body="props">
@@ -30,8 +39,8 @@
               Info coming soon
             </td>
             <td class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4">
-              <span v-for="tag in props.row.tags" :key="tag" class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200 last:mr-0 mr-1">
-                {{ tag }}
+              <span v-for="tag in props.row.tags" :key="tag.id" class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200 last:mr-0 mr-1">
+                {{ tag.name }}
               </span>
             </td>
             <td class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4">
@@ -51,6 +60,12 @@
               <card-table caption="List of services on host" :columns="componentColumns" :rows="componentRows[props.row.id]" row-id="id">
                 <template #body-cell-currentVersion>
                   Coming Soon
+                </template>
+
+                <template #body-cell-tag="props">
+                  <span v-if="props.row.tag !== null" class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200 last:mr-0 mr-1">
+                    {{ props.row.tag?.name }}
+                  </span>
                 </template>
               </card-table>
             </td>
@@ -82,10 +97,10 @@
               Hostname is required!
             </div>
             <div class="mb-3 pt-0">
-              <input type="text" placeholder="Tags - Press enter to add" @keyup.enter="addTag" v-model="hostToCreate.tag" class="px-2 py-1 placeholder-gray-300 text-gray-600 relative bg-white rounded text-sm border border-gray-300 outline-none focus:outline-none focus:shadow-outline w-full"/>
+              <Multiselect v-model="hostToCreate.tags" :options="allTags" mode="multiple"/>
               <div class="pb-1 pt-1">
-                <span v-for="tag in hostToCreate.tags" :key="tag" class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-emerald-600 bg-emerald-200  last:mr-0 mr-1">
-                  {{ tag }} <button type="button" @click="removeTag(tag)"><i class="fas fa-close text-white"></i></button>
+                <span v-for="tag in hostToCreate.tags" :key="tag.id" class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-emerald-600 bg-emerald-200  last:mr-0 mr-1">
+                  {{ tag.name }} <button type="button" @click="removeTag(tag)"><i class="fas fa-close text-white"></i></button>
                 </span>
               </div>
             </div>
@@ -102,6 +117,35 @@
       </div>
     </div>
     <div v-if="showAddHost" class="opacity-25 fixed inset-0 z-40 bg-black"></div>
+
+    <div v-if="filterShow" class="overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none justify-center items-center flex">
+      <div class="relative w-auto my-6 mx-auto max-w-sm">
+        <div class="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none">
+          <div class="flex items-start justify-between p-5 border-b border-solid border-gray-200 rounded-t">
+            <h5 class="text-lg font-semibold uppercase">
+              Filters
+            </h5>
+          </div>
+          <div class="relative p-6 flex-auto">
+            <div class="mb-3 pt-0">
+              <input type="text" placeholder="Component Name" v-model="componentFilter" class="px-2 py-1 placeholder-gray-300 text-gray-600 relative bg-white rounded text-sm border border-gray-300 outline-none focus:outline-none focus:shadow-outline w-full"/>
+            </div>
+          </div>
+          <div class="flex items-center justify-end p-6 border-t border-solid border-gray-200 rounded-b">
+            <button v-if="componentFilter !== ''" class="text-red-500 bg-transparent font-bold uppercase px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150" type="button" @click="componentFilter = ''; filterShow = false; loadHosts()">
+              Clear
+            </button>
+            <button class="text-red-500 border border-emerald-500 rounded bg-transparent font-bold uppercase px-6 py-3 text-sm outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150" type="button" @click="filterShow = false">
+              Cancel
+            </button>
+            <button class="bg-emerald-500 text-white active:bg-emerald-600 font-bold uppercase px-6 py-3 text-sm rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150" type="button" @click="filterShow = false; loadHosts()">
+              Apply
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-if="filterShow" class="opacity-25 fixed inset-0 z-40 bg-black"></div>
   </div>
 </template>
 
@@ -114,6 +158,8 @@ import {useEnvironmentStore} from "@/stores/environments";
 
 import CardTable from "@/components/Cards/CardTable.vue";
 import ConfirmationPrompt from "@/components/Alerts/ConfirmationPrompt.vue";
+
+import Multiselect from "@vueform/multiselect";
 
 import {api} from "@/plugins/axios";
 import _ from "lodash";
@@ -130,14 +176,18 @@ const loading = ref(false);
 const selectedEnv = ref(currentUserStore.activeDeployableSystem.devEnvironmentId);
 watch(selectedEnv, loadHosts);
 
+const filterShow = ref(false);
+const componentFilter = ref('');
+
 const showAddHost = ref(false);
 const hostToCreate = ref({
   id: null,
   hostname: '',
-  tag: '',
   tags: [],
   showHostnameError: false
 });
+
+const allTags = ref([]);
 
 const expandedHosts = ref([]);
 
@@ -193,7 +243,11 @@ const componentColumns = [
 
 function loadHosts() {
   loading.value = true;
-  api.get(`/host/${selectedEnv.value}`)
+  api.get(`/host/${selectedEnv.value}`, {
+    params: {
+      componentFilter: componentFilter.value
+    }
+  })
       .then(response => {
         hostRows.value = response.data;
         loading.value = false;
@@ -233,11 +287,6 @@ function deleteHost() {
       .then(() => loadHosts());
 }
 
-function addTag() {
-  hostToCreate.value.tags.push(hostToCreate.value.tag);
-  hostToCreate.value.tag = '';
-}
-
 function removeTag(tag) {
   _.pull(hostToCreate.value.tags, tag);
 }
@@ -245,13 +294,15 @@ function removeTag(tag) {
 function startCreate() {
   hostToCreate.value.id = null;
   hostToCreate.value.hostname = '';
-  hostToCreate.value.tag = '';
   hostToCreate.value.tags = [];
   hostToCreate.value.showHostnameError = false;
   showAddHost.value = true;
+  loadAllTags();
 }
 
-function startUpdate(host) {
+async function startUpdate(host) {
+  await loadAllTags();
+
   hostToCreate.value.id = host.id;
   hostToCreate.value.hostname = host.hostname;
   hostToCreate.value.tags = host.tags;
@@ -287,9 +338,22 @@ function updateHost() {
   }
 }
 
+function toggleFilter() {
+  filterShow.value = !filterShow.value;
+}
+
+async function loadAllTags() {
+  const tagResponse = await api.get('/tag');
+  allTags.value = tagResponse.data.map(tag => { return { value: tag, label: tag.name } });
+}
+
 onMounted(() => {
   pageInfoStore.setPageTitle('Hosts');
 
   loadHosts();
 });
 </script>
+
+<style>
+  @import '@vueform/multiselect/themes/tailwind.css';
+</style>
