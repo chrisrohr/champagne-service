@@ -9,6 +9,7 @@ import EnvironmentView from "@/views/Observability/EnvironmentView.vue";
 import ManageSystemView from "@/views/SystemAdmin/ManageSystemView.vue";
 import ComponentView from "@/views/Observability/ComponentView.vue";
 import TagView from "@/views/SystemAdmin/TagView.vue";
+import BuildView from "@/views/Observability/BuildView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -23,6 +24,7 @@ const router = createRouter({
         { path: '/environments', component: EnvironmentView, name: 'environments' },
         { path: '/manageSystem', component: ManageSystemView, name: 'manageSystem' },
         { path: '/tags', component: TagView, name: 'tags' },
+        { path: '/builds', component: BuildView, name: 'builds' },
         { path: '/noDeployableSystem', component: NoDeployableSystemView, name: 'noDeployableSystem' }
       ]
     },

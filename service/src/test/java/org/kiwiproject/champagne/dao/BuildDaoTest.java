@@ -8,6 +8,10 @@ import static org.kiwiproject.collect.KiwiLists.first;
 import static org.kiwiproject.test.constants.KiwiTestConstants.JSON_HELPER;
 import static org.kiwiproject.test.util.DateTimeTestHelper.assertTimeDifferenceWithinTolerance;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.Map;
+
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.spi.JdbiPlugin;
@@ -17,16 +21,14 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.kiwiproject.champagne.dao.mappers.BuildMapper;
 import org.kiwiproject.champagne.model.Build;
 import org.kiwiproject.champagne.model.GitProvider;
 import org.kiwiproject.test.junit.jupiter.Jdbi3DaoExtension;
 import org.kiwiproject.test.junit.jupiter.PostgresLiquibaseTestExtension;
-
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.util.Map;
+import org.kiwiproject.test.junit.jupiter.params.provider.BlankStringSource;
 
 @DisplayName("BuildDao")
 class BuildDaoTest {
@@ -97,17 +99,14 @@ class BuildDaoTest {
     class FindPagedBuilds {
 
         @ParameterizedTest
-        @CsvSource(nullValues = "null", value = {
-            "null, null",
-            "null, 42.0",
-            "champagne-service, null",
-            "champagne-service, 42.0"
-        })
-        void shouldReturnListOfBuilds(String componentIdentifierFilter, String componentVersionFilter) {
+        @NullSource
+        @BlankStringSource
+        @ValueSource(strings = { "42.0", "champagne-service" })
+        void shouldReturnListOfBuilds(String componentFilter) {
             var systemId = insertDeployableSystem(handle, "kiwi");
             insertBuildRecord(handle, "champagne-service", "42.0", systemId);
 
-            var builds = dao.findPagedBuilds(0, 10, systemId, componentIdentifierFilter, componentVersionFilter);
+            var builds = dao.findPagedBuilds(0, 10, systemId, componentFilter);
             assertThat(builds)
                 .extracting("componentIdentifier", "componentVersion")
                 .contains(tuple("champagne-service", "42.0"));
@@ -118,7 +117,7 @@ class BuildDaoTest {
             var systemId = insertDeployableSystem(handle, "kiwi");
             insertBuildRecord(handle, "champagne-service", "42.0", systemId);
 
-            var builds = dao.findPagedBuilds(10, 10, systemId, null, null);
+            var builds = dao.findPagedBuilds(10, 10, systemId, null);
             assertThat(builds).isEmpty();
         }
     }
@@ -127,23 +126,20 @@ class BuildDaoTest {
     class CountBuilds {
 
         @ParameterizedTest
-        @CsvSource(nullValues = "null", value = {
-            "null, null",
-            "null, 42.0",
-            "champagne-service, null",
-            "champagne-service, 42.0"
-        })
-        void shouldReturnCountOfBuilds(String componentIdentifierFilter, String componentVersionFilter) {
+        @NullSource
+        @BlankStringSource
+        @ValueSource(strings = { "42.0", "champagne-service" })
+        void shouldReturnCountOfBuilds(String componentFilter) {
             var systemId = insertDeployableSystem(handle, "kiwi");
             insertBuildRecord(handle, "champagne-service", "42.0", systemId);
 
-            var builds = dao.countBuilds(systemId, componentIdentifierFilter, componentVersionFilter);
+            var builds = dao.countBuilds(systemId, componentFilter);
             assertThat(builds).isOne();
         }
 
         @Test
         void shouldReturnEmptyListWhenNoBuildsFound() {
-            var builds = dao.countBuilds(1L, null, null);
+            var builds = dao.countBuilds(1L, null);
             assertThat(builds).isZero();
         }
     }
