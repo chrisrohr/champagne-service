@@ -13,6 +13,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import javax.ws.rs.core.GenericType;
+import java.util.List;
+import java.util.Map;
+
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import org.junit.jupiter.api.AfterEach;
@@ -28,10 +32,6 @@ import org.kiwiproject.champagne.model.Build;
 import org.kiwiproject.dropwizard.util.exception.JerseyViolationExceptionMapper;
 import org.kiwiproject.jaxrs.exception.JaxrsExceptionMapper;
 import org.kiwiproject.spring.data.KiwiPage;
-
-import java.util.List;
-import java.util.Map;
-import javax.ws.rs.core.GenericType;
 
 @DisplayName("BuildResource")
 @ExtendWith({DropwizardExtensionsSupport.class, DeployableSystemExtension.class})
@@ -49,7 +49,7 @@ class BuildResourceTest {
             .build();
 
     @RegisterExtension
-    private final JwtExtension jwtExtension = new JwtExtension("bob");
+    public final JwtExtension jwtExtension = new JwtExtension("bob");
 
     @AfterEach
     void cleanup() {
@@ -74,8 +74,8 @@ class BuildResourceTest {
                     .deployableSystemId(1L)
                     .build();
 
-            when(BUILD_DAO.findPagedBuilds(0, 10, 1L, null, null)).thenReturn(List.of(build));
-            when(BUILD_DAO.countBuilds(1L, null, null)).thenReturn(1L);
+            when(BUILD_DAO.findPagedBuilds(0, 10, 1L, null)).thenReturn(List.of(build));
+            when(BUILD_DAO.countBuilds(1L, null)).thenReturn(1L);
 
             var response = RESOURCES.client()
                     .target("/build")
@@ -92,8 +92,8 @@ class BuildResourceTest {
             assertThat(result.getNumber()).isOne();
             assertThat(result.getTotalElements()).isOne();
 
-            verify(BUILD_DAO).findPagedBuilds(0, 10, 1L, null, null);
-            verify(BUILD_DAO).countBuilds(1L, null, null);
+            verify(BUILD_DAO).findPagedBuilds(0, 10, 1L, null);
+            verify(BUILD_DAO).countBuilds(1L, null);
 
             verifyNoMoreInteractions(BUILD_DAO);
         }
@@ -113,8 +113,8 @@ class BuildResourceTest {
                     .deployableSystemId(1L)
                     .build();
 
-            when(BUILD_DAO.findPagedBuilds(0, 50, 1L, null, null)).thenReturn(List.of(build));
-            when(BUILD_DAO.countBuilds(1L, null, null)).thenReturn(1L);
+            when(BUILD_DAO.findPagedBuilds(0, 50, 1L, null)).thenReturn(List.of(build));
+            when(BUILD_DAO.countBuilds(1L, null)).thenReturn(1L);
 
             var response = RESOURCES.client()
                     .target("/build")
@@ -130,8 +130,8 @@ class BuildResourceTest {
             assertThat(result.getSize()).isEqualTo(50);
             assertThat(result.getTotalElements()).isOne();
 
-            verify(BUILD_DAO).findPagedBuilds(0, 50, 1L, null, null);
-            verify(BUILD_DAO).countBuilds(1L, null, null);
+            verify(BUILD_DAO).findPagedBuilds(0, 50, 1L, null);
+            verify(BUILD_DAO).countBuilds(1L, null);
 
             verifyNoMoreInteractions(BUILD_DAO);
         }
