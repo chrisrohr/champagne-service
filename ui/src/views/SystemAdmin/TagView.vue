@@ -3,12 +3,7 @@
     <div class="w-full mb-12 px-4">
       <card-table caption="List of tags" :columns="tagColumns" :rows="tagRows" row-id="id" title="Tags" :loading="loading">
         <template #body-cell-actions="props">
-          <button type="button" @click="startUpdate(props.row)" class="text-emerald-500 bg-transparent border border-solid border-emerald-500 hover:bg-emerald-500 hover:text-white active:bg-emerald-600 font-bold uppercase text-xs px-4 py-2 rounded outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150">
-            <i class="fas fa-edit"></i>
-          </button>
-          <button type="button" @click="confirmDeleteTag(props.row)" class="text-emerald-500 bg-transparent border border-solid border-emerald-500 hover:bg-emerald-500 hover:text-white active:bg-emerald-600 font-bold uppercase text-xs px-4 py-2 rounded outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150">
-            <i class="fas fa-trash"></i>
-          </button>
+          <table-actions-dropdown :action-list="tagActions" :row="props.row"/>
         </template>
       </card-table>
     </div>
@@ -57,6 +52,7 @@ import {usePageInfoStore} from "@/stores/pageInfo";
 import CardTable from "@/components/Cards/CardTable.vue";
 import {api} from "@/plugins/axios";
 import ConfirmationPrompt from "@/components/Alerts/ConfirmationPrompt.vue";
+import TableActionsDropdown from "@/components/Dropdowns/TableActionsDropdown.vue";
 
 const pageInfoStore = usePageInfoStore();
 
@@ -84,6 +80,19 @@ const tagColumns = [
   {
     name: 'actions',
     label: 'Actions'
+  }
+];
+
+const tagActions = [
+  {
+    label: 'Edit',
+    icon: 'fa-edit',
+    onClick: startUpdate
+  },
+  {
+    label: 'Remove',
+    icon: 'fa-trash',
+    onClick: confirmDeleteTag
   }
 ];
 
