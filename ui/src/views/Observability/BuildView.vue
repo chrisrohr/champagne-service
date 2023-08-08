@@ -10,16 +10,8 @@
           </h3>
         </template>
 
-        <template #body-cell-actions>
-          <button type="button" v-if="currentUserStore.isDeployableSystemAdmin" class="text-emerald-500 bg-transparent border border-solid border-emerald-500 hover:bg-emerald-500 hover:text-white active:bg-emerald-600 font-bold uppercase text-xs px-4 py-2 rounded outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150">
-            <i class="fas fa-medal"></i>
-          </button>
-          <button type="button" v-if="currentUserStore.isDeployableSystemAdmin" class="text-emerald-500 bg-transparent border border-solid border-emerald-500 hover:bg-emerald-500 hover:text-white active:bg-emerald-600 font-bold uppercase text-xs px-4 py-2 rounded outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150">
-            <i class="fas fa-magnifying-glass"></i>
-          </button>
-          <button type="button" v-if="currentUserStore.isDeployableSystemAdmin" class="text-emerald-500 bg-transparent border border-solid border-emerald-500 hover:bg-emerald-500 hover:text-white active:bg-emerald-600 font-bold uppercase text-xs px-4 py-2 rounded outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150">
-            <i class="fas fa-rectangle-list"></i>
-          </button>
+        <template #body-cell-actions="props">
+          <table-actions-dropdown :action-list="buildActions" :row="props.row" v-if="buildActions.length > 0"/>
         </template>
       </card-table>
     </div>
@@ -27,7 +19,7 @@
 </template>
 
 <script setup>
-import {onMounted, ref, watch} from "vue";
+import {computed, onMounted, ref, watch} from "vue";
 
 import {usePageInfoStore} from "@/stores/pageInfo";
 import {useCurrentUserStore} from "@/stores/currentUser";
@@ -35,6 +27,7 @@ import {useCurrentUserStore} from "@/stores/currentUser";
 import CardTable from "@/components/Cards/CardTable.vue";
 import {api} from "@/plugins/axios";
 import debounce from "@/utils/debounce";
+import TableActionsDropdown from "@/components/Dropdowns/TableActionsDropdown.vue";
 
 const pageInfo = usePageInfoStore();
 const currentUserStore = useCurrentUserStore();
@@ -59,47 +52,64 @@ const buildColumns = [
     name: 'componentIdentifier',
     label: 'Component',
     field: 'componentIdentifier',
-    align: 'left'
   },
   {
     name: 'componentVersion',
     label: 'Version',
     field: 'componentVersion',
-    align: 'left'
   },
   {
     name: 'sourceBranch',
     label: 'Source',
     field: 'sourceBranch',
-    align: 'left'
   },
   {
     name: 'commitRef',
     label: 'Commit Ref',
     field: 'commitRef',
-    align: 'left'
   },
   {
     name: 'commitUser',
     label: 'Committer',
     field: 'commitUser',
-    align: 'left'
   },
   {
     name: 'released',
     label: 'Released?',
-    align: 'left'
   },
   {
     name: 'createdAt',
     label: 'Created At',
-    align: 'left'
   },
   {
     name: 'actions',
-    label: 'Actions',
-    align: 'left'
   }
+];
+
+const buildActions = computed(() => allBuildActions.filter(action => action.permission === undefined || action.permission()));
+
+const allBuildActions = [
+  {
+    label: 'Promote',
+    icon: 'fa-medal',
+    onClick: () => {},
+    permission: () => {
+      return currentUserStore.isDeployableSystemAdmin;
+    }
+  },
+  {
+    label: 'Preview Promotion',
+    icon: 'fa-magnifying-glass',
+    onClick: () => {},
+    permission: () => {
+      return currentUserStore.isDeployableSystemAdmin;
+    }
+  },
+  {
+    label: 'View Changelog',
+    icon: 'fa-rectangle-list',
+    onClick: () => {}
+  },
 ];
 
 function loadBuilds() {

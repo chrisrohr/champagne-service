@@ -21,15 +21,7 @@
         </template>
 
         <template #body-cell-actions="props">
-          <button type="button" v-if="!props.row.deleted && currentUserStore.isDeployableSystemAdmin" @click="deactivateEnv(props.row.id)" class="text-emerald-500 bg-transparent border border-solid border-emerald-500 hover:bg-emerald-500 hover:text-white active:bg-emerald-600 font-bold uppercase text-xs px-4 py-2 rounded outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150">
-            <i class="fas fa-eye-slash"></i>
-          </button>
-          <button type="button" v-if="props.row.deleted && currentUserStore.isDeployableSystemAdmin" @click="activateEnv(props.row.id)" class="text-emerald-500 bg-transparent border border-solid border-emerald-500 hover:bg-emerald-500 hover:text-white active:bg-emerald-600 font-bold uppercase text-xs px-4 py-2 rounded outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150">
-            <i class="fas fa-eye"></i>
-          </button>
-          <button type="button" v-if="currentUserStore.isDeployableSystemAdmin" @click="confirmDelete(props.row)" class="text-emerald-500 bg-transparent border border-solid border-emerald-500 hover:bg-emerald-500 hover:text-white active:bg-emerald-600 font-bold uppercase text-xs px-4 py-2 rounded outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150">
-            <i class="fas fa-trash"></i>
-          </button>
+          <table-actions-dropdown :action-list="environmentActions" :row="props.row" v-if="environmentActions.length > 0"/>
         </template>
       </card-table>
     </div>
@@ -72,7 +64,7 @@
 </template>
 
 <script setup>
-import {onMounted, ref} from "vue";
+import {computed, onMounted, ref} from "vue";
 import {usePageInfoStore} from "@/stores/pageInfo";
 import {useEnvironmentStore} from "@/stores/environments";
 import {useCurrentUserStore} from "@/stores/currentUser";
@@ -80,6 +72,7 @@ import CardTable from "@/components/Cards/CardTable.vue";
 import ConfirmationPrompt from "@/components/Alerts/ConfirmationPrompt.vue";
 import {fromNow} from "@/utils/time";
 import {api} from "@/plugins/axios";
+import TableActionsDropdown from "@/components/Dropdowns/TableActionsDropdown.vue";
 
 const pageInfoStore = usePageInfoStore();
 const environmentStore = useEnvironmentStore();
@@ -115,6 +108,45 @@ const envColumns = [
     name: 'actions',
     label: 'Actions'
   }
+];
+
+const environmentActions = computed(() => allEnvironmentActions.filter(action => action.permission === undefined || action.permission()));
+
+const allEnvironmentActions = [
+  {
+    label: 'Deactivate',
+    icon: 'fa-eye-slash',
+    onClick: (row) => {
+      deactivateEnv(row.id);
+    },
+    permission: () => {
+      return currentUserStore.isDeployableSystemAdmin;
+    },
+    enabled: (row) => {
+      return !row.deleted;
+    }
+  },
+  {
+    label: 'Activate',
+    icon: 'fa-eye',
+    onClick: (row) => {
+      activateEnv(row.id);
+    },
+    permission: () => {
+      return currentUserStore.isDeployableSystemAdmin;
+    },
+    enabled: (row) => {
+      return row.deleted;
+    }
+  },
+  {
+    label: 'Remove',
+    icon: 'fa-trash',
+    onClick: confirmDelete,
+    permission: () => {
+      return currentUserStore.isDeployableSystemAdmin;
+    }
+  },
 ];
 
 function envTestCase(env) {

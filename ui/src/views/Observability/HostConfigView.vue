@@ -47,12 +47,7 @@
               {{ props.row.source }}
             </td>
             <td class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4">
-              <button type="button" v-if="currentUserStore.isDeployableSystemAdmin" @click="startUpdate(props.row)" class="text-emerald-500 bg-transparent border border-solid border-emerald-500 hover:bg-emerald-500 hover:text-white active:bg-emerald-600 font-bold uppercase text-xs px-4 py-2 rounded outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150">
-                <i class="fas fa-edit"></i>
-              </button>
-              <button type="button" v-if="currentUserStore.isDeployableSystemAdmin" @click="confirmDeleteHost(props.row)" class="text-emerald-500 bg-transparent border border-solid border-emerald-500 hover:bg-emerald-500 hover:text-white active:bg-emerald-600 font-bold uppercase text-xs px-4 py-2 rounded outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150">
-                <i class="fas fa-trash"></i>
-              </button>
+              <table-actions-dropdown :action-list="hostActions" :row="props.row" v-if="hostActions.length > 0"/>
             </td>
           </tr>
           <tr class="bg-gray-200" v-if="props.row.expand">
@@ -150,7 +145,7 @@
 </template>
 
 <script setup>
-import {onMounted, ref, watch} from "vue";
+import {computed, onMounted, ref, watch} from "vue";
 
 import {usePageInfoStore} from "@/stores/pageInfo";
 import {useCurrentUserStore} from "@/stores/currentUser";
@@ -158,6 +153,7 @@ import {useEnvironmentStore} from "@/stores/environments";
 
 import CardTable from "@/components/Cards/CardTable.vue";
 import ConfirmationPrompt from "@/components/Alerts/ConfirmationPrompt.vue";
+import TableActionsDropdown from "@/components/Dropdowns/TableActionsDropdown.vue";
 
 import Multiselect from "@vueform/multiselect";
 
@@ -220,10 +216,31 @@ const hostColumns = [
     field: 'source'
   },
   {
-    name: 'actions',
-    label: 'Actions'
+    name: 'actions'
   }
 ];
+
+const hostActions = computed(() => allHostActions.filter(action => action.permission === undefined || action.permission()));
+
+const allHostActions = [
+  {
+    label: 'Edit',
+    icon: 'fa-edit',
+    onClick: startUpdate,
+    permission: () => {
+      return currentUserStore.isDeployableSystemAdmin;
+    }
+  },
+  {
+    label: 'Remove',
+    icon: 'fa-trash',
+    onClick: confirmDeleteHost,
+    permission: () => {
+      return currentUserStore.isDeployableSystemAdmin;
+    }
+  }
+];
+
 const componentColumns = [
   {
     name: 'componentName',
