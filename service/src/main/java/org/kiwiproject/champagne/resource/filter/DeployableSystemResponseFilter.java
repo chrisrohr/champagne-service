@@ -1,10 +1,9 @@
 package org.kiwiproject.champagne.resource.filter;
 
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.container.ContainerResponseContext;
+import jakarta.ws.rs.container.ContainerResponseFilter;
 import org.kiwiproject.champagne.model.DeployableSystemThreadLocal;
-
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerResponseContext;
-import javax.ws.rs.container.ContainerResponseFilter;
 
 public class DeployableSystemResponseFilter implements ContainerResponseFilter {
 

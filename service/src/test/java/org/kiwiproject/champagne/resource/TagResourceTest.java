@@ -1,6 +1,6 @@
 package org.kiwiproject.champagne.resource;
 
-import static javax.ws.rs.client.Entity.json;
+import static jakarta.ws.rs.client.Entity.json;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertAcceptedResponse;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertNoContentResponse;
@@ -13,12 +13,12 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import javax.ws.rs.core.GenericType;
 import java.util.List;
 import java.util.Map;
 
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
+import jakarta.ws.rs.core.GenericType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

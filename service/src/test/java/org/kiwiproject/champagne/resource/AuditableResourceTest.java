@@ -9,6 +9,9 @@ import static org.mockito.Mockito.verifyNoInteractions;
 
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -21,10 +24,6 @@ import org.kiwiproject.champagne.util.AuthHelper;
 import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
 import org.kiwiproject.dropwizard.error.test.junit.jupiter.ApplicationErrorExtension;
 import org.kiwiproject.jaxrs.exception.JaxrsExceptionMapper;
-
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.core.Response;
 
 @DisplayName("AuditableResource")
 @ExtendWith({DropwizardExtensionsSupport.class, ApplicationErrorExtension.class})

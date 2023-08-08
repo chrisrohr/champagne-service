@@ -2,8 +2,7 @@ package org.kiwiproject.champagne.model;
 
 import java.time.Instant;
 
-import javax.validation.constraints.NotBlank;
-
+import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
 import lombok.Value;
 import lombok.With;

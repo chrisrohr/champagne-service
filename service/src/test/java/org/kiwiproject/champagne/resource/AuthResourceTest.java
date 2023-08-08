@@ -1,12 +1,15 @@
 package org.kiwiproject.champagne.resource;
 
-import static javax.ws.rs.client.Entity.json;
+import static jakarta.ws.rs.client.Entity.json;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertNoContentResponse;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertOkResponse;
 import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertUnauthorizedResponse;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
+
+import java.util.Map;
+import java.util.Optional;
 
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
@@ -15,12 +18,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.kiwiproject.champagne.model.User;
 import org.kiwiproject.champagne.dao.UserDao;
+import org.kiwiproject.champagne.model.User;
 import org.kiwiproject.jaxrs.exception.JaxrsExceptionMapper;
-
-import java.util.Map;
-import java.util.Optional;
 
 @DisplayName("AuthResource")
 @ExtendWith(DropwizardExtensionsSupport.class)
