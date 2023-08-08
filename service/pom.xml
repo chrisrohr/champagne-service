@@ -8,7 +8,7 @@
     <parent>
         <groupId>org.kiwiproject</groupId>
         <artifactId>kiwi-parent</artifactId>
-        <version>2.0.20</version>
+        <version>3.0.1</version>
     </parent>
 
     <artifactId>champagne-service</artifactId>
@@ -24,14 +24,14 @@
 
     <properties>
         <!-- Versions for required dependencies -->
-        <dropwizard-application-errors.version>1.2.1</dropwizard-application-errors.version>
-        <dropwizard-jwt-cookie-auth.version>4.5.1</dropwizard-jwt-cookie-auth.version>
-        <dropwizard-service-utilities.version>2.2.2</dropwizard-service-utilities.version>
-        <kiwi.version>2.7.0</kiwi.version>
-        <kiwi-bom.version>1.1.1</kiwi-bom.version>
+        <dropwizard-application-errors.version>2.0.0</dropwizard-application-errors.version>
+        <dropwizard-jwt-cookie-auth.version>5.0.0</dropwizard-jwt-cookie-auth.version>
+        <dropwizard-service-utilities.version>3.0.0</dropwizard-service-utilities.version>
+        <kiwi.version>3.0.0</kiwi.version>
+        <kiwi-bom.version>2.0.0</kiwi-bom.version>
 
         <!-- Versions for test dependencies -->
-        <kiwi-test.version>2.4.0</kiwi-test.version>
+        <kiwi-test.version>3.0.0</kiwi-test.version>
 
         <!-- Versions for plugins -->
         <maven-shade-plugin.version>3.5.0</maven-shade-plugin.version>

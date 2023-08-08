@@ -9,8 +9,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
+
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
+import jakarta.ws.rs.core.GenericType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -26,9 +29,6 @@ import org.kiwiproject.champagne.model.User;
 import org.kiwiproject.dropwizard.util.exception.JerseyViolationExceptionMapper;
 import org.kiwiproject.jaxrs.exception.JaxrsExceptionMapper;
 import org.kiwiproject.spring.data.KiwiPage;
-
-import java.util.List;
-import javax.ws.rs.core.GenericType;
 
 @DisplayName("AuditRecordResource")
 @ExtendWith({DropwizardExtensionsSupport.class, DeployableSystemExtension.class})

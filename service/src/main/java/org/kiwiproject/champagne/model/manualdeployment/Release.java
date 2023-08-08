@@ -2,10 +2,8 @@ package org.kiwiproject.champagne.model.manualdeployment;
 
 import java.time.Instant;
 
-import javax.validation.constraints.NotBlank;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
+import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
 import lombok.Value;
 import lombok.With;

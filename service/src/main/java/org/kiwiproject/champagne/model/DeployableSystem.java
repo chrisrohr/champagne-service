@@ -1,14 +1,14 @@
 package org.kiwiproject.champagne.model;
 
+import java.time.Instant;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
 import lombok.ToString;
 import lombok.Value;
 import lombok.With;
-
-import java.time.Instant;
-import java.util.List;
-import javax.validation.constraints.NotBlank;
 
 @Builder
 @Value
