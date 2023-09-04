@@ -1,5 +1,6 @@
 import {computed, ref} from 'vue'
 import {defineStore} from 'pinia'
+import {api} from "@/plugins/axios";
 
 export const useStatsStore = defineStore('stats', () => {
   const currentMonthBuilds = ref(0);
@@ -28,9 +29,10 @@ export const useStatsStore = defineStore('stats', () => {
     return ((currentMonthFailures.value - previousMonthFailures.value) / (divisor * 1.0) * 100).toFixed(2);
   });
 
-  function loadStats() {
-    currentMonthBuilds.value = 50;
-    previousMonthBuilds.value = 45;
+  async function loadStats() {
+    const response = await api.get('/metrics');
+    currentMonthBuilds.value = response.data.builds.current;
+    previousMonthBuilds.value = response.data.builds.previous;
 
     currentMonthDeployments.value = 38;
     previousMonthDeployments.value = 45;

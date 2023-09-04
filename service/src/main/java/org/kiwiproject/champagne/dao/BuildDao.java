@@ -4,6 +4,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.kiwiproject.base.KiwiStrings.f;
 import static org.kiwiproject.champagne.dao.DaoHelper.LIKE_QUERY_FORMAT;
 
+import java.time.Instant;
 import java.util.List;
 
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -53,4 +54,7 @@ public interface BuildDao {
         + "(:repoNamespace, :repoName, :commitRef, :commitUser, :sourceBranch, :componentIdentifier, :componentVersion, :distributionLocation, :extraData, :changeLog, :gitProvider, :deployableSystemId)")
     @GetGeneratedKeys
     long insertBuild(@BindBean Build build, @Bind("extraData") String extraDataJson);
+
+    @SqlQuery("select count(*) from builds where deployable_system_id = :systemId and created_at >= :start and created_at <= :end")
+    long countBuildsInSystemInRange(@Bind("systemId") long systemId, @Bind("start") Instant start, @Bind("end") Instant end);
 }
