@@ -8,6 +8,7 @@ import static org.kiwiproject.collect.KiwiLists.first;
 import static org.kiwiproject.test.constants.KiwiTestConstants.JSON_HELPER;
 import static org.kiwiproject.test.util.DateTimeTestHelper.assertTimeDifferenceWithinTolerance;
 
+import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Map;
@@ -140,6 +141,25 @@ class BuildDaoTest {
         @Test
         void shouldReturnEmptyListWhenNoBuildsFound() {
             var builds = dao.countBuilds(1L, null);
+            assertThat(builds).isZero();
+        }
+    }
+
+    @Nested
+    class CountBuildsInSystemInRange {
+
+        @Test
+        void shouldReturnCountOfBuildsInRange() {
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            insertBuildRecord(handle, "champagne-service", "42.0", systemId);
+
+            var builds = dao.countBuildsInSystemInRange(systemId, Instant.now().minusSeconds(60), Instant.now());
+            assertThat(builds).isOne();
+        }
+
+        @Test
+        void shouldReturnEmptyListWhenNoBuildsFound() {
+            var builds = dao.countBuildsInSystemInRange(1L, Instant.now(), Instant.now());
             assertThat(builds).isZero();
         }
     }
