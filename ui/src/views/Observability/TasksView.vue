@@ -340,9 +340,9 @@ function deleteRelease() {
       });
 }
 
-async function toggleExpand(row) {
+function toggleExpand(row) {
   if (!row.expand) {
-    await loadTasksForRelease(row.id);
+    loadTasksForRelease(row.id);
     expandedReleases.value.push(row.id);
   } else {
     _.pull(expandedReleases.value, row.id);
