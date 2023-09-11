@@ -38,11 +38,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.kiwiproject.champagne.config.AppConfig;
 import org.kiwiproject.champagne.dao.AuditRecordDao;
+import org.kiwiproject.champagne.dao.DeployableSystemDao;
 import org.kiwiproject.champagne.dao.UserDao;
+import org.kiwiproject.champagne.junit.jupiter.DeployableSystemExtension;
 import org.kiwiproject.champagne.junit.jupiter.JwtExtension;
 import org.kiwiproject.champagne.model.AuditRecord;
 import org.kiwiproject.champagne.model.AuditRecord.Action;
 import org.kiwiproject.champagne.model.User;
+import org.kiwiproject.champagne.model.UserInSystem;
 import org.kiwiproject.champagne.resource.apps.TestUserApp;
 import org.kiwiproject.dropwizard.error.dao.ApplicationErrorDao;
 import org.kiwiproject.dropwizard.error.test.junit.jupiter.ApplicationErrorExtension;
@@ -55,9 +58,10 @@ import org.mockito.ArgumentCaptor;
 public class UserResourceTest {
 
     private static final UserDao USER_DAO = mock(UserDao.class);
+    private static final DeployableSystemDao SYSTEM_DAO = mock(DeployableSystemDao.class);
     private static final AuditRecordDao AUDIT_RECORD_DAO = mock(AuditRecordDao.class);
     private static final ApplicationErrorDao APPLICATION_ERROR_DAO = mock(ApplicationErrorDao.class);
-    private static final UserResource USER_RESOURCE = new UserResource(USER_DAO, AUDIT_RECORD_DAO, APPLICATION_ERROR_DAO);
+    private static final UserResource USER_RESOURCE = new UserResource(USER_DAO, SYSTEM_DAO, AUDIT_RECORD_DAO, APPLICATION_ERROR_DAO);
 
     private static final ResourceExtension APP = ResourceExtension.builder()
             .bootstrapLogging(false)
@@ -67,10 +71,13 @@ public class UserResourceTest {
 
     @RegisterExtension
     private final JwtExtension jwtExtension = new JwtExtension("bob");
+
+    @RegisterExtension
+    public final DeployableSystemExtension deployableSystemExtension = new DeployableSystemExtension(1L, true);
     
     @BeforeEach
     void setUp() {
-        reset(USER_DAO, AUDIT_RECORD_DAO);
+        reset(USER_DAO, SYSTEM_DAO, AUDIT_RECORD_DAO);
     }
 
     @Nested
@@ -90,7 +97,7 @@ public class UserResourceTest {
             when(USER_DAO.findPagedUsers(0, 25)).thenReturn(List.of(user));
             when(USER_DAO.countUsers()).thenReturn(1L);
 
-            var response = APP.client().target("/users")
+            var response = APP.client().target("/users/all")
                 .request()
                 .get();
 
@@ -104,7 +111,7 @@ public class UserResourceTest {
             var foundUser = first(pagedData.getContent());
             assertThat(foundUser)
                 .usingRecursiveComparison()
-                .ignoringFields("createdAt", "updatedAt")
+                .ignoringFields("createdAt", "updatedAt", "systems")
                 .isEqualTo(user);
 
             verify(USER_DAO).findPagedUsers(0, 25);
@@ -127,7 +134,7 @@ public class UserResourceTest {
             when(USER_DAO.findPagedUsers(40, 10)).thenReturn(List.of(user));
             when(USER_DAO.countUsers()).thenReturn(41L);
 
-            var response = APP.client().target("/users")
+            var response = APP.client().target("/users/all")
                 .queryParam("pageNumber", 5)
                 .queryParam("pageSize", 10)
                 .request()
@@ -143,11 +150,101 @@ public class UserResourceTest {
             var foundUser = first(pagedData.getContent());
             assertThat(foundUser)
                 .usingRecursiveComparison()
-                .ignoringFields("createdAt", "updatedAt")
+                .ignoringFields("createdAt", "updatedAt", "systems")
                 .isEqualTo(user);
 
             verify(USER_DAO).findPagedUsers(40, 10);
             verify(USER_DAO).countUsers();
+            verifyNoMoreInteractions(USER_DAO);
+            verifyNoInteractions(AUDIT_RECORD_DAO);
+        }
+    }
+
+    @Nested
+    class ListUsersInSystem {
+
+        @Test
+        void shouldReturnPagedListOfUsersUsingDefaultPagingParams() {
+            var user = User.builder()
+                    .id(1L)
+                    .firstName("John")
+                    .lastName("Doe")
+                    .displayName("John Doe")
+                    .createdAt(Instant.now())
+                    .updatedAt(Instant.now())
+                    .build();
+
+            var userInSystem = UserInSystem.builder()
+                    .user(user)
+                    .systemAdmin(false)
+                    .build();
+
+            when(USER_DAO.findPagedUsersInSystem(1L, 0, 25)).thenReturn(List.of(userInSystem));
+            when(USER_DAO.countUsersInSystem(1L)).thenReturn(1L);
+
+            var response = APP.client().target("/users")
+                    .request()
+                    .get();
+
+            assertOkResponse(response);
+
+            var pagedData = response.readEntity(new GenericType<KiwiPage<User>>(){});
+            assertThat(pagedData.getNumberOfElements()).isOne();
+            assertThat(pagedData.getTotalElements()).isOne();
+            assertThat(pagedData.getNumber()).isOne();
+
+            var foundUser = first(pagedData.getContent());
+            assertThat(foundUser)
+                    .usingRecursiveComparison()
+                    .ignoringFields("createdAt", "updatedAt")
+                    .isEqualTo(user);
+
+            verify(USER_DAO).findPagedUsersInSystem(1L, 0, 25);
+            verify(USER_DAO).countUsersInSystem(1L);
+            verifyNoMoreInteractions(USER_DAO);
+            verifyNoInteractions(AUDIT_RECORD_DAO);
+        }
+
+        @Test
+        void shouldReturnPagedListOfUsersUsingProvidedPagingParams() {
+            var user = User.builder()
+                    .id(1L)
+                    .firstName("John")
+                    .lastName("Doe")
+                    .displayName("John Doe")
+                    .createdAt(Instant.now())
+                    .updatedAt(Instant.now())
+                    .build();
+
+            var userInSystem = UserInSystem.builder()
+                    .user(user)
+                    .systemAdmin(false)
+                    .build();
+
+            when(USER_DAO.findPagedUsersInSystem(1L, 40, 10)).thenReturn(List.of(userInSystem));
+            when(USER_DAO.countUsersInSystem(1L)).thenReturn(41L);
+
+            var response = APP.client().target("/users")
+                    .queryParam("pageNumber", 5)
+                    .queryParam("pageSize", 10)
+                    .request()
+                    .get();
+
+            assertOkResponse(response);
+
+            var pagedData = response.readEntity(new GenericType<KiwiPage<User>>(){});
+            assertThat(pagedData.getNumberOfElements()).isOne();
+            assertThat(pagedData.getTotalElements()).isEqualTo(41L);
+            assertThat(pagedData.getNumber()).isEqualTo(5L);
+
+            var foundUser = first(pagedData.getContent());
+            assertThat(foundUser)
+                    .usingRecursiveComparison()
+                    .ignoringFields("createdAt", "updatedAt")
+                    .isEqualTo(user);
+
+            verify(USER_DAO).findPagedUsersInSystem(1L, 40, 10);
+            verify(USER_DAO).countUsersInSystem(1L);
             verifyNoMoreInteractions(USER_DAO);
             verifyNoInteractions(AUDIT_RECORD_DAO);
         }
@@ -175,7 +272,7 @@ public class UserResourceTest {
 
             verify(USER_DAO).insertUser(isA(User.class));
 
-            verifyAuditRecorded(1L, Action.CREATED);
+            verifyAuditRecorded(1L, User.class, Action.CREATED);
 
             verifyNoMoreInteractions(USER_DAO, AUDIT_RECORD_DAO);
         }
@@ -211,7 +308,7 @@ public class UserResourceTest {
 
             verify(USER_DAO).deleteUser(1L);
             
-            verifyAuditRecorded(1L, Action.DELETED);
+            verifyAuditRecorded(1L, User.class, Action.DELETED);
 
             verifyNoMoreInteractions(USER_DAO, AUDIT_RECORD_DAO);
         }
@@ -234,14 +331,14 @@ public class UserResourceTest {
         }
     }
 
-    private void verifyAuditRecorded(long id, Action action) {
+    private void verifyAuditRecorded(long id, Class<?> clazz, Action action) {
         var argCapture = ArgumentCaptor.forClass(AuditRecord.class);
         verify(AUDIT_RECORD_DAO).insertAuditRecord(argCapture.capture());
 
         var audit = argCapture.getValue();
 
         assertThat(audit.getRecordId()).isEqualTo(id);
-        assertThat(audit.getRecordType()).isEqualTo(User.class.getSimpleName());
+        assertThat(audit.getRecordType()).isEqualTo(clazz.getSimpleName());
         assertThat(audit.getAction()).isEqualTo(action);
     }
 
@@ -350,7 +447,7 @@ public class UserResourceTest {
 
             verify(USER_DAO).updateUser(any(User.class));
             
-            verifyAuditRecorded(1L, Action.UPDATED);
+            verifyAuditRecorded(1L, User.class, Action.UPDATED);
 
             verifyNoMoreInteractions(USER_DAO, AUDIT_RECORD_DAO);
         }
@@ -394,6 +491,140 @@ public class UserResourceTest {
             assertInternalServerErrorResponse(response);
 
             verifyNoInteractions(USER_DAO, AUDIT_RECORD_DAO);
+        }
+    }
+
+    @Nested
+    class RemoveUserFromSystem {
+        @Test
+        void shouldRemoveGivenUserFromCurrentSystem() {
+            when(USER_DAO.removeUserFromSystem(1L, 1L)).thenReturn(1);
+
+            var response = APP.client().target("/users/system/{id}")
+                    .resolveTemplate("id", 1L)
+                    .request()
+                    .delete();
+
+            assertNoContentResponse(response);
+
+            verify(USER_DAO).removeUserFromSystem(1L, 1L);
+
+            verifyAuditRecorded(1L, UserInSystem.class, Action.DELETED);
+
+            verifyNoMoreInteractions(USER_DAO, AUDIT_RECORD_DAO);
+        }
+
+        @Test
+        void shouldNotAuditIfNothingRemoved() {
+            when(USER_DAO.removeUserFromSystem(1L, 1L)).thenReturn(0);
+
+            var response = APP.client().target("/users/system/{id}")
+                    .resolveTemplate("id", 1L)
+                    .request()
+                    .delete();
+
+            assertNoContentResponse(response);
+
+            verify(USER_DAO).removeUserFromSystem(1L, 1L);
+
+            verifyNoInteractions(AUDIT_RECORD_DAO);
+            verifyNoMoreInteractions(USER_DAO, AUDIT_RECORD_DAO);
+        }
+    }
+
+    @Nested
+    class UpdateSystemAdminStatus {
+        @Test
+        void shouldSetGivenUserToAdminInSystem() {
+            when(USER_DAO.makeUserAdminInSystem(1L, 1L)).thenReturn(1);
+
+            var response = APP.client().target("/users/system/{id}")
+                    .resolveTemplate("id", 1L)
+                    .request()
+                    .put(json(Map.of("admin", true)));
+
+            assertAcceptedResponse(response);
+
+            verify(USER_DAO).makeUserAdminInSystem(1L, 1L);
+
+            verifyAuditRecorded(1L, UserInSystem.class, Action.UPDATED);
+
+            verifyNoMoreInteractions(USER_DAO, AUDIT_RECORD_DAO);
+        }
+
+        @Test
+        void shouldSetGivenUserToNonAdminInSystem() {
+            when(USER_DAO.makeUserNonAdminInSystem(1L, 1L)).thenReturn(1);
+
+            var response = APP.client().target("/users/system/{id}")
+                    .resolveTemplate("id", 1L)
+                    .request()
+                    .put(json(Map.of("admin", false)));
+
+            assertAcceptedResponse(response);
+
+            verify(USER_DAO).makeUserNonAdminInSystem(1L, 1L);
+
+            verifyAuditRecorded(1L, UserInSystem.class, Action.UPDATED);
+
+            verifyNoMoreInteractions(USER_DAO, AUDIT_RECORD_DAO);
+        }
+
+        @Test
+        void shouldNotAuditIfNothingUpdated() {
+            when(USER_DAO.makeUserAdminInSystem(1L, 1L)).thenReturn(0);
+
+            var response = APP.client().target("/users/system/{id}")
+                    .resolveTemplate("id", 1L)
+                    .request()
+                    .put(json(Map.of("admin", true)));
+
+            assertAcceptedResponse(response);
+
+            verify(USER_DAO).makeUserAdminInSystem(1L, 1L);
+
+            verifyNoInteractions(AUDIT_RECORD_DAO);
+            verifyNoMoreInteractions(USER_DAO, AUDIT_RECORD_DAO);
+        }
+    }
+
+    @Nested
+    class AddUserToSystem {
+        @Test
+        void shouldAddUserToGivenSystem() {
+            when(USER_DAO.addUserToSystem(1L, 1L)).thenReturn(1);
+
+            var response = APP.client().target("/users/system/{systemId}/{id}")
+                    .resolveTemplate("systemId", 1L)
+                    .resolveTemplate("id", 1L)
+                    .request()
+                    .post(json(""));
+
+            assertAcceptedResponse(response);
+
+            verify(USER_DAO).addUserToSystem(1L, 1L);
+
+            verifyAuditRecorded(1L, User.class, Action.UPDATED);
+
+            verifyNoMoreInteractions(USER_DAO, AUDIT_RECORD_DAO);
+        }
+
+        @Test
+        void shouldNotAuditedIfNothingAdded() {
+            when(USER_DAO.addUserToSystem(1L, 1L)).thenReturn(0);
+
+            var response = APP.client().target("/users/system/{systemId}/{id}")
+                    .resolveTemplate("systemId", 1L)
+                    .resolveTemplate("id", 1L)
+                    .request()
+                    .post(json(""));
+
+            assertAcceptedResponse(response);
+
+            verify(USER_DAO).addUserToSystem(1L, 1L);
+
+            verifyNoInteractions(AUDIT_RECORD_DAO);
+            verifyNoMoreInteractions(USER_DAO, AUDIT_RECORD_DAO);
         }
     }
 }
