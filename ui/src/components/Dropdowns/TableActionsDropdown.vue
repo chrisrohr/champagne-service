@@ -4,7 +4,7 @@
     <i class="fas fa-ellipsis-v"></i>
   </button>
   <div ref="actionListRef" class="absolute right-0 bg-white text-base z-50 py-2 list-none text-left rounded shadow-lg min-w-48" :class="{ hidden: !dropdownPopoverShow, block: dropdownPopoverShow }">
-    <a v-for="action in props.actionList" :key="action.label" href="javascript:void(0);" class="text-sm py-2 px-4 font-normal block w-full whitespace-nowrap bg-transparent hover:bg-gray-100" :class="action.enabled === undefined || action.enabled(props.row) ? 'text-emerald-500' : 'text-gray-200 pointer-events-none'" @click="action.onClick(props.row)">
+    <a v-for="action in props.actionList" :key="action.label" href="javascript:void(0);" class="text-sm py-2 px-4 font-normal block w-full whitespace-nowrap bg-transparent hover:bg-gray-100" :class="action.enabled === undefined || action.enabled(props.row) ? 'text-emerald-500' : 'hidden'" @click="action.onClick(props.row)">
       <i class="fas mr-3" :class="action.icon"></i>
       {{ action.label }}
     </a>

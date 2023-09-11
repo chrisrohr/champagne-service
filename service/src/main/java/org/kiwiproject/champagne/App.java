@@ -119,7 +119,7 @@ public class App extends Application<AppConfig> {
         environment.jersey().register(new DeploymentEnvironmentResource(deploymentEnvironmentDao, auditRecordDao, errorDao, manualTaskService));
         environment.jersey().register(new HostConfigurationResource(hostDao, componentDao, tagDao, auditRecordDao, errorDao));
         environment.jersey().register(new TaskResource(releaseDao, releaseStatusDao, taskDao, taskStatusDao, deploymentEnvironmentDao, auditRecordDao, errorDao));
-        environment.jersey().register(new UserResource(userDao, auditRecordDao, errorDao));
+        environment.jersey().register(new UserResource(userDao, deployableSystemDao, auditRecordDao, errorDao));
         environment.jersey().register(new ApplicationErrorResource(errorDao));
         environment.jersey().register(new DeployableSystemResource(deployableSystemDao, userDao, auditRecordDao, errorDao));
         environment.jersey().register(new TagResource(tagDao, auditRecordDao, errorDao));

@@ -2,7 +2,9 @@ package org.kiwiproject.champagne.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.kiwiproject.champagne.util.TestObjects.insertDeployableSystem;
 import static org.kiwiproject.champagne.util.TestObjects.insertUserRecord;
+import static org.kiwiproject.champagne.util.TestObjects.insertUserToDeployableSystemLink;
 import static org.kiwiproject.collect.KiwiLists.first;
 import static org.kiwiproject.test.util.DateTimeTestHelper.assertTimeDifferenceWithinTolerance;
 
@@ -12,14 +14,14 @@ import java.time.ZonedDateTime;
 import org.assertj.core.api.SoftAssertions;
 import org.assertj.core.api.junit.jupiter.SoftAssertionsExtension;
 import org.jdbi.v3.core.Handle;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.kiwiproject.champagne.model.User;
 import org.kiwiproject.champagne.dao.mappers.UserMapper;
+import org.kiwiproject.champagne.model.User;
 import org.kiwiproject.test.junit.jupiter.Jdbi3DaoExtension;
 import org.kiwiproject.test.junit.jupiter.PostgresLiquibaseTestExtension;
 
@@ -181,7 +183,7 @@ class UserDaoTest {
     class DeleteUser {
 
         @Test
-        void shouldDeleteUserSuccessfully(SoftAssertions softly) {
+        void shouldDeleteUserSuccessfully() {
             var userId = insertUserRecord(handle, "jdoe");
 
             dao.deleteUser(userId);
@@ -190,6 +192,105 @@ class UserDaoTest {
             assertThat(users).isEmpty();
         }
 
+    }
+
+    @Nested
+    class FindPagedUsersInSystem {
+
+        @Test
+        void shouldReturnListOfUsers() {
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            var userId = insertUserRecord(handle, "fooBar", "Foo", "Bar");
+            insertUserToDeployableSystemLink(handle, userId, systemId, false);
+
+            var users = dao.findPagedUsersInSystem(systemId, 0, 10);
+            assertThat(users)
+                    .extracting("systemIdentifier", "firstName", "lastName")
+                    .contains(tuple("fooBar", "Foo", "Bar"));
+        }
+
+        @Test
+        void shouldReturnEmptyListWhenNoUsersFound() {
+            insertUserRecord(handle, "fooBar", "Foo", "Bar");
+
+            var users = dao.findPagedUsersInSystem(1L, 10, 10);
+            assertThat(users).isEmpty();
+        }
+    }
+
+    @Nested
+    class CountUsersInSystem {
+
+        @Test
+        void shouldReturnCountOfUsers() {
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            var userId = insertUserRecord(handle, "fooBar", "Foo", "Bar");
+            insertUserToDeployableSystemLink(handle, userId, systemId, false);
+
+            var count = dao.countUsers();
+            assertThat(count).isOne();
+        }
+
+        @Test
+        void shouldReturnZeroWhenNoUsersFound() {
+            var count = dao.countUsers();
+            assertThat(count).isZero();
+        }
+    }
+
+    @Nested
+    class RemoveUserFromSystem {
+
+        @Test
+        void shouldRemoveUserFromSystem() {
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            var userId = insertUserRecord(handle, "fooBar", "Foo", "Bar");
+            insertUserToDeployableSystemLink(handle, userId, systemId, false);
+
+            var updateCount = dao.removeUserFromSystem(userId, systemId);
+            assertThat(updateCount).isOne();
+        }
+    }
+
+    @Nested
+    class MakeUserAdminInSystem {
+
+        @Test
+        void shouldMakeTheGivenUserAnAdminInTheGivenSystem() {
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            var userId = insertUserRecord(handle, "fooBar", "Foo", "Bar");
+            insertUserToDeployableSystemLink(handle, userId, systemId, false);
+
+            var updateCount = dao.makeUserAdminInSystem(userId, systemId);
+            assertThat(updateCount).isOne();
+        }
+    }
+
+    @Nested
+    class MakeUserNonAdminInSystem {
+
+        @Test
+        void shouldMakeTheGivenUserANonAdminInTheGivenSystem() {
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            var userId = insertUserRecord(handle, "fooBar", "Foo", "Bar");
+            insertUserToDeployableSystemLink(handle, userId, systemId, true);
+
+            var updateCount = dao.makeUserNonAdminInSystem(userId, systemId);
+            assertThat(updateCount).isOne();
+        }
+    }
+
+    @Nested
+    class AddUserToSystem {
+
+        @Test
+        void shouldAddTheGivenUserToTheGivenSystem() {
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            var userId = insertUserRecord(handle, "fooBar", "Foo", "Bar");
+
+            var updateCount = dao.addUserToSystem(userId, systemId);
+            assertThat(updateCount).isOne();
+        }
     }
 
 }

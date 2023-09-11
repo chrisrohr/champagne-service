@@ -11,6 +11,8 @@ import ComponentView from "@/views/Observability/ComponentView.vue";
 import TagView from "@/views/SystemAdmin/TagView.vue";
 import BuildView from "@/views/Observability/BuildView.vue";
 import TasksView from "@/views/Observability/TasksView.vue";
+import SystemUsersView from "@/views/SystemAdmin/SystemUsersView.vue";
+import UsersView from "@/views/ChampagneAdmin/UsersView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -27,6 +29,8 @@ const router = createRouter({
         { path: '/tags', component: TagView, name: 'tags' },
         { path: '/builds', component: BuildView, name: 'builds' },
         { path: '/tasks', component: TasksView, name: 'tasks' },
+        { path: '/systemUsers', component: SystemUsersView, name: 'systemUsers' },
+        { path: '/users', component: UsersView, name: 'users' },
         { path: '/noDeployableSystem', component: NoDeployableSystemView, name: 'noDeployableSystem' }
       ]
     },
