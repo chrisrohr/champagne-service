@@ -10,6 +10,7 @@ import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertUnauthorizedRespo
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -28,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kiwiproject.champagne.dao.AuditRecordDao;
 import org.kiwiproject.champagne.dao.DeployableSystemDao;
+import org.kiwiproject.champagne.dao.DeploymentEnvironmentDao;
 import org.kiwiproject.champagne.dao.UserDao;
 import org.kiwiproject.champagne.model.AuditRecord;
 import org.kiwiproject.champagne.model.DeployableSystem;
@@ -45,13 +47,14 @@ class DeployableSystemResourceTest {
     private static final AuditRecordDao AUDIT_RECORD_DAO = mock(AuditRecordDao.class);
     private static final ApplicationErrorDao APPLICATION_ERROR_DAO = mock(ApplicationErrorDao.class);
     private static final UserDao USER_DAO = mock(UserDao.class);
+    private static final DeploymentEnvironmentDao DEPLOYMENT_ENVIRONMENT_DAO = mock(DeploymentEnvironmentDao.class);
 
-    private static final DeployableSystemResource RESOURCE = new DeployableSystemResource(DEPLOYABLE_SYSTEM_DAO, USER_DAO, AUDIT_RECORD_DAO, APPLICATION_ERROR_DAO);
+    private static final DeployableSystemResource RESOURCE = new DeployableSystemResource(DEPLOYABLE_SYSTEM_DAO, USER_DAO, DEPLOYMENT_ENVIRONMENT_DAO, AUDIT_RECORD_DAO, APPLICATION_ERROR_DAO);
     private static final ResourceExtension RESOURCES = JwtResourceHelper.configureJwtResource(RESOURCE);
 
     @AfterEach
     void cleanup() {
-        reset(DEPLOYABLE_SYSTEM_DAO, AUDIT_RECORD_DAO, USER_DAO);
+        reset(DEPLOYABLE_SYSTEM_DAO, AUDIT_RECORD_DAO, USER_DAO, DEPLOYMENT_ENVIRONMENT_DAO);
     }
 
     @Nested
@@ -131,12 +134,17 @@ class DeployableSystemResourceTest {
 
             var systemUser = DeployableSystem.SystemUser.builder()
                     .userId(1L)
+                    .displayName("Jim Bob")
+                    .systemIdentifier("jbob")
                     .admin(true)
                     .build();
 
             when(DEPLOYABLE_SYSTEM_DAO.findPagedDeployableSystems(0, 10)).thenReturn(List.of(system));
             when(DEPLOYABLE_SYSTEM_DAO.countDeployableSystems()).thenReturn(1L);
             when(DEPLOYABLE_SYSTEM_DAO.findUsersForSystem(1L)).thenReturn(List.of(systemUser));
+            when(DEPLOYMENT_ENVIRONMENT_DAO.getEnvironmentName(2L)).thenReturn("dev");
+            when(DEPLOYMENT_ENVIRONMENT_DAO.getEnvironmentName(3L)).thenReturn("test");
+            when(DEPLOYMENT_ENVIRONMENT_DAO.getEnvironmentName(4L)).thenReturn("prod");
 
             var token = generateJwt(true);
             var response = RESOURCES.client()
@@ -158,6 +166,9 @@ class DeployableSystemResourceTest {
             verify(DEPLOYABLE_SYSTEM_DAO).findPagedDeployableSystems(0, 10);
             verify(DEPLOYABLE_SYSTEM_DAO).countDeployableSystems();
             verify(DEPLOYABLE_SYSTEM_DAO).findUsersForSystem(1L);
+            verify(DEPLOYMENT_ENVIRONMENT_DAO, times(2)).getEnvironmentName(2L);
+            verify(DEPLOYMENT_ENVIRONMENT_DAO).getEnvironmentName(3L);
+            verify(DEPLOYMENT_ENVIRONMENT_DAO).getEnvironmentName(4L);
 
             verifyNoMoreInteractions(DEPLOYABLE_SYSTEM_DAO);
         }
@@ -167,8 +178,6 @@ class DeployableSystemResourceTest {
             var system = DeployableSystem.builder()
                     .id(1L)
                     .name("kiwi")
-                    .devEnvironmentId(2L)
-                    .environmentPromotionOrder("2,3,4")
                     .build();
 
             var systemUser = DeployableSystem.SystemUser.builder()
@@ -200,6 +209,7 @@ class DeployableSystemResourceTest {
             verify(DEPLOYABLE_SYSTEM_DAO).findUsersForSystem(1L);
 
             verifyNoMoreInteractions(DEPLOYABLE_SYSTEM_DAO);
+            verifyNoInteractions(DEPLOYMENT_ENVIRONMENT_DAO);
         }
     }
 

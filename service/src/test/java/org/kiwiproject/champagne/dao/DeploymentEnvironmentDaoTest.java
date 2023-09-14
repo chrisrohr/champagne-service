@@ -6,6 +6,9 @@ import static org.kiwiproject.champagne.util.TestObjects.insertDeploymentEnviron
 import static org.kiwiproject.collect.KiwiLists.first;
 import static org.kiwiproject.test.util.DateTimeTestHelper.assertTimeDifferenceWithinTolerance;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+
 import org.jdbi.v3.core.Handle;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,9 +19,6 @@ import org.kiwiproject.champagne.dao.mappers.DeploymentEnvironmentMapper;
 import org.kiwiproject.champagne.model.DeploymentEnvironment;
 import org.kiwiproject.test.junit.jupiter.Jdbi3DaoExtension;
 import org.kiwiproject.test.junit.jupiter.PostgresLiquibaseTestExtension;
-
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 
 @DisplayName("DeploymentEnvironmentDao")
 class DeploymentEnvironmentDaoTest {
@@ -71,7 +71,7 @@ class DeploymentEnvironmentDaoTest {
     }
 
     @Nested
-    class UpdateUser {
+    class UpdateEnv {
 
         @Test
         void shouldUpdateDeploymentEnvironmentSuccessfully() {
@@ -114,6 +114,19 @@ class DeploymentEnvironmentDaoTest {
         void shouldReturnEmptyListWhenNoDeploymentEnvironmentsFound() {
             var environments = dao.findAllEnvironments(1L);
             assertThat(environments).isEmpty();
+        }
+    }
+
+    @Nested
+    class GetEnvironmentName {
+
+        @Test
+        void shouldReturnNameOfGivenEnvironment() {
+            var systemId = insertDeployableSystem(handle, "kiwi");
+            var envId = insertDeploymentEnvironmentRecord(handle, "DEV", systemId);
+
+            var name = dao.getEnvironmentName(envId);
+            assertThat(name).isEqualTo("DEV");
         }
     }
 
