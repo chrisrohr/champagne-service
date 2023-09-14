@@ -10,6 +10,7 @@ import static org.kiwiproject.test.jaxrs.JaxrsTestHelper.assertUnauthorizedRespo
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -133,12 +134,17 @@ class DeployableSystemResourceTest {
 
             var systemUser = DeployableSystem.SystemUser.builder()
                     .userId(1L)
+                    .displayName("Jim Bob")
+                    .systemIdentifier("jbob")
                     .admin(true)
                     .build();
 
             when(DEPLOYABLE_SYSTEM_DAO.findPagedDeployableSystems(0, 10)).thenReturn(List.of(system));
             when(DEPLOYABLE_SYSTEM_DAO.countDeployableSystems()).thenReturn(1L);
             when(DEPLOYABLE_SYSTEM_DAO.findUsersForSystem(1L)).thenReturn(List.of(systemUser));
+            when(DEPLOYMENT_ENVIRONMENT_DAO.getEnvironmentName(2L)).thenReturn("dev");
+            when(DEPLOYMENT_ENVIRONMENT_DAO.getEnvironmentName(3L)).thenReturn("test");
+            when(DEPLOYMENT_ENVIRONMENT_DAO.getEnvironmentName(4L)).thenReturn("prod");
 
             var token = generateJwt(true);
             var response = RESOURCES.client()
@@ -160,6 +166,9 @@ class DeployableSystemResourceTest {
             verify(DEPLOYABLE_SYSTEM_DAO).findPagedDeployableSystems(0, 10);
             verify(DEPLOYABLE_SYSTEM_DAO).countDeployableSystems();
             verify(DEPLOYABLE_SYSTEM_DAO).findUsersForSystem(1L);
+            verify(DEPLOYMENT_ENVIRONMENT_DAO, times(2)).getEnvironmentName(2L);
+            verify(DEPLOYMENT_ENVIRONMENT_DAO).getEnvironmentName(3L);
+            verify(DEPLOYMENT_ENVIRONMENT_DAO).getEnvironmentName(4L);
 
             verifyNoMoreInteractions(DEPLOYABLE_SYSTEM_DAO);
         }
@@ -169,8 +178,6 @@ class DeployableSystemResourceTest {
             var system = DeployableSystem.builder()
                     .id(1L)
                     .name("kiwi")
-                    .devEnvironmentId(2L)
-                    .environmentPromotionOrder("2,3,4")
                     .build();
 
             var systemUser = DeployableSystem.SystemUser.builder()
@@ -202,6 +209,7 @@ class DeployableSystemResourceTest {
             verify(DEPLOYABLE_SYSTEM_DAO).findUsersForSystem(1L);
 
             verifyNoMoreInteractions(DEPLOYABLE_SYSTEM_DAO);
+            verifyNoInteractions(DEPLOYMENT_ENVIRONMENT_DAO);
         }
     }
 
