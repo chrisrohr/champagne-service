@@ -303,7 +303,7 @@
             </router-link>
           </li>
           <li class="items-center">
-            <router-link to="/" v-slot="{ href, navigate, isActive }">
+            <router-link to="/systems" v-slot="{ href, navigate, isActive }">
               <a
                   :href="href"
                   @click="navigate"

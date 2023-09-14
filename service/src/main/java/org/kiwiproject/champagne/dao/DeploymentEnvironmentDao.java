@@ -1,5 +1,7 @@
 package org.kiwiproject.champagne.dao;
 
+import java.util.List;
+
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
@@ -8,8 +10,6 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.kiwiproject.champagne.dao.mappers.DeploymentEnvironmentMapper;
 import org.kiwiproject.champagne.model.DeploymentEnvironment;
-
-import java.util.List;
 
 @RegisterRowMapper(DeploymentEnvironmentMapper.class)
 public interface DeploymentEnvironmentDao {
@@ -31,5 +31,8 @@ public interface DeploymentEnvironmentDao {
 
     @SqlUpdate("update deployment_environments set deleted = false, updated_at = current_timestamp where id = :id")
     int unSoftDeleteById(@Bind("id") long id);
+
+    @SqlQuery("select environment_name from deployment_environments where id = :id")
+    String getEnvironmentName(@Bind("id") long id);
 
 }

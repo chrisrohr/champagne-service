@@ -1,5 +1,7 @@
 package org.kiwiproject.champagne.dao;
 
+import java.util.List;
+
 import org.apache.commons.lang3.BooleanUtils;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -11,8 +13,6 @@ import org.kiwiproject.champagne.dao.mappers.DeployableSystemForUserMapper;
 import org.kiwiproject.champagne.dao.mappers.DeployableSystemMapper;
 import org.kiwiproject.champagne.dao.mappers.SystemUserMapper;
 import org.kiwiproject.champagne.model.DeployableSystem;
-
-import java.util.List;
 
 public interface DeployableSystemDao {
 
@@ -31,7 +31,7 @@ public interface DeployableSystemDao {
     @SqlQuery("select count(*) from deployable_systems")
     long countDeployableSystems();
 
-    @SqlQuery("select * from users_deployable_systems where deployable_system_id = :systemId")
+    @SqlQuery("select u.id, u.display_name, u.system_identifier, usd.system_admin from users u left join users_deployable_systems usd on u.id = usd.user_id where usd.deployable_system_id = :systemId")
     @RegisterRowMapper(SystemUserMapper.class)
     List<DeployableSystem.SystemUser> findUsersForSystem(@Bind("systemId") long systemId);
 

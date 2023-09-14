@@ -1,12 +1,15 @@
 package org.kiwiproject.champagne.resource;
 
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.kiwiproject.champagne.model.AuditRecord.Action.CREATED;
 import static org.kiwiproject.champagne.model.AuditRecord.Action.DELETED;
 import static org.kiwiproject.champagne.model.AuditRecord.Action.UPDATED;
 import static org.kiwiproject.search.KiwiSearching.zeroBasedOffset;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
@@ -29,6 +32,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.dhatim.dropwizard.jwt.cookie.authentication.DefaultJwtCookiePrincipal;
 import org.kiwiproject.champagne.dao.AuditRecordDao;
 import org.kiwiproject.champagne.dao.DeployableSystemDao;
+import org.kiwiproject.champagne.dao.DeploymentEnvironmentDao;
 import org.kiwiproject.champagne.dao.UserDao;
 import org.kiwiproject.champagne.model.DeployableSystem;
 import org.kiwiproject.champagne.model.DeployableSystem.SystemUser;
@@ -44,12 +48,18 @@ public class DeployableSystemResource extends AuditableResource {
 
     private final DeployableSystemDao deployableSystemDao;
     private final UserDao userDao;
+    private final DeploymentEnvironmentDao deploymentEnvironmentDao;
 
-    public DeployableSystemResource(DeployableSystemDao deployableSystemDao, UserDao userDao, AuditRecordDao auditRecordDao, ApplicationErrorDao errorDao) {
+    public DeployableSystemResource(DeployableSystemDao deployableSystemDao,
+                                    UserDao userDao, DeploymentEnvironmentDao deploymentEnvironmentDao,
+                                    AuditRecordDao auditRecordDao,
+                                    ApplicationErrorDao errorDao) {
+
         super(auditRecordDao, errorDao);
 
         this.deployableSystemDao = deployableSystemDao;
         this.userDao = userDao;
+        this.deploymentEnvironmentDao = deploymentEnvironmentDao;
     }
 
     @GET
@@ -75,13 +85,32 @@ public class DeployableSystemResource extends AuditableResource {
         var offset = zeroBasedOffset(pageNumber, pageSize);
 
         var systems = deployableSystemDao.findPagedDeployableSystems(offset, pageSize).stream()
-                .map(system -> system.withUsers(deployableSystemDao.findUsersForSystem(system.getId())))
+                .map(this::inflateSystem)
                 .toList();
 
         var total = deployableSystemDao.countDeployableSystems();
 
         var page = KiwiPage.of(pageNumber, pageSize, total, systems);
         return Response.ok(page).build();
+    }
+
+    private DeployableSystem inflateSystem(DeployableSystem system) {
+        var updatedSystem = system.withUsers(deployableSystemDao.findUsersForSystem(system.getId()));
+
+        if (Objects.nonNull(system.getDevEnvironmentId())) {
+            updatedSystem = updatedSystem.withDevEnvName(deploymentEnvironmentDao.getEnvironmentName(system.getDevEnvironmentId()));
+        }
+
+        if (isNotBlank(system.getEnvironmentPromotionOrder())) {
+            var orderedEnvNames = Arrays.stream(system.getEnvironmentPromotionOrder().split(","))
+                    .map(Long::parseLong)
+                    .map(deploymentEnvironmentDao::getEnvironmentName)
+                    .toList();
+
+            updatedSystem = updatedSystem.withEnvOrder(orderedEnvNames);
+        }
+
+        return updatedSystem;
     }
 
     @POST
@@ -176,7 +205,4 @@ public class DeployableSystemResource extends AuditableResource {
         deployableSystemDao.deleteUserFromSystem(systemId, userId);
         return Response.noContent().build();
     }
-
-    // TODO: Add endpoint to set and unset existing system user as admin (only can be done by system admins)
-    // TODO: Add endpoint to retrieve a list of users for the current system (only by system admin)
 }

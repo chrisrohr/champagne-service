@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kiwiproject.champagne.dao.AuditRecordDao;
 import org.kiwiproject.champagne.dao.DeployableSystemDao;
+import org.kiwiproject.champagne.dao.DeploymentEnvironmentDao;
 import org.kiwiproject.champagne.dao.UserDao;
 import org.kiwiproject.champagne.model.AuditRecord;
 import org.kiwiproject.champagne.model.DeployableSystem;
@@ -45,13 +46,14 @@ class DeployableSystemResourceTest {
     private static final AuditRecordDao AUDIT_RECORD_DAO = mock(AuditRecordDao.class);
     private static final ApplicationErrorDao APPLICATION_ERROR_DAO = mock(ApplicationErrorDao.class);
     private static final UserDao USER_DAO = mock(UserDao.class);
+    private static final DeploymentEnvironmentDao DEPLOYMENT_ENVIRONMENT_DAO = mock(DeploymentEnvironmentDao.class);
 
-    private static final DeployableSystemResource RESOURCE = new DeployableSystemResource(DEPLOYABLE_SYSTEM_DAO, USER_DAO, AUDIT_RECORD_DAO, APPLICATION_ERROR_DAO);
+    private static final DeployableSystemResource RESOURCE = new DeployableSystemResource(DEPLOYABLE_SYSTEM_DAO, USER_DAO, DEPLOYMENT_ENVIRONMENT_DAO, AUDIT_RECORD_DAO, APPLICATION_ERROR_DAO);
     private static final ResourceExtension RESOURCES = JwtResourceHelper.configureJwtResource(RESOURCE);
 
     @AfterEach
     void cleanup() {
-        reset(DEPLOYABLE_SYSTEM_DAO, AUDIT_RECORD_DAO, USER_DAO);
+        reset(DEPLOYABLE_SYSTEM_DAO, AUDIT_RECORD_DAO, USER_DAO, DEPLOYMENT_ENVIRONMENT_DAO);
     }
 
     @Nested

@@ -37,12 +37,26 @@ public class DeployableSystem {
     @With
     List<SystemUser> users;
 
+    /**
+     * Transitive property that is the resolved development environment name.
+     */
+    @With
+    String devEnvName;
+
+    /**
+     * Transitive property that is the list of the resolved deployment environment names in their promotion order.
+     */
+    @With
+    List<String> envOrder;
+
     @Builder
     @Value
     @JsonIgnoreProperties(ignoreUnknown = true)
     @ToString
     public static class SystemUser {
         Long userId;
+        String displayName;
+        String systemIdentifier;
         boolean admin;
     }
 }
