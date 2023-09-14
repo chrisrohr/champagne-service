@@ -1,5 +1,6 @@
 package org.kiwiproject.champagne.resource;
 
+import static org.kiwiproject.champagne.util.DeployableSystems.checkUserAdminOfSystem;
 import static org.kiwiproject.champagne.util.DeployableSystems.getSystemIdOrThrowBadRequest;
 import static org.kiwiproject.search.KiwiSearching.zeroBasedOffset;
 
@@ -29,15 +30,31 @@ public class AuditRecordResource {
     private final AuditRecordDao auditRecordDao;
 
     @GET
+    @Timed
+    @ExceptionMetered
+    public Response getPagedAuditsForSystem(@QueryParam("pageNumber") @DefaultValue("1") int pageNumber,
+                                     @QueryParam("pageSize") @DefaultValue("50") int pageSize) {
+
+        checkUserAdminOfSystem();
+
+        var systemId = getSystemIdOrThrowBadRequest();
+
+        var audits = auditRecordDao.findPagedAuditRecordsForSystem(zeroBasedOffset(pageNumber, pageSize), pageSize, systemId);
+        var totalCount = auditRecordDao.countAuditRecordsForSystem(systemId);
+
+        return Response.ok(KiwiPage.of(pageNumber, pageSize, totalCount, audits).usingOneAsFirstPage()).build();
+    }
+
+    @GET
+    @Path("/all")
     @RolesAllowed("admin")
     @Timed
     @ExceptionMetered
     public Response getPagedAudits(@QueryParam("pageNumber") @DefaultValue("1") int pageNumber,
-                                     @QueryParam("pageSize") @DefaultValue("50") int pageSize) {
+                                   @QueryParam("pageSize") @DefaultValue("50") int pageSize) {
 
-        var systemId = getSystemIdOrThrowBadRequest();
-        var audits = auditRecordDao.findPagedAuditRecords(zeroBasedOffset(pageNumber, pageSize), pageSize, systemId);
-        var totalCount = auditRecordDao.countAuditRecords(systemId);
+        var audits = auditRecordDao.findPagedAuditRecords(zeroBasedOffset(pageNumber, pageSize), pageSize);
+        var totalCount = auditRecordDao.countAuditRecords();
 
         return Response.ok(KiwiPage.of(pageNumber, pageSize, totalCount, audits).usingOneAsFirstPage()).build();
     }
