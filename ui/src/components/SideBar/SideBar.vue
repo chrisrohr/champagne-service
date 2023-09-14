@@ -240,6 +240,23 @@
               </a>
             </router-link>
           </li>
+          <li class="items-center">
+            <router-link to="/systemAudits" v-slot="{ href, navigate, isActive }">
+              <a
+                  :href="href"
+                  @click="navigate"
+                  class="text-xs uppercase py-3 font-bold block"
+                  :class="[
+                      isActive
+                        ? 'text-emerald-500 hover:text-emerald-600'
+                        : 'text-blueGray-700 hover:text-blueGray-500'
+                  ]"
+              >
+                <i class="fas fa-tags mr-2 text-sm" :class="[isActive ? 'opacity-75' : 'text-blueGray-300']"></i>
+                System Audits
+              </a>
+            </router-link>
+          </li>
         </ul>
 
         <!-- Divider -->
@@ -269,7 +286,7 @@
             </router-link>
           </li>
           <li class="items-center">
-            <router-link to="/" v-slot="{ href, navigate, isActive }">
+            <router-link to="/audits" v-slot="{ href, navigate, isActive }">
               <a
                   :href="href"
                   @click="navigate"
@@ -281,7 +298,7 @@
                   ]"
               >
                 <i class="fas fa-clipboard mr-2 text-sm" :class="[isActive ? 'opacity-75' : 'text-blueGray-300']"></i>
-                Audit
+                Audits
               </a>
             </router-link>
           </li>

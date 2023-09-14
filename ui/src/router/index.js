@@ -13,6 +13,8 @@ import BuildView from "@/views/Observability/BuildView.vue";
 import TasksView from "@/views/Observability/TasksView.vue";
 import SystemUsersView from "@/views/SystemAdmin/SystemUsersView.vue";
 import UsersView from "@/views/ChampagneAdmin/UsersView.vue";
+import SystemAuditsView from "@/views/SystemAdmin/SystemAuditsView.vue";
+import AuditsView from "@/views/ChampagneAdmin/AuditsView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -31,6 +33,8 @@ const router = createRouter({
         { path: '/tasks', component: TasksView, name: 'tasks' },
         { path: '/systemUsers', component: SystemUsersView, name: 'systemUsers' },
         { path: '/users', component: UsersView, name: 'users' },
+        { path: '/systemAudits', component: SystemAuditsView, name: 'systemAudits' },
+        { path: '/audits', component: AuditsView, name: 'audits' },
         { path: '/noDeployableSystem', component: NoDeployableSystemView, name: 'noDeployableSystem' }
       ]
     },
