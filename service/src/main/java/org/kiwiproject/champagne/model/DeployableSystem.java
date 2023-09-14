@@ -25,26 +25,26 @@ public class DeployableSystem {
     String environmentPromotionOrder;
 
     /**
-     * This is a transitive property populated through the users_system table and indicates if a specific user is
+     * This is a transient property populated through the users_system table and indicates if a specific user is
      * an admin in this system.  Listing all systems will NOT populate this field.
      */
     @With
     boolean admin;
 
     /**
-     * Transitive property that is the list of users assigned to this system and if they are an admin
+     * Transient property that is the list of users assigned to this system and if they are an admin
      */
     @With
     List<SystemUser> users;
 
     /**
-     * Transitive property that is the resolved development environment name.
+     * Transient property that is the resolved development environment name.
      */
     @With
     String devEnvName;
 
     /**
-     * Transitive property that is the list of the resolved deployment environment names in their promotion order.
+     * Transient property that is the list of the resolved deployment environment names in their promotion order.
      */
     @With
     List<String> envOrder;
