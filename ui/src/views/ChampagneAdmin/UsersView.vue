@@ -56,8 +56,8 @@
               Username is required!
             </div>
             <div class="mb-3 pt-0">
-              <label for="adminCheckbox" class="text-sm font-medium text-gray-900 dark:text-gray-300">Admin?</label>
-              <input type="checkbox" v-model="userToCreate.admin" id="adminCheckbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 ml-2"/>
+              <label for="adminCheckbox" class="text-sm font-medium text-gray-900">Admin?</label>
+              <input type="checkbox" v-model="userToCreate.admin" id="adminCheckbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 ml-2"/>
             </div>
           </div>
           <div class="flex items-center justify-end p-6 border-t border-solid border-gray-200 rounded-b">

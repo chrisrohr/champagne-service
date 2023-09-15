@@ -4,6 +4,18 @@ theme: readthedocs
 nav:
   - Overview: index.md
   - Getting Started: getting_started.md
-  - User Guid:
+  - User Guide:
+      - Hosts: user_guide/hosts.md
+      - Components: user_guide/components.md
+      - Builds: user_guide/builds.md
       - Environments: user_guide/environments.md
-      - Host Configuration: user_guide/host_configuration.md
+      - Manual Tasks: user_guide/tasks.md
+      - System Users: user_guide/system_users.md
+  - System Admin Guide:
+      - Manage System: system_admin/manage_system.md
+      - Tags: system_admin/tags.md
+      - System Audits: system_admin/system_audits.md
+  - Champagne Admin Guide:
+      - Users: champagne_admin/users.md
+      - Audits: champagne_admin/audits.md
+      - Systems: champagne_admin/systems.md
