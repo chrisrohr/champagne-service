@@ -16,6 +16,7 @@ import UsersView from "@/views/ChampagneAdmin/UsersView.vue";
 import SystemAuditsView from "@/views/SystemAdmin/SystemAuditsView.vue";
 import AuditsView from "@/views/ChampagneAdmin/AuditsView.vue";
 import SystemsView from "@/views/ChampagneAdmin/SystemsView.vue";
+import ErrorsView from "@/views/ChampagneAdmin/ErrorsView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -37,6 +38,7 @@ const router = createRouter({
         { path: '/systemAudits', component: SystemAuditsView, name: 'systemAudits' },
         { path: '/audits', component: AuditsView, name: 'audits' },
         { path: '/systems', component: SystemsView, name: 'systems' },
+        { path: '/errors', component: ErrorsView, name: 'errors' },
         { path: '/noDeployableSystem', component: NoDeployableSystemView, name: 'noDeployableSystem' }
       ]
     },
