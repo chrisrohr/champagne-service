@@ -9,7 +9,7 @@ The environments page lets a user manage a logical list of deployable environmen
 1. Click the <img alt="add" src="../../img/add.png" width="40"/> button at the bottom of the screen
 2. The create new environment dialog will appear
 
-    <img alt="New deployment environment dialog" src="../../img/create_environment.png" width="300"/>
+    <img alt="New deployment environment dialog" src="../../img/create-environment.png" width="300"/>
    
 3. Enter the new environment name (**This is required**)
 4. Click Save to create the environment
@@ -23,11 +23,15 @@ is historical data related to the environment that should be kept.
 
 ### Disable an environment
 
-To disable an environment, find the row with the environment to be disabled, click the <img alt="disable" src="../../img/disable.png" width="40"/> button.
+To disable an environment, find the row with the environment to be disabled, click the 3 vertical dots and select Deactivate.
+
+<img alt="Deactivate Environment Action" src="../../img/environment-actions-active.png" width="300"/>
 
 ### Enable an environment
 
-To enable an environment, find the row with the environment to be enabled, click the <img alt="enable" src="../../img/enable.png" width="40"/> button.
+To enable an environment, find the row with the environment to be enabled, click the 3 vertical dots and select Activate.
+
+<img alt="Activate Environment Action" src="../../img/environment-actions-inactive.png" width="300"/>
 
 ## Deleting an environment
 
@@ -36,4 +40,6 @@ deployable environment
 
 **Heads Up!** Deleting can only be performed by administrators of the deployable system!
 
-To delete an environment, find the row with the environment to be deleted and click the <img alt="delete" src="../../img/delete.png" width="40"/> button.
+To delete an environment, find the row with the environment to be deleted and click the 3 vertical dots and select Remove.
+
+<img alt="Remove Environment Action" src="../../img/environment-actions-active.png" width="300"/>
