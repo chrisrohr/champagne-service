@@ -45,16 +45,16 @@ public class ApplicationErrorWithAuthResource {
     @RolesAllowed({"admin"})
     @Timed
     @ExceptionMetered
-    public Response getById(@PathParam("id") OptionalLong id) {
-        return delegate.getById(id);
+    public Response getById(@PathParam("id") Long id) {
+        return delegate.getById(OptionalLong.of(id));
     }
 
     @GET
     @RolesAllowed({"admin"})
     @Timed
     @ExceptionMetered
-    public Response getErrors(@QueryParam("status") @DefaultValue("UNRESOLVED") String statusParam, @QueryParam("pageNumber") @DefaultValue("1") OptionalInt pageNumber, @QueryParam("pageSize") @DefaultValue("25") OptionalInt pageSize) {
-        return delegate.getErrors(statusParam, pageNumber, pageSize);
+    public Response getErrors(@QueryParam("status") @DefaultValue("UNRESOLVED") String statusParam, @QueryParam("pageNumber") @DefaultValue("1") Integer pageNumber, @QueryParam("pageSize") @DefaultValue("25") Integer pageSize) {
+        return delegate.getErrors(statusParam, OptionalInt.of(pageNumber), OptionalInt.of(pageSize));
     }
 
     @PUT
@@ -62,8 +62,8 @@ public class ApplicationErrorWithAuthResource {
     @RolesAllowed({"admin"})
     @Timed
     @ExceptionMetered
-    public Response resolve(@PathParam("id") OptionalLong id) {
-        return delegate.resolve(id);
+    public Response resolve(@PathParam("id") Long id) {
+        return delegate.resolve(OptionalLong.of(id));
     }
 
     @PUT
