@@ -33,7 +33,7 @@ jobs:
       # Cache all the things
       - name: Cache SonarCloud packages
         uses: actions/cache@v3
-        if: ${{ env.SONAR_TOKEN != null && env.SONAR_TOKEN != '' }}
+        if: ${{ env.SONAR_TOKEN != null && env.SONAR_TOKEN != '' && matrix.java_version == '17' }}
         env:
           SONAR_TOKEN: ${{ secrets.SERVICE_SONAR_TOKEN }}
         with:
@@ -56,13 +56,14 @@ jobs:
 
       # Run the tests
       - name: Run service tests
+        if: ${{ matrix.java_version != '17' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
         run: mvn -B -V verify
 
       # Run Sonar Analysis
       - name: Analyze with SonarCloud on service
-        if: ${{ env.SONAR_TOKEN != null && env.SONAR_TOKEN != '' }}
+        if: ${{ env.SONAR_TOKEN != null && env.SONAR_TOKEN != '' && matrix.java_version == '17' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SERVICE_SONAR_TOKEN }}
@@ -76,6 +77,8 @@ jobs:
         working-directory: ui
     strategy:
       fail-fast: false
+      matrix:
+        node_version: [ '18', '20' ]
     steps:
       # Check out the project
       - uses: actions/checkout@v4
@@ -85,14 +88,14 @@ jobs:
       # Setup Node/JS
       - uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node_version: ${{ matrix.node_version }}
           cache: 'npm'
           cache-dependency-path: '**/package-lock.json'
 
       # Cache all the things
       - name: Cache SonarCloud packages
         uses: actions/cache@v3
-        if: ${{ env.SONAR_TOKEN != null && env.SONAR_TOKEN != '' }}
+        if: ${{ env.SONAR_TOKEN != null && env.SONAR_TOKEN != ''&& matrix.node_version == '18' }}
         env:
           SONAR_TOKEN: ${{ secrets.UI_SONAR_TOKEN }}
         with:
@@ -118,7 +121,7 @@ jobs:
 
       # Run Sonar Analysis
       - name: SonarCloud Scan
-        if: ${{ env.SONAR_TOKEN != null && env.SONAR_TOKEN != '' }}
+        if: ${{ env.SONAR_TOKEN != null && env.SONAR_TOKEN != '' && matrix.node_version == '18' }}
         uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
