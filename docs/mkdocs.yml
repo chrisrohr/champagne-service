@@ -19,3 +19,4 @@ nav:
       - Users: champagne_admin/users.md
       - Audits: champagne_admin/audits.md
       - Systems: champagne_admin/systems.md
+      - Errors: champagne_admin/errors.md
