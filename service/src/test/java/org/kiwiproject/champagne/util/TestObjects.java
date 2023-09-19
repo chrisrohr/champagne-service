@@ -9,7 +9,9 @@ import org.kiwiproject.champagne.model.AuditRecord.Action;
 import org.kiwiproject.champagne.model.Build;
 import org.kiwiproject.champagne.model.Component;
 import org.kiwiproject.champagne.model.DeployableSystem;
+import org.kiwiproject.champagne.model.Deployment;
 import org.kiwiproject.champagne.model.DeploymentEnvironment;
+import org.kiwiproject.champagne.model.DeploymentExecution;
 import org.kiwiproject.champagne.model.GitProvider;
 import org.kiwiproject.champagne.model.Host;
 import org.kiwiproject.champagne.model.Tag;
@@ -252,6 +254,28 @@ public class TestObjects {
                 .bind("deployableSystemId", deployableSystemId)
                 .bind("admin", admin)
                 .execute();
+    }
+
+    public static long insertDeploymentExecution(Handle handle, long systemId, long envId, DeploymentExecution.Status status) {
+        return handle.createUpdate("insert into deployment_executions (environment_id, deployable_system_id, status) values (:envId, :systemId, :status)")
+                .bind("envId", envId)
+                .bind("systemId", systemId)
+                .bind("status", status)
+                .executeAndReturnGeneratedKeys("id")
+                .mapTo(Long.class)
+                .first();
+    }
+
+    public static long insertDeployment(Handle handle, long systemId, long envId, long executionId, long buildId, Deployment.Status status) {
+        return handle.createUpdate("insert into deployments (environment_id, deployable_system_id, execution_id, build_id, status) values (:envId, :systemId, :executionId, :buildId, :status)")
+                .bind("envId", envId)
+                .bind("systemId", systemId)
+                .bind("executionId", executionId)
+                .bind("buildId", buildId)
+                .bind("status", status)
+                .executeAndReturnGeneratedKeys("id")
+                .mapTo(Long.class)
+                .first();
     }
 
 }

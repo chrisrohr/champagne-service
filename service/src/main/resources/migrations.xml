@@ -458,4 +458,62 @@
             <dropTable tableName="tags"/>
         </rollback>
     </changeSet>
+
+    <changeSet id="add_deployments" author="crohr">
+        <createTable tableName="deployment_executions">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="created_at" type="timestamp without time zone" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp without time zone" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="status" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="failure_output" type="text"/>
+            <column name="environment_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_deployment_execution_deployment_environment" references="deployment_environments(id)" deleteCascade="true" />
+            </column>
+            <column name="consolidated_change_log" type="text"/>
+            <column name="percent_complete" type="decimal" defaultValueNumeric="0.0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deployable_system_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_deployment_execution_deployable_system" references="deployable_systems(id)" deleteCascade="true"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="deployments">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="created_at" type="timestamp without time zone" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp without time zone" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="build_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_deployment_build" references="builds(id)"/>
+            </column>
+            <column name="deployed_at" type="timestamp without time zone"/>
+            <column name="status" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="environment_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_deployment_deployment_environment" references="deployment_environments(id)" deleteCascade="true"/>
+            </column>
+            <column name="execution_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_deployment_deployment_execution" references="deployment_executions(id)"/>
+            </column>
+            <column name="failure_output" type="text"/>
+            <column name="deployable_system_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_deployment_deployable_system" references="deployable_systems(id)" deleteCascade="true"/>
+            </column>
+        </createTable>
+    </changeSet>
 </databaseChangeLog>
