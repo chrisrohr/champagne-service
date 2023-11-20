@@ -25,7 +25,7 @@
     <properties>
         <!-- Versions for required dependencies -->
         <dropwizard-application-errors.version>2.0.0</dropwizard-application-errors.version>
-        <dropwizard-jwt-cookie-auth.version>5.0.0</dropwizard-jwt-cookie-auth.version>
+        <dropwizard-jwt-cookie-auth.version>5.1.2</dropwizard-jwt-cookie-auth.version>
         <dropwizard-service-utilities.version>3.0.2</dropwizard-service-utilities.version>
         <kiwi.version>3.1.0</kiwi.version>
         <kiwi-bom.version>2.0.5</kiwi-bom.version>
