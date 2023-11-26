@@ -4,7 +4,6 @@ import io.dropwizard.auth.AuthValueFactoryProvider;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.experimental.UtilityClass;
 import org.dhatim.dropwizard.jwt.cookie.authentication.DefaultJwtCookiePrincipal;
 import org.dhatim.dropwizard.jwt.cookie.authentication.DontRefreshSessionFilter;
@@ -15,12 +14,12 @@ import org.kiwiproject.champagne.config.AppConfig;
 import org.kiwiproject.dropwizard.util.exception.JerseyViolationExceptionMapper;
 import org.kiwiproject.jaxrs.exception.JaxrsExceptionMapper;
 
-import java.security.Key;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
 import java.util.function.Function;
+import javax.crypto.SecretKey;
 
 @UtilityClass
 public class JwtResourceHelper {
@@ -29,7 +28,7 @@ public class JwtResourceHelper {
             new JwtCookieAuthBundle<>(DefaultJwtCookiePrincipal.class, DefaultJwtCookiePrincipal::getClaims,
                     DefaultJwtCookiePrincipal::new);
 
-    private static final Key KEY = JwtCookieAuthBundle.generateKey("secretSauce");
+    private static final SecretKey KEY = JwtCookieAuthBundle.generateKey("secretSauce");
 
     public static ResourceExtension configureJwtResource(Object resource) {
         return ResourceExtension.builder()
@@ -51,9 +50,9 @@ public class JwtResourceHelper {
 
         Function<DefaultJwtCookiePrincipal, Claims> serializer = DefaultJwtCookiePrincipal::getClaims;
         return Jwts.builder()
-                .signWith(KEY, SignatureAlgorithm.HS256)
-                .setClaims(serializer.apply(principal))
-                .setExpiration(Date.from(Instant.now().plus(1800, ChronoUnit.SECONDS)))
+                .signWith(KEY, Jwts.SIG.HS256)
+                .claims().add(serializer.apply(principal)).and()
+                .expiration(Date.from(Instant.now().plus(1800, ChronoUnit.SECONDS)))
                 .compact();
     }
 }
