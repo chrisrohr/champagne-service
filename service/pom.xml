@@ -26,7 +26,7 @@
         <!-- Versions for required dependencies -->
         <dropwizard-application-errors.version>2.1.0</dropwizard-application-errors.version>
         <dropwizard-jwt-cookie-auth.version>5.1.2</dropwizard-jwt-cookie-auth.version>
-        <dropwizard-service-utilities.version>3.2.0</dropwizard-service-utilities.version>
+        <dropwizard-service-utilities.version>3.3.0</dropwizard-service-utilities.version>
         <kiwi.version>3.2.0</kiwi.version>
         <kiwi-bom.version>2.0.6</kiwi-bom.version>
 
