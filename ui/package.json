@@ -36,7 +36,7 @@
     "@vue/test-utils": "2.4.5",
     "autoprefixer": "10.4.19",
     "cypress": "13.8.1",
-    "daisyui": "4.10.2",
+    "daisyui": "4.10.5",
     "eslint": "9.2.0",
     "eslint-plugin-cypress": "2.15.2",
     "eslint-plugin-vue": "9.25.0",
