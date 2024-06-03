@@ -34,7 +34,7 @@
         <kiwi-test.version>3.3.0</kiwi-test.version>
 
         <!-- Versions for plugins -->
-        <maven-shade-plugin.version>3.5.3</maven-shade-plugin.version>
+        <maven-shade-plugin.version>3.6.0</maven-shade-plugin.version>
 
         <!-- Extra properties -->
         <maven-compiler-plugin.java.release>17</maven-compiler-plugin.java.release>
