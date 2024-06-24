@@ -54,6 +54,18 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+
+            <dependency>
+                <groupId>org.kiwiproject</groupId>
+                <artifactId>dropwizard-application-errors</artifactId>
+                <version>${dropwizard-application-errors.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.kiwiproject</groupId>
+                <artifactId>dropwizard-service-utilities</artifactId>
+                <version>${dropwizard-service-utilities.version}</version>
+            </dependency>
                  
             <dependency>
                 <groupId>org.kiwiproject</groupId>
@@ -100,13 +112,11 @@
         <dependency>
             <groupId>org.kiwiproject</groupId>
             <artifactId>dropwizard-application-errors</artifactId>
-            <version>${dropwizard-application-errors.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.kiwiproject</groupId>
             <artifactId>dropwizard-service-utilities</artifactId>
-            <version>${dropwizard-service-utilities.version}</version>
         </dependency>
 
         <dependency>
