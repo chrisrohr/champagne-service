@@ -29,6 +29,7 @@
         <dropwizard-service-utilities.version>3.5.0</dropwizard-service-utilities.version>
         <kiwi.version>4.0.0</kiwi.version>
         <kiwi-bom.version>2.0.12</kiwi-bom.version>
+        <metrics-healthchecks-severity.version>2.0.4</metrics-healthchecks-severity.version>
 
         <!-- Versions for test dependencies -->
         <kiwi-test.version>3.4.0</kiwi-test.version>
@@ -71,6 +72,12 @@
                 <groupId>org.kiwiproject</groupId>
                 <artifactId>kiwi</artifactId>
                 <version>${kiwi.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.kiwiproject</groupId>
+                <artifactId>metrics-healthchecks-severity</artifactId>
+                <version>${metrics-healthchecks-severity.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
