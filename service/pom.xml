@@ -32,7 +32,7 @@
         <metrics-healthchecks-severity.version>2.0.4</metrics-healthchecks-severity.version>
 
         <!-- Versions for test dependencies -->
-        <kiwi-test.version>3.4.0</kiwi-test.version>
+        <kiwi-test.version>3.5.0</kiwi-test.version>
 
         <!-- Versions for plugins -->
         <maven-shade-plugin.version>3.6.0</maven-shade-plugin.version>
