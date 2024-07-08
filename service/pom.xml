@@ -29,7 +29,7 @@
         <dropwizard-service-utilities.version>3.7.0</dropwizard-service-utilities.version>
         <kiwi.version>4.0.0</kiwi.version>
         <kiwi-bom.version>2.0.13</kiwi-bom.version>
-        <metrics-healthchecks-severity.version>2.0.4</metrics-healthchecks-severity.version>
+        <metrics-healthchecks-severity.version>2.0.5</metrics-healthchecks-severity.version>
 
         <!-- Versions for test dependencies -->
         <kiwi-test.version>3.5.0</kiwi-test.version>
