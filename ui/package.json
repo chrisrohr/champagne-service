@@ -22,7 +22,7 @@
     "@vueform/multiselect": "2.6.8",
     "axios": "1.7.2",
     "lodash": "4.17.21",
-    "luxon": "3.4.4",
+    "luxon": "3.5.0",
     "pinia": "2.2.0",
     "vue": "3.4.34",
     "vue-router": "4.4.0",
