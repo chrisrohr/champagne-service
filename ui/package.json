@@ -44,7 +44,7 @@
     "mini-svg-data-uri": "1.4.4",
     "postcss": "8.4.47",
     "prettier": "3.3.3",
-    "start-server-and-test": "2.0.6",
+    "start-server-and-test": "2.0.8",
     "tailwindcss": "3.4.11",
     "vite": "5.4.3",
     "vitest": "2.0.5"
