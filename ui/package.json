@@ -40,7 +40,7 @@
     "eslint": "9.11.0",
     "eslint-plugin-cypress": "3.5.0",
     "eslint-plugin-vue": "9.28.0",
-    "jsdom": "25.0.0",
+    "jsdom": "25.0.1",
     "mini-svg-data-uri": "1.4.4",
     "postcss": "8.4.47",
     "prettier": "3.3.3",
