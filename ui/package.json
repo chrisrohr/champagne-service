@@ -39,7 +39,7 @@
     "daisyui": "4.12.13",
     "eslint": "9.13.0",
     "eslint-plugin-cypress": "4.0.0",
-    "eslint-plugin-vue": "9.29.0",
+    "eslint-plugin-vue": "9.29.1",
     "jsdom": "25.0.1",
     "mini-svg-data-uri": "1.4.4",
     "postcss": "8.4.47",
