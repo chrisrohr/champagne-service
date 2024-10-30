@@ -28,7 +28,7 @@
         <dropwizard-jwt-cookie-auth.version>5.1.3</dropwizard-jwt-cookie-auth.version>
         <dropwizard-service-utilities.version>4.0.0</dropwizard-service-utilities.version>
         <kiwi.version>4.5.1</kiwi.version>
-        <kiwi-bom.version>2.0.17</kiwi-bom.version>
+        <kiwi-bom.version>2.0.18</kiwi-bom.version>
         <metrics-healthchecks-severity.version>2.0.6</metrics-healthchecks-severity.version>
 
         <!-- Versions for test dependencies -->
