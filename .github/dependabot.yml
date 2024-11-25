@@ -4,6 +4,11 @@ updates:
     directory: "/service"
     schedule:
       interval: "weekly"
+    groups:
+      dev-deps:
+        dependency-type: "development"
+      prod-deps:
+        dependency-type: "production"
     assignees:
       - "sleberknight"
       - "chrisrohr"
@@ -15,6 +20,11 @@ updates:
     directory: "/ui"
     schedule:
       interval: "weekly"
+    groups:
+      dev-deps:
+        dependency-type: "development"
+      prod-deps:
+        dependency-type: "production"
     assignees:
       - "sleberknight"
       - "chrisrohr"
@@ -26,6 +36,10 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      actions-deps:
+        patterns:
+          - "*"
     assignees:
       - "sleberknight"
       - "chrisrohr"
