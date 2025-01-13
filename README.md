@@ -1,3 +1,7 @@
+# Archive Notice
+
+_As of January 13, 2025 this repository is archived. We might pick it back up at some point, but no guarantee on that..._
+
 # Champagne
 [![Build](https://github.com/kiwiproject/champagne-service/workflows/build/badge.svg)](https://github.com/kiwiproject/champagne-service/actions?query=workflow%3Abuild)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
